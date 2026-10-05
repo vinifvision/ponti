@@ -59,41 +59,62 @@ O projeto adota o modelo **Cliente-Servidor (API RESTful)** e uma arquitetura de
 
 ---
 
-## 🚀 Como Executar o Projeto Localmente
+## Como rodar o projeto
 
-*(As instruções abaixo serão atualizadas assim que as dependências do código base forem commitadas)*
+O projeto é dividido em duas partes: `backend/` (API REST em Java com Spring Boot) e `frontend/` (SPA em Angular).
 
 ### Pré-requisitos
-* [Git](https://git-scm.com/)
-* [Node.js](https://nodejs.org/) (Versão LTS recomendada)
-* [PostgreSQL](https://www.postgresql.org/)
 
-### Passos de Instalação
+- Java 17 ou superior
+- Maven (ou uma IDE com suporte a Maven)
+- Node.js e npm
 
-1. **Clone o repositório:**
+### Backend
+
 ```bash
-git clone [https://github.com/vinifvision/ponti.git](https://github.com/vinifvision/ponti.git)
-cd ponti
+cd backend
+mvn spring-boot:run
 ```
 
-2. **Instale as dependências:**
+- A API sobe em `http://localhost:8080`.
+- A documentação interativa (Swagger UI) fica em `http://localhost:8080/swagger-ui.html`.
+- A especificação OpenAPI está em [`openapi.yaml`](./openapi.yaml), na raiz do repositório.
+- Por padrão o banco é o H2 (em memória), então os dados são apagados quando a aplicação reinicia. Para usar PostgreSQL, ajuste o `application.properties`: comente a configuração do H2 e descomente a do PostgreSQL.
+
+### Frontend
+
+Em outro terminal:
+
 ```bash
+cd frontend
 npm install
+npx ng serve
 ```
 
-3. **Configure as Variáveis de Ambiente:**
+A aplicação fica em `http://localhost:4200`. O backend precisa estar rodando.
 
-Crie um arquivo `.env` na raiz do projeto com base no arquivo `.env.example`.
+### Rodando no GitHub Codespaces
 
-5. **Execute as Migrações do Banco de Dados:**
+- O front descobre sozinho o endereço da API (porta 8080 do mesmo Codespace).
+- A porta **8080** precisa estar com visibilidade **Public** na aba *Ports*. Ela volta a ficar privada sempre que o backend reinicia. Para torná-la pública de novo:
+
 ```bash
-npm run migrate
+gh codespace ports visibility 8080:public -c $CODESPACE_NAME
 ```
 
-5. **Inicie o servidor de desenvolvimento:**
-```bash
-npm run dev
-```
+## Endpoints (CRUD base)
+
+| Recurso | Rota | Operações |
+|---|---|---|
+| Startups | `/startups` | listar, buscar por id, criar, atualizar, excluir |
+| Mentores | `/mentores` | listar, buscar por id, criar, atualizar, excluir |
+| Convites | `/convites` | listar, buscar por id, criar, atualizar, excluir (somente API) |
+
+## Tecnologias
+
+- **Backend:** Java, Spring Boot, Spring Data JPA, springdoc-openapi, H2 / PostgreSQL
+- **Frontend:** Angular, TypeScript
+- **Documentação da API:** OpenAPI 3.0
 
 ---
 
