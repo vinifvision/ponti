@@ -16,14 +16,14 @@ paths:
       tags: [Startups]
       summary: Lista startups
       responses:
-        '200':
+        "200":
           description: Lista retornada com sucesso
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Startup'
+                  $ref: "#/components/schemas/Startup"
     post:
       tags: [Startups]
       summary: Cria um(a) startup
@@ -32,15 +32,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Startup'
+              $ref: "#/components/schemas/Startup"
       responses:
-        '201':
+        "201":
           description: Criado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Startup'
-        '400':
+                $ref: "#/components/schemas/Startup"
+        "400":
           description: Dados inválidos
   /startups/{id}:
     parameters:
@@ -54,13 +54,13 @@ paths:
       tags: [Startups]
       summary: Busca por id
       responses:
-        '200':
+        "200":
           description: Encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Startup'
-        '404':
+                $ref: "#/components/schemas/Startup"
+        "404":
           description: Não encontrado
     put:
       tags: [Startups]
@@ -70,39 +70,39 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Startup'
+              $ref: "#/components/schemas/Startup"
       responses:
-        '200':
+        "200":
           description: Atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Startup'
-        '400':
+                $ref: "#/components/schemas/Startup"
+        "400":
           description: Dados inválidos
-        '404':
+        "404":
           description: Não encontrado
     delete:
       tags: [Startups]
       summary: Remove por id
       responses:
-        '204':
+        "204":
           description: Removido com sucesso
-        '404':
+        "404":
           description: Não encontrado
   /mentores:
     get:
       tags: [Mentores]
       summary: Lista mentores
       responses:
-        '200':
+        "200":
           description: Lista retornada com sucesso
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Mentor'
+                  $ref: "#/components/schemas/Mentor"
     post:
       tags: [Mentores]
       summary: Cria um(a) mentore
@@ -111,15 +111,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Mentor'
+              $ref: "#/components/schemas/Mentor"
       responses:
-        '201':
+        "201":
           description: Criado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mentor'
-        '400':
+                $ref: "#/components/schemas/Mentor"
+        "400":
           description: Dados inválidos
   /mentores/{id}:
     parameters:
@@ -133,13 +133,13 @@ paths:
       tags: [Mentores]
       summary: Busca por id
       responses:
-        '200':
+        "200":
           description: Encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mentor'
-        '404':
+                $ref: "#/components/schemas/Mentor"
+        "404":
           description: Não encontrado
     put:
       tags: [Mentores]
@@ -149,39 +149,39 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Mentor'
+              $ref: "#/components/schemas/Mentor"
       responses:
-        '200':
+        "200":
           description: Atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mentor'
-        '400':
+                $ref: "#/components/schemas/Mentor"
+        "400":
           description: Dados inválidos
-        '404':
+        "404":
           description: Não encontrado
     delete:
       tags: [Mentores]
       summary: Remove por id
       responses:
-        '204':
+        "204":
           description: Removido com sucesso
-        '404':
+        "404":
           description: Não encontrado
   /convites:
     get:
       tags: [Convites]
       summary: Lista convites
       responses:
-        '200':
+        "200":
           description: Lista retornada com sucesso
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Convite'
+                  $ref: "#/components/schemas/Convite"
     post:
       tags: [Convites]
       summary: Cria um(a) convite
@@ -190,15 +190,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Convite'
+              $ref: "#/components/schemas/Convite"
       responses:
-        '201':
+        "201":
           description: Criado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Convite'
-        '400':
+                $ref: "#/components/schemas/Convite"
+        "400":
           description: Dados inválidos
   /convites/{id}:
     parameters:
@@ -212,13 +212,13 @@ paths:
       tags: [Convites]
       summary: Busca por id
       responses:
-        '200':
+        "200":
           description: Encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Convite'
-        '404':
+                $ref: "#/components/schemas/Convite"
+        "404":
           description: Não encontrado
     put:
       tags: [Convites]
@@ -228,25 +228,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Convite'
+              $ref: "#/components/schemas/Convite"
       responses:
-        '200':
+        "200":
           description: Atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Convite'
-        '400':
+                $ref: "#/components/schemas/Convite"
+        "400":
           description: Dados inválidos
-        '404':
+        "404":
           description: Não encontrado
     delete:
       tags: [Convites]
       summary: Remove por id
       responses:
-        '204':
+        "204":
           description: Removido com sucesso
-        '404':
+        "404":
           description: Não encontrado
 components:
   schemas:
