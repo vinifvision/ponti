@@ -1,0 +1,340 @@
+openapi: 3.0.3
+info:
+  title: Ponti API
+  description: API do Ponti, plataforma que conecta startups em estágio inicial a mentores.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Servidor local
+tags:
+  - name: Startups
+  - name: Mentores
+  - name: Convites
+paths:
+  /startups:
+    get:
+      tags: [Startups]
+      summary: Lista startups
+      responses:
+        '200':
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Startup'
+    post:
+      tags: [Startups]
+      summary: Cria um(a) startup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Startup'
+      responses:
+        '201':
+          description: Criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Startup'
+        '400':
+          description: Dados inválidos
+  /startups/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Startups]
+      summary: Busca por id
+      responses:
+        '200':
+          description: Encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Startup'
+        '404':
+          description: Não encontrado
+    put:
+      tags: [Startups]
+      summary: Atualiza por id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Startup'
+      responses:
+        '200':
+          description: Atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Startup'
+        '400':
+          description: Dados inválidos
+        '404':
+          description: Não encontrado
+    delete:
+      tags: [Startups]
+      summary: Remove por id
+      responses:
+        '204':
+          description: Removido com sucesso
+        '404':
+          description: Não encontrado
+  /mentores:
+    get:
+      tags: [Mentores]
+      summary: Lista mentores
+      responses:
+        '200':
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mentor'
+    post:
+      tags: [Mentores]
+      summary: Cria um(a) mentore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Mentor'
+      responses:
+        '201':
+          description: Criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '400':
+          description: Dados inválidos
+  /mentores/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Mentores]
+      summary: Busca por id
+      responses:
+        '200':
+          description: Encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '404':
+          description: Não encontrado
+    put:
+      tags: [Mentores]
+      summary: Atualiza por id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Mentor'
+      responses:
+        '200':
+          description: Atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '400':
+          description: Dados inválidos
+        '404':
+          description: Não encontrado
+    delete:
+      tags: [Mentores]
+      summary: Remove por id
+      responses:
+        '204':
+          description: Removido com sucesso
+        '404':
+          description: Não encontrado
+  /convites:
+    get:
+      tags: [Convites]
+      summary: Lista convites
+      responses:
+        '200':
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Convite'
+    post:
+      tags: [Convites]
+      summary: Cria um(a) convite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Convite'
+      responses:
+        '201':
+          description: Criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Convite'
+        '400':
+          description: Dados inválidos
+  /convites/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Convites]
+      summary: Busca por id
+      responses:
+        '200':
+          description: Encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Convite'
+        '404':
+          description: Não encontrado
+    put:
+      tags: [Convites]
+      summary: Atualiza por id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Convite'
+      responses:
+        '200':
+          description: Atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Convite'
+        '400':
+          description: Dados inválidos
+        '404':
+          description: Não encontrado
+    delete:
+      tags: [Convites]
+      summary: Remove por id
+      responses:
+        '204':
+          description: Removido com sucesso
+        '404':
+          description: Não encontrado
+components:
+  schemas:
+    Startup:
+      type: object
+      required: [nome]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          example: 1
+        nome:
+          type: string
+          example: AgroTech Recife
+        descricao:
+          type: string
+          example: Plataforma de monitoramento de lavouras com sensores de baixo custo.
+        videoPitchUrl:
+          type: string
+          format: uri
+          example: https://www.youtube.com/watch?v=exemplo
+        atuacoes:
+          type: string
+          example: Agricultura, IoT, sustentabilidade
+        segmento:
+          type: string
+          example: Agritech
+        cidade:
+          type: string
+          example: Recife
+        estado:
+          type: string
+          example: PE
+        site:
+          type: string
+          format: uri
+          example: https://agrotechrecife.com.br
+        estagioMaturidade:
+          type: integer
+          minimum: 1
+          maximum: 9
+          description: Escala de maturidade inspirada no TRL (1 a 9).
+          example: 3
+    Mentor:
+      type: object
+      required: [nome]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          example: 1
+        nome:
+          type: string
+          example: Maria Souza
+        bio:
+          type: string
+          example: Ex-fundadora com 10 anos de experiência em startups de tecnologia.
+        areasAtuacao:
+          type: string
+          example: Produto, Validação de MVP, Captação
+        ecossistemas:
+          type: string
+          example: Porto Digital, Cesar
+        valorSessao:
+          type: number
+          format: double
+          description: Valor por sessão definido pelo mentor.
+          example: 150.00
+    Convite:
+      type: object
+      required: [startupId, mentorId]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          example: 1
+        startupId:
+          type: integer
+          format: int64
+          example: 1
+        mentorId:
+          type: integer
+          format: int64
+          example: 1
+        status:
+          type: string
+          enum: [PENDENTE, ACEITO, RECUSADO]
+          default: PENDENTE
