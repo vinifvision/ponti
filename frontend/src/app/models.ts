@@ -18,4 +18,5 @@ export interface Mentor {
   areasAtuacao?: string;
   ecossistemas?: string;
   valorSessao?: number | null;
+  fotoUrl?: string;
 }
