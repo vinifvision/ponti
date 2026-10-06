@@ -1,0 +1,70 @@
+<header class="flex items-center justify-end gap-4 px-4 py-4 sm:gap-6 sm:px-8">
+  <div class="relative w-full max-w-md">
+    <label for="busca-mentores" class="sr-only">Buscar mentores</label>
+    <input
+      id="busca-mentores"
+      type="search"
+      placeholder="Buscar mentores..."
+      [value]="busca.termo()"
+      (input)="busca.termo.set($any($event.target).value)"
+      class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-4 pr-11 text-base text-gray-900 placeholder:text-gray-400 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+    />
+    <app-icone nome="busca" [tamanho]="20" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
+  </div>
+
+  <button
+    type="button"
+    class="relative rounded-full p-2 text-ponti-marinho transition-colors hover:bg-ponti-lilas/30"
+    aria-label="Notificações"
+  >
+    <app-icone nome="sino" [tamanho]="26" />
+    @if (temNotificacao()) {
+      <span class="absolute right-2 top-2 size-2.5 rounded-full bg-ponti-amarelo ring-2 ring-white">
+        <span class="sr-only">Você tem novas notificações</span>
+      </span>
+    }
+  </button>
+
+  <div class="relative shrink-0">
+    <button
+      type="button"
+      (click)="alternarMenu()"
+      class="flex items-center gap-3 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-gray-100"
+      aria-haspopup="menu"
+      [attr.aria-expanded]="menuAberto()"
+    >
+      <span class="size-12 rounded-full bg-gray-200" aria-hidden="true"></span>
+      <span class="hidden flex-col items-start leading-tight sm:flex">
+        <span class="flex items-center gap-1 font-semibold">
+          {{ usuario.nome }}
+          <app-icone nome="seta-baixo" [tamanho]="18" class="transition-transform" [class.rotate-180]="menuAberto()" />
+        </span>
+        <span class="text-sm text-gray-400">{{ usuario.papel }}</span>
+      </span>
+    </button>
+
+    @if (menuAberto()) {
+      <div
+        role="menu"
+        class="absolute right-0 top-full z-20 mt-2 w-48 rounded-md border border-gray-200 bg-white py-2 shadow-lg"
+      >
+        <a
+          role="menuitem"
+          routerLink="/perfil"
+          (click)="menuAberto.set(false)"
+          class="block px-4 py-2 text-sm hover:bg-ponti-lilas/20"
+        >
+          Dados Pessoais
+        </a>
+        <button
+          role="menuitem"
+          type="button"
+          (click)="sair()"
+          class="block w-full px-4 py-2 text-left text-sm hover:bg-ponti-lilas/20"
+        >
+          Sair
+        </button>
+      </div>
+    }
+  </div>
+</header>

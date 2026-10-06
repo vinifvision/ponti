@@ -1,0 +1,65 @@
+<aside
+  class="sticky top-0 flex h-screen shrink-0 flex-col rounded-r-3xl bg-ponti-lilas py-6 text-ponti-marinho transition-[width] duration-300"
+  [class.w-72]="!recolhida()"
+  [class.w-20]="recolhida()"
+  aria-label="Menu principal"
+>
+  <a
+    routerLink="/encontrar-mentores"
+    class="mb-10 flex h-12 items-center justify-center px-4"
+    aria-label="Ponti - página inicial"
+  >
+    @if (recolhida()) {
+      <img src="logo-mini.svg" alt="Ponti" class="h-9 w-auto" />
+    } @else {
+      <img src="logo.svg" alt="Ponti" class="h-12 w-auto" />
+    }
+  </a>
+
+  <nav class="flex flex-1 flex-col gap-2 px-3">
+    @if (!recolhida()) {
+      <p class="mb-2 px-2 text-lg font-medium">Navegação</p>
+    }
+
+    @for (item of itens; track item.rota) {
+      <a
+        [routerLink]="item.rota"
+        routerLinkActive="border-ponti-marinho! bg-ponti-lilas-escuro"
+        class="flex items-center gap-3 rounded-xl border-l-4 border-transparent px-4 py-3 text-lg font-medium transition-colors hover:bg-ponti-lilas-escuro/60"
+        [class.justify-center]="recolhida()"
+        [attr.title]="recolhida() ? item.rotulo : null"
+      >
+        <app-icone [nome]="item.icone" />
+        @if (recolhida()) {
+          <span class="sr-only">{{ item.rotulo }}</span>
+        } @else {
+          <span class="truncate">{{ item.rotulo }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <div class="flex flex-col gap-2 px-3">
+    <a
+      routerLink="/configuracoes"
+      routerLinkActive="bg-ponti-lilas-escuro"
+      class="flex items-center gap-3 rounded-xl px-4 py-3 text-lg font-medium transition-colors hover:bg-ponti-lilas-escuro/60"
+      [class.justify-center]="recolhida()"
+      [attr.title]="recolhida() ? 'Configurações' : null"
+    >
+      <app-icone nome="config" />
+      <span [class.sr-only]="recolhida()">Configurações</span>
+    </a>
+
+    <button
+      type="button"
+      (click)="alternar.emit()"
+      class="flex items-center gap-3 rounded-xl px-4 py-3 text-lg font-medium transition-colors hover:bg-ponti-lilas-escuro/60"
+      [class.justify-center]="recolhida()"
+      [attr.aria-expanded]="!recolhida()"
+    >
+      <app-icone nome="recolher" class="transition-transform" [class.rotate-180]="recolhida()" />
+      <span [class.sr-only]="recolhida()">{{ recolhida() ? 'Expandir' : 'Recolher' }}</span>
+    </button>
+  </div>
+</aside>
