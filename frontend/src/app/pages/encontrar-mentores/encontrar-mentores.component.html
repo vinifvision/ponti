@@ -1,0 +1,49 @@
+<section class="pt-6">
+  <h1 class="text-balance text-3xl font-medium sm:text-4xl">Mentores recomendados</h1>
+
+  <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+    <app-filtro-select
+      rotulo="Área de atuação"
+      placeholder="Todas"
+      [opcoes]="opcoesArea()"
+      [limpavel]="true"
+      [(valor)]="area"
+    />
+    <app-filtro-select rotulo="Experiência" [opcoes]="opcoesExperiencia" [(valor)]="experiencia" />
+    <app-filtro-select rotulo="Filtro" placeholder="Filtrar" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
+  </div>
+
+  <div class="mt-8">
+    @if (carregando()) {
+      <p class="text-gray-500" role="status">Carregando mentores...</p>
+    } @else if (erro()) {
+      <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+    } @else if (mentoresFiltrados().length === 0) {
+      <p class="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500">
+        Nenhum mentor encontrado com esses filtros.
+      </p>
+    } @else {
+      <ul class="flex flex-col items-start gap-8">
+        @for (mentor of mentoresFiltrados(); track mentor.id) {
+          <li class="flex gap-8" (mouseenter)="focar(mentor)" (mouseleave)="desfocarSe(mentor)">
+            <app-mentor-card
+              class="block w-full max-w-3xl shrink-0"
+              [mentor]="mentor"
+              [compativel]="ehCompativel(mentor)"
+              [selecionado]="mentor.id === selecionadoId()"
+              [conectado]="conectados().has(mentor.id!)"
+              (selecionar)="selecionar($event)"
+              (conectar)="conectar($event)"
+            />
+
+            @if (focoId() === mentor.id) {
+              <div class="hidden w-96 shrink-0 xl:block">
+                <app-mentor-destaque [mentor]="mentor" class="block h-full" />
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    } 
+</div>
+</section>

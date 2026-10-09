@@ -1,0 +1,71 @@
+<article
+  class="flex flex-col gap-6 rounded-xl border bg-white p-6 transition-shadow hover:border-ponti-roxo hover:shadow-md hover:ring-2 hover:ring-ponti-roxo/20 sm:flex-row sm:p-8"
+  [class]="selecionado() ? 'border-ponti-roxo ring-2 ring-ponti-roxo/20' : 'border-gray-300'"
+>
+  @if (mentor().fotoUrl) {
+    <img
+      [src]="mentor().fotoUrl"
+      [alt]="'Foto de ' + mentor().nome"
+      class="size-40 shrink-0 rounded-md object-cover sm:size-44"
+    />
+  } @else {
+    <div
+      class="flex size-40 shrink-0 items-center justify-center rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho sm:size-44"
+      aria-hidden="true"
+    >
+      {{ iniciais() }}
+    </div>
+  }
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <h2 class="text-2xl font-bold">
+      <button
+        type="button"
+        (click)="selecionar.emit(mentor())"
+        class="text-left hover:text-ponti-roxo focus:outline-none focus-visible:underline"
+        [attr.aria-pressed]="selecionado()"
+      >
+        {{ mentor().nome }}
+      </button>
+    </h2>
+
+    @if (mentor().areasAtuacao) {
+      <p class="mt-2 flex items-center gap-2 text-gray-600">
+        <app-icone nome="maleta" [tamanho]="20" />
+        <span class="sr-only">Áreas de atuação:</span>
+        {{ mentor().areasAtuacao }}
+      </p>
+    }
+    @if (mentor().ecossistemas) {
+      <p class="mt-1 flex items-center gap-2 text-gray-600">
+        <app-icone nome="alvo" [tamanho]="20" />
+        <span class="sr-only">Ecossistemas:</span>
+        {{ mentor().ecossistemas }}
+      </p>
+    }
+
+    @if (compativel()) {
+      <span
+        class="mt-4 inline-flex w-fit items-center gap-2 bg-gradient-to-r from-ponti-amarelo/80 to-ponti-lilas/80 px-2 py-1 font-medium text-gray-900"
+      >
+        <app-icone nome="brilho" [tamanho]="18" />
+        Compatível com seu perfil!
+      </span>
+    }
+
+    <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <p class="max-w-prose text-pretty text-lg leading-relaxed text-gray-800">
+        {{ mentor().bio || 'Este mentor ainda não adicionou uma descrição.' }}
+      </p>
+
+      <button
+        type="button"
+        (click)="conectar.emit(mentor())"
+        [disabled]="conectado()"
+        class="shrink-0 rounded-lg bg-ponti-roxo px-12 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90 disabled:px-2 disabled:cursor-default disabled:bg-gray-200 disabled:text-gray-600"
+      >
+        {{ conectado() ? 'Solicitação enviada' : 'Conectar' }}
+      </button>
+    </div>
+  </div>
+</article>

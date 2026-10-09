@@ -1,0 +1,11 @@
+<div class="flex min-h-screen bg-white font-sans text-gray-900">
+  <app-sidebar [recolhida]="sidebarRecolhida()" (alternar)="alternarSidebar()" />
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <app-topbar />
+
+    <main class="flex-1 px-4 pb-12 sm:px-8 lg:px-16">
+      <router-outlet />
+    </main>
+  </div>
+</div>

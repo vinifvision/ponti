@@ -1,76 +1,74 @@
-* { box-sizing: border-box; }
+@import "tailwindcss";
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: #f4f6f9;
-  color: #1f2937;
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ponti-lilas: #c8a2fd;
+  --color-ponti-lilas-escuro: #b48ef7;
+  --color-ponti-roxo: #a46ff5;
+  --color-ponti-marinho: #1f1aa3;
+  --color-ponti-amarelo: #f4b731;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 14px 32px;
-  background: #1e3a5f;
-  color: #fff;
-}
-.topbar .brand { font-size: 1.3rem; font-weight: 700; }
-.topbar nav a {
-  color: #cbd5e1;
-  text-decoration: none;
-  margin-right: 20px;
-  padding-bottom: 4px;
-}
-.topbar nav a.ativo { color: #fff; border-bottom: 2px solid #fff; }
-
-.conteudo { max-width: 1000px; margin: 28px auto; padding: 0 20px; }
-
-.card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+@layer base {
+  html {
+    font-size: 87.5%;
+  }
 }
 
-.cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.cabecalho h1 { margin: 0; font-size: 1.4rem; }
+/*
+  Estilos antigos das telas de CRUD. Ficam dentro de um @layer para que as
+  classes utilitárias do Tailwind sempre tenham prioridade sobre eles.
+*/
+@layer components {
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
 
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
-th { font-size: 0.8rem; text-transform: uppercase; color: #6b7280; }
+  .cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .cabecalho h1 { margin: 0; font-size: 1.4rem; }
 
-.btn {
-  display: inline-block;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  text-decoration: none;
-  background: #e5e7eb;
-  color: #1f2937;
-}
-.btn-primario { background: #2563eb; color: #fff; }
-.btn-perigo { background: #dc2626; color: #fff; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.acoes { display: flex; gap: 8px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
+  th { font-size: 0.8rem; text-transform: uppercase; color: #6b7280; }
 
-form { display: grid; gap: 14px; }
-label { display: grid; gap: 4px; font-size: 0.9rem; font-weight: 600; }
-input, textarea, select {
-  font: inherit;
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-weight: 400;
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    background: #e5e7eb;
+    color: #1f2937;
+  }
+  .btn-primario { background: var(--color-ponti-roxo); color: #fff; }
+  .btn-perigo { background: #dc2626; color: #fff; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .acoes { display: flex; gap: 8px; }
+
+  form { display: grid; gap: 14px; }
+  form label { display: grid; gap: 4px; font-size: 0.9rem; font-weight: 600; }
+  form input, form textarea, form select {
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-weight: 400;
+  }
+  input.ng-invalid.ng-touched { border-color: #dc2626; }
+  .erro { color: #dc2626; font-size: 0.85rem; font-weight: 400; }
+  .vazio { color: #6b7280; padding: 16px 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 }
-input.ng-invalid.ng-touched { border-color: #dc2626; }
-.erro { color: #dc2626; font-size: 0.85rem; font-weight: 400; }
-.vazio { color: #6b7280; padding: 16px 0; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
