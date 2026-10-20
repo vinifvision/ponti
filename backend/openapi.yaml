@@ -16,14 +16,14 @@ paths:
       tags: [Startups]
       summary: Lista startups
       responses:
-        '200':
+        "200":
           description: Lista retornada com sucesso
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Startup'
+                  $ref: "#/components/schemas/Startup"
     post:
       tags: [Startups]
       summary: Cria um(a) startup
@@ -32,15 +32,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Startup'
+              $ref: "#/components/schemas/Startup"
       responses:
-        '201':
+        "201":
           description: Criado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Startup'
-        '400':
+                $ref: "#/components/schemas/Startup"
+        "400":
           description: Dados inválidos
   /startups/{id}:
     parameters:
@@ -54,13 +54,13 @@ paths:
       tags: [Startups]
       summary: Busca por id
       responses:
-        '200':
+        "200":
           description: Encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Startup'
-        '404':
+                $ref: "#/components/schemas/Startup"
+        "404":
           description: Não encontrado
     put:
       tags: [Startups]
@@ -70,39 +70,39 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Startup'
+              $ref: "#/components/schemas/Startup"
       responses:
-        '200':
+        "200":
           description: Atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Startup'
-        '400':
+                $ref: "#/components/schemas/Startup"
+        "400":
           description: Dados inválidos
-        '404':
+        "404":
           description: Não encontrado
     delete:
       tags: [Startups]
       summary: Remove por id
       responses:
-        '204':
+        "204":
           description: Removido com sucesso
-        '404':
+        "404":
           description: Não encontrado
   /mentores:
     get:
       tags: [Mentores]
       summary: Lista mentores
       responses:
-        '200':
+        "200":
           description: Lista retornada com sucesso
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Mentor'
+                  $ref: "#/components/schemas/Mentor"
     post:
       tags: [Mentores]
       summary: Cria um(a) mentore
@@ -111,15 +111,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Mentor'
+              $ref: "#/components/schemas/Mentor"
       responses:
-        '201':
+        "201":
           description: Criado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mentor'
-        '400':
+                $ref: "#/components/schemas/Mentor"
+        "400":
           description: Dados inválidos
   /mentores/{id}:
     parameters:
@@ -133,13 +133,13 @@ paths:
       tags: [Mentores]
       summary: Busca por id
       responses:
-        '200':
+        "200":
           description: Encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mentor'
-        '404':
+                $ref: "#/components/schemas/Mentor"
+        "404":
           description: Não encontrado
     put:
       tags: [Mentores]
@@ -149,57 +149,121 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Mentor'
+              $ref: "#/components/schemas/Mentor"
       responses:
-        '200':
+        "200":
           description: Atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mentor'
-        '400':
+                $ref: "#/components/schemas/Mentor"
+        "400":
           description: Dados inválidos
-        '404':
+        "404":
           description: Não encontrado
     delete:
       tags: [Mentores]
       summary: Remove por id
       responses:
-        '204':
+        "204":
           description: Removido com sucesso
-        '404':
+        "404":
           description: Não encontrado
   /convites:
     get:
       tags: [Convites]
-      summary: Lista convites
+      summary: Lista convites (com filtros opcionais)
+      description: >
+        Sem parâmetros, lista todos. Com `mentorId` devolve a inbox do mentor;
+        com `startupId` devolve os convites enviados pela startup.
+        `status` pode ser combinado com qualquer um dos dois.
+      parameters:
+        - name: mentorId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: startupId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDENTE, ACEITO, RECUSADO]
       responses:
-        '200':
+        "200":
           description: Lista retornada com sucesso
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Convite'
+                  $ref: "#/components/schemas/Convite"
     post:
       tags: [Convites]
-      summary: Cria um(a) convite
+      summary: Envia um convite de uma startup para um mentor
+      description: O convite sempre nasce com status PENDENTE.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Convite'
+              $ref: "#/components/schemas/Convite"
       responses:
-        '201':
+        "201":
           description: Criado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Convite'
-        '400':
+                $ref: "#/components/schemas/Convite"
+        "400":
           description: Dados inválidos
+        "404":
+          description: Startup ou mentor não encontrado
+        "409":
+          description: Essa startup já enviou um convite para esse mentor
+  /convites/detalhados:
+    get:
+      tags: [Convites]
+      summary: Lista convites já com os dados da startup e do mentor
+      description: >
+        Aceita os mesmos filtros de `GET /convites`. Use `mentorId` para montar a inbox do mentor
+        e `startupId` para a lista de enviados da startup. O `site` da startup só vem preenchido
+        quando o convite está ACEITO.
+      parameters:
+        - name: mentorId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: startupId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDENTE, ACEITO, RECUSADO]
+      responses:
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConviteDetalhe"
   /convites/{id}:
     parameters:
       - name: id
@@ -212,13 +276,13 @@ paths:
       tags: [Convites]
       summary: Busca por id
       responses:
-        '200':
+        "200":
           description: Encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Convite'
-        '404':
+                $ref: "#/components/schemas/Convite"
+        "404":
           description: Não encontrado
     put:
       tags: [Convites]
@@ -228,26 +292,70 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Convite'
+              $ref: "#/components/schemas/Convite"
       responses:
-        '200':
+        "200":
           description: Atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Convite'
-        '400':
+                $ref: "#/components/schemas/Convite"
+        "400":
           description: Dados inválidos
-        '404':
+        "404":
           description: Não encontrado
     delete:
       tags: [Convites]
       summary: Remove por id
       responses:
-        '204':
+        "204":
           description: Removido com sucesso
-        '404':
+        "404":
           description: Não encontrado
+  /convites/{id}/aceitar:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: [Convites]
+      summary: O mentor aceita o convite
+      responses:
+        "200":
+          description: Convite aceito (status ACEITO)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Convite"
+        "404":
+          description: Não encontrado
+        "409":
+          description: O convite já foi respondido
+  /convites/{id}/recusar:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: [Convites]
+      summary: O mentor recusa o convite
+      responses:
+        "200":
+          description: Convite recusado (status RECUSADO)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Convite"
+        "404":
+          description: Não encontrado
+        "409":
+          description: O convite já foi respondido
 components:
   schemas:
     Startup:
@@ -317,6 +425,40 @@ components:
           format: double
           description: Valor por sessão definido pelo mentor.
           example: 150.00
+    ConviteDetalhe:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [PENDENTE, ACEITO, RECUSADO]
+        startup:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer, format: int64 }
+            nome: { type: string }
+            descricao: { type: string }
+            segmento: { type: string }
+            cidade: { type: string }
+            estado: { type: string }
+            estagioMaturidade: { type: integer }
+            videoPitchUrl: { type: string }
+            site:
+              type: string
+              nullable: true
+              description: Só preenchido quando o convite está ACEITO.
+        mentor:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer, format: int64 }
+            nome: { type: string }
+            areasAtuacao: { type: string }
+            ecossistemas: { type: string }
+            valorSessao: { type: number }
     Convite:
       type: object
       required: [startupId, mentorId]
