@@ -8,6 +8,10 @@
   --color-ponti-roxo: #a46ff5;
   --color-ponti-marinho: #1f1aa3;
   --color-ponti-amarelo: #f4b731;
+
+  /* Paleta exata do Figma das telas de login/cadastro */
+  --color-auth-lilas: #c19add;
+  --color-auth-marinho: #06168c;
 }
 
 @layer base {
