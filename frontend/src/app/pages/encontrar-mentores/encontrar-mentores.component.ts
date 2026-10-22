@@ -1,4 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { SessaoService } from '../../auth/sessao.service';
+import { ConviteService } from '../../convites/convite.service';
 import { BuscaService } from '../../layout/busca.service';
 import { MentorCardComponent } from '../../mentores/mentor-card/mentor-card.component';
 import { MentorDestaqueComponent } from '../../mentores/mentor-destaque/mentor-destaque.component';
@@ -15,11 +18,14 @@ import { separarLista } from '../../shared/texto.utils';
 })
 export class EncontrarMentoresComponent implements OnInit {
   private mentorService = inject(MentorService);
+  private conviteService = inject(ConviteService);
+  private sessao = inject(SessaoService);
   private busca = inject(BuscaService);
 
   mentores = signal<Mentor[]>([]);
   carregando = signal(true);
   erro = signal('');
+  erroConexao = signal('');
 
   area = signal('');
   experiencia = signal('');
@@ -27,25 +33,6 @@ export class EncontrarMentoresComponent implements OnInit {
   selecionadoId = signal<number | undefined>(undefined);
   focoId = signal<number | undefined>(undefined);
   conectados = signal<Set<number>>(new Set());
-  // TEMPORÁRIO!!: só pra testar o visual do card, remover quando a API estiver funcionando
-  private readonly mentoresMock: Mentor[] = [
-  {
-    id: 1,
-    nome: 'Juliana G.',
-    bio: 'Zootecnista e professora, com experiência ajudando startups de Health-techs a validar o produto com usuários reais.',
-    areasAtuacao: 'Zootecnista, Professora',
-    ecossistemas: 'Health-techs, PetTech',
-    valorSessao: 0,
-  },
-  {
-    id: 2,
-    nome: 'Roberto',
-    bio: 'Veterinário com foco em PetTechs, ajuda startups a validar hipóteses de produto na área de saúde animal.',
-    areasAtuacao: 'Veterinário',
-    ecossistemas: 'Health-techs, PetTech',
-    valorSessao: 0,
-  },
-];
 
   readonly opcoesExperiencia: OpcaoFiltro[] = [
     { valor: 'iniciante', rotulo: 'Até 2 anos' },
@@ -88,16 +75,22 @@ export class EncontrarMentoresComponent implements OnInit {
   });
 
   ngOnInit() {
-  this.mentorService.listar().subscribe({
-    next: (dados) => {
-      this.mentores.set(dados);
-      this.carregando.set(false);
-    },
-    error: () => {
-      // TEMPORÁRIO!!: só pra testar o visual do card, remover quando a API estiver funcionando
-      this.mentores.set(this.mentoresMock);
-      this.carregando.set(false);
+    this.mentorService.listar().subscribe({
+      next: (dados) => {
+        this.mentores.set(dados);
+        this.carregando.set(false);
       },
+      error: () => {
+        this.erro.set('Não foi possível carregar os mentores. Verifique se a API está rodando.');
+        this.carregando.set(false);
+      },
+    });
+
+    // Marca como "Solicitação enviada" os mentores que essa startup já convidou.
+    this.conviteService.listarEnviados(this.sessao.startupId()).subscribe({
+      next: (convites) => this.conectados.set(new Set(convites.map((c) => c.mentorId))),
+      // Se falhar, a lista de mentores continua funcionando: o backend recusa convite duplicado (409).
+      error: () => {},
     });
   }
 
@@ -121,7 +114,23 @@ export class EncontrarMentoresComponent implements OnInit {
   }
   conectar(mentor: Mentor) {
     if (mentor.id == null) return;
-    // Enviar a solicitação de conexão para o backend quando o endpoint existir.
-    this.conectados.update((ids) => new Set(ids).add(mentor.id!));
+    const mentorId = mentor.id;
+
+    this.erroConexao.set('');
+    // Atualiza o botão na hora; se a API falhar, desfaz abaixo.
+    this.conectados.update((ids) => new Set(ids).add(mentorId));
+
+    this.conviteService.criar({ startupId: this.sessao.startupId(), mentorId }).subscribe({
+      error: (e: HttpErrorResponse) => {
+        if (e.status === 409) return; // esse convite já existia, então o botão continua "enviado"
+
+        this.conectados.update((ids) => {
+          const restantes = new Set(ids);
+          restantes.delete(mentorId);
+          return restantes;
+        });
+        this.erroConexao.set(e.error?.message ?? 'Não foi possível enviar a solicitação. Tente novamente.');
+      },
+    });
   }
 }

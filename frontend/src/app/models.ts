@@ -11,6 +11,15 @@ export interface Startup {
   estagioMaturidade?: number | null;
 }
 
+export type StatusConvite = 'PENDENTE' | 'ACEITO' | 'RECUSADO';
+
+export interface Convite {
+  id?: number;
+  startupId: number;
+  mentorId: number;
+  status?: StatusConvite;
+}
+
 export interface Mentor {
   id?: number;
   nome: string;

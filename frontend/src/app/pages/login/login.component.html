@@ -1,0 +1,63 @@
+<section class="flex w-full max-w-[30rem] flex-col items-center">
+  <app-auth-cabecalho voltarPara="/bem-vindo" />
+
+  <h1 class="mt-12 text-4xl font-semibold text-auth-marinho">Faça seu login</h1>
+  <p class="mt-2 text-xl">Conecte-se com uma conta</p>
+
+  <form #f="ngForm" (ngSubmit)="entrar(f)" novalidate class="mt-12 flex w-full flex-col gap-0">
+    <div class="flex flex-col gap-6">
+      <div>
+        <label for="usuario" class="sr-only">Usuário</label>
+        <input
+          id="usuario"
+          name="usuario"
+          type="text"
+          autocomplete="username"
+          placeholder="Usuário"
+          [(ngModel)]="usuario"
+          required
+          class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-5 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50 [&.ng-invalid.ng-touched]:border-red-500"
+        />
+      </div>
+
+      <div>
+        <label for="senha" class="sr-only">Senha</label>
+        <input
+          id="senha"
+          name="senha"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Senha"
+          [(ngModel)]="senha"
+          required
+          class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-5 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50 [&.ng-invalid.ng-touched]:border-red-500"
+        />
+      </div>
+    </div>
+
+    <a
+      routerLink="/recuperar-senha"
+      class="mt-2 self-end text-sm font-semibold text-auth-marinho hover:underline focus-visible:outline-2 focus-visible:outline-auth-marinho"
+    >
+      Esqueceu a senha?
+    </a>
+
+    @if (erro()) {
+      <p class="mt-4 text-center text-sm text-red-600" role="alert">{{ erro() }}</p>
+    }
+
+    <button
+      type="submit"
+      class="mt-10 w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
+    >
+      Entrar
+    </button>
+  </form>
+
+  <p class="mt-10 text-base text-auth-marinho">
+    Não possui uma conta?
+    <a routerLink="/cadastro" class="font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-auth-marinho">
+      Cadastre-se
+    </a>
+  </p>
+</section>

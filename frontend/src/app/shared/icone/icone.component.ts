@@ -8,6 +8,7 @@ export type NomeIcone =
   | 'recolher'
   | 'sino'
   | 'seta-baixo'
+  | 'seta-esquerda'
   | 'fechar'
   | 'maleta'
   | 'alvo'
@@ -59,6 +60,9 @@ export type NomeIcone =
         }
         @case ('seta-baixo') {
           <svg:path d="m6 9 6 6 6-6" />
+        }
+        @case ('seta-esquerda') {
+          <svg:path d="m12 19-7-7 7-7M19 12H5" />
         }
         @case ('fechar') {
           <svg:path d="M18 6 6 18M6 6l12 12" />

@@ -1,5 +1,7 @@
-import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, ElementRef, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { SessaoService } from '../../auth/sessao.service';
+import { StartupService } from '../../startups/startup.service';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import { BuscaService } from '../busca.service';
 
@@ -9,14 +11,25 @@ import { BuscaService } from '../busca.service';
   imports: [RouterLink, IconeComponent],
   templateUrl: './topbar.component.html',
 })
-export class TopbarComponent {
+export class TopbarComponent implements OnInit {
   private elemento = inject(ElementRef<HTMLElement>);
+  private router = inject(Router);
+  private sessao = inject(SessaoService);
+  private startupService = inject(StartupService);
   readonly busca = inject(BuscaService);
 
   menuAberto = signal(false);
   temNotificacao = signal(true);
 
-  readonly usuario = { nome: 'Startup', papel: 'Administrador' };
+  usuario = signal({ nome: 'Startup', papel: 'Startup' });
+
+  ngOnInit() {
+    this.startupService.buscar(this.sessao.startupId()).subscribe({
+      next: (startup) => this.usuario.update((u) => ({ ...u, nome: startup.nome })),
+      // Se a API falhar, o rótulo genérico "Startup" continua aparecendo.
+      error: () => {},
+    });
+  }
 
   alternarMenu() {
     this.menuAberto.update((aberto) => !aberto);
@@ -24,7 +37,8 @@ export class TopbarComponent {
 
   sair() {
     this.menuAberto.set(false);
-    // TODO: chamar o serviço de autenticação quando o login existir no backend.
+    // TODO: limpar o token quando o login existir no backend.
+    this.router.navigateByUrl('/bem-vindo');
   }
 
   @HostListener('document:click', ['$event'])

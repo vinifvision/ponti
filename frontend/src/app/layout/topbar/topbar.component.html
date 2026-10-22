@@ -36,10 +36,10 @@
       <span class="size-12 rounded-full bg-gray-200" aria-hidden="true"></span>
       <span class="hidden flex-col items-start leading-tight sm:flex">
         <span class="flex items-center gap-1 font-semibold">
-          {{ usuario.nome }}
+          {{ usuario().nome }}
           <app-icone nome="seta-baixo" [tamanho]="18" class="transition-transform" [class.rotate-180]="menuAberto()" />
         </span>
-        <span class="text-sm text-gray-400">{{ usuario.papel }}</span>
+        <span class="text-sm text-gray-400">{{ usuario().papel }}</span>
       </span>
     </button>
 

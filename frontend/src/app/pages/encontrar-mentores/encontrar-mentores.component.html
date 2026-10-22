@@ -13,6 +13,10 @@
     <app-filtro-select rotulo="Filtro" placeholder="Filtrar" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
   </div>
 
+  @if (erroConexao()) {
+    <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erroConexao() }}</p>
+  }
+
   <div class="mt-8">
     @if (carregando()) {
       <p class="text-gray-500" role="status">Carregando mentores...</p>
