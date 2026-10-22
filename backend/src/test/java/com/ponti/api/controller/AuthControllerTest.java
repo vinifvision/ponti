@@ -124,13 +124,14 @@ class AuthControllerTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("com.ponti.api.controller.AuthControllerTest#dadosInvalidosStartup")
         void rejeitaDadosInvalidosCom400ENaoGravaNada(String caso, String campo, Object valor) throws Exception {
+            long usuariosAntes = usuarioRepository.count();
             long startupsAntes = startupRepository.count();
             Map<String, Object> body = startupValida();
             body.put(campo, valor);
 
             enviar("/auth/cadastro/startup", body).andExpect(status().isBadRequest());
 
-            assertThat(usuarioRepository.count()).isZero();
+            assertThat(usuarioRepository.count()).isEqualTo(usuariosAntes);
             assertThat(startupRepository.count()).isEqualTo(startupsAntes);
         }
     }
@@ -185,13 +186,14 @@ class AuthControllerTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("com.ponti.api.controller.AuthControllerTest#dadosInvalidosMentor")
         void rejeitaDadosInvalidosCom400ENaoGravaNada(String caso, String campo, Object valor) throws Exception {
+            long usuariosAntes = usuarioRepository.count();
             long mentoresAntes = mentorRepository.count();
             Map<String, Object> body = mentorValido();
             body.put(campo, valor);
 
             enviar("/auth/cadastro/mentor", body).andExpect(status().isBadRequest());
 
-            assertThat(usuarioRepository.count()).isZero();
+            assertThat(usuarioRepository.count()).isEqualTo(usuariosAntes);
             assertThat(mentorRepository.count()).isEqualTo(mentoresAntes);
         }
     }
@@ -227,6 +229,7 @@ class AuthControllerTest {
         @Test
         void recusaEmailJaCadastradoCom409MesmoEntreTiposDiferentes() throws Exception {
             enviar("/auth/cadastro/startup", startupValida()).andExpect(status().isCreated());
+            long usuariosAntes = usuarioRepository.count();
             long mentoresAntes = mentorRepository.count();
 
             // Mesmo e-mail, com maiúsculas, tentando virar mentor
@@ -241,7 +244,7 @@ class AuthControllerTest {
 
             // O @Transactional do service garante que não sobrou um mentor "órfão" (sem usuário)
             assertThat(mentorRepository.count()).isEqualTo(mentoresAntes);
-            assertThat(usuarioRepository.count()).isEqualTo(1);
+            assertThat(usuarioRepository.count()).isEqualTo(usuariosAntes);
         }
 
         @Test

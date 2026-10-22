@@ -373,7 +373,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsuarioCadastrado"
+                $ref: "#/components/schemas/UsuarioResumo"
         "400":
           description: Dados inválidos
         "409":
@@ -394,12 +394,53 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsuarioCadastrado"
+                $ref: "#/components/schemas/UsuarioResumo"
         "400":
           description: Dados inválidos
         "409":
           description: Este e-mail já está cadastrado
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Faz login com e-mail e senha e devolve um token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CredenciaisLogin"
+      responses:
+        "200":
+          description: Login feito
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResposta"
+        "400":
+          description: E-mail ou senha em branco
+        "401":
+          description: E-mail ou senha inválidos (mesma resposta para os dois casos)
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Devolve o usuário dono do token
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Usuário logado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsuarioResumo"
+        "401":
+          description: Token ausente, inválido ou expirado
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Startup:
       type: object
@@ -592,7 +633,7 @@ components:
           minLength: 8
           maxLength: 72
           example: senhaSegura123
-    UsuarioCadastrado:
+    UsuarioResumo:
       type: object
       properties:
         id:
@@ -617,3 +658,30 @@ components:
           nullable: true
           description: Preenchido quando tipo = MENTOR.
           example: null
+    CredenciaisLogin:
+      type: object
+      required: [email, senha]
+      properties:
+        email:
+          type: string
+          example: petcare@exemplo.com
+        senha:
+          type: string
+          format: password
+          example: ponti1234
+    LoginResposta:
+      type: object
+      properties:
+        token:
+          type: string
+          description: 'Enviar nas próximas chamadas no cabeçalho "Authorization: Bearer <token>".'
+          example: eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxIn0.assinatura
+        tipoToken:
+          type: string
+          example: Bearer
+        expiraEm:
+          type: string
+          format: date-time
+          example: "2026-10-22T10:35:08Z"
+        usuario:
+          $ref: "#/components/schemas/UsuarioResumo"
