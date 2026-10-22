@@ -1,0 +1,28 @@
+<section class="flex w-full max-w-[30rem] flex-col items-center">
+  <app-auth-cabecalho voltarPara="/cadastro" />
+
+  <h1 class="mt-12 text-center text-3xl font-semibold text-auth-marinho">Cadastro de mentor</h1>
+  <p class="mt-2 text-center text-xl">Conte um pouco sobre a sua experiência</p>
+
+  <form (ngSubmit)="criarConta()" class="mt-10 flex w-full flex-col gap-4" autocomplete="off">
+    <input name="nome" type="text" placeholder="Nome *" [(ngModel)]="nome" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+    <input name="bio" type="text" placeholder="Bio (opcional)" [(ngModel)]="bio" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+    <input name="areasAtuacao" type="text" placeholder="Áreas de atuação, ex.: Veterinário (opcional)" [(ngModel)]="areasAtuacao" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+    <input name="ecossistemas" type="text" placeholder="Ecossistemas, ex.: PetTech, Health-techs (opcional)" [(ngModel)]="ecossistemas" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+    <input name="valorSessao" type="number" min="0" step="0.01" placeholder="Valor por sessão em R$ (opcional)" [(ngModel)]="valorSessao" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+    <input name="usuario" type="text" placeholder="Usuário *" autocomplete="username" [(ngModel)]="usuario" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+    <input name="senha" type="password" placeholder="Senha (mínimo 6 caracteres) *" autocomplete="new-password" [(ngModel)]="senha" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+
+    @if (erro()) {
+      <p class="text-center text-sm text-red-600" role="alert">{{ erro() }}</p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="salvando()"
+      class="mt-4 w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
+    >
+      {{ salvando() ? 'Criando conta...' : 'Criar conta' }}
+    </button>
+  </form>
+</section>

@@ -11,6 +11,71 @@ tags:
   - name: Mentores
   - name: Convites
 paths:
+  /auth/cadastro/startup:
+    post:
+      tags: [Autenticação]
+      summary: Cadastra uma startup e cria a conta de acesso dela
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CadastroStartup"
+      responses:
+        "201":
+          description: Startup e conta criadas. Devolve quem é a pessoa logada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sessao"
+        "400":
+          description: Dados inválidos
+        "409":
+          description: Esse nome de usuário já está em uso
+  /auth/cadastro/mentor:
+    post:
+      tags: [Autenticação]
+      summary: Cadastra um mentor e cria a conta de acesso dele
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CadastroMentor"
+      responses:
+        "201":
+          description: Mentor e conta criados. Devolve quem é a pessoa logada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sessao"
+        "400":
+          description: Dados inválidos
+        "409":
+          description: Esse nome de usuário já está em uso
+  /auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Entra com usuário e senha
+      description: >
+        Devolve o tipo da conta (STARTUP ou MENTOR) e o id do perfil. A mesma mensagem de erro
+        vale para usuário inexistente e senha errada. Contas de exemplo (senha 123456):
+        petcare, saudeagora, juliana, roberto.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Login"
+      responses:
+        "200":
+          description: Login feito com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sessao"
+        "401":
+          description: Usuário ou senha inválidos
   /startups:
     get:
       tags: [Startups]
@@ -459,6 +524,44 @@ components:
             areasAtuacao: { type: string }
             ecossistemas: { type: string }
             valorSessao: { type: number }
+    Login:
+      type: object
+      required: [usuario, senha]
+      properties:
+        usuario: { type: string, example: petcare }
+        senha: { type: string, example: "123456" }
+    CadastroStartup:
+      type: object
+      required: [usuario, senha, nome]
+      properties:
+        usuario: { type: string, minLength: 3, maxLength: 50, example: minhastartup }
+        senha: { type: string, minLength: 6, maxLength: 100, example: "segredo123" }
+        nome: { type: string, example: Minha Startup }
+        descricao: { type: string }
+        segmento: { type: string, example: PetTech }
+        cidade: { type: string, example: Recife }
+        estado: { type: string, example: PE }
+        estagioMaturidade: { type: integer, minimum: 1, maximum: 9, example: 3 }
+    CadastroMentor:
+      type: object
+      required: [usuario, senha, nome]
+      properties:
+        usuario: { type: string, minLength: 3, maxLength: 50, example: meumentor }
+        senha: { type: string, minLength: 6, maxLength: 100, example: "segredo123" }
+        nome: { type: string, example: Maria Souza }
+        bio: { type: string }
+        areasAtuacao: { type: string }
+        ecossistemas: { type: string }
+        valorSessao: { type: number, minimum: 0 }
+    Sessao:
+      type: object
+      properties:
+        usuarioId: { type: integer, format: int64 }
+        usuario: { type: string }
+        tipo: { type: string, enum: [STARTUP, MENTOR] }
+        startupId: { type: integer, format: int64, nullable: true }
+        mentorId: { type: integer, format: int64, nullable: true }
+        nome: { type: string }
     Convite:
       type: object
       required: [startupId, mentorId]

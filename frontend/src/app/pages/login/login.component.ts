@@ -1,6 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../auth/auth.service';
+import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
 
 @Component({
@@ -11,10 +14,12 @@ import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.
 })
 export class LoginComponent {
   private router = inject(Router);
+  private auth = inject(AuthService);
 
   usuario = '';
   senha = '';
   erro = signal('');
+  entrando = signal(false);
 
   entrar(form: NgForm) {
     this.erro.set('');
@@ -25,8 +30,14 @@ export class LoginComponent {
       return;
     }
 
-    // TEMPORÁRIO!!: o backend ainda não tem login. Quando existir (POST /auth/login),
-    // chamar o serviço de autenticação aqui, guardar o token e tratar 401 com this.erro.set(...).
-    this.router.navigateByUrl('/encontrar-mentores');
+    this.entrando.set(true);
+    this.auth.login(this.usuario, this.senha).subscribe({
+      // Startup começa procurando mentores; mentor começa na caixa de convites recebidos.
+      next: (sessao) => this.router.navigateByUrl(sessao.tipo === 'MENTOR' ? '/convites' : '/encontrar-mentores'),
+      error: (e: HttpErrorResponse) => {
+        this.erro.set(e.status === 401 ? 'Usuário ou senha inválidos.' : mensagemDeErro(e, 'Não foi possível entrar. Tente novamente.'));
+        this.entrando.set(false);
+      },
+    });
   }
 }

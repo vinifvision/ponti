@@ -1,5 +1,6 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { SessaoService } from '../../auth/sessao.service';
 import { IconeComponent, NomeIcone } from '../../shared/icone/icone.component';
 
 interface ItemNavegacao {
@@ -18,9 +19,19 @@ export class SidebarComponent {
   recolhida = input(false);
   alternar = output<void>();
 
-  readonly itens: ItemNavegacao[] = [
-    { rotulo: 'Encontrar Mentores', rota: '/encontrar-mentores', icone: 'busca' },
-    { rotulo: 'Agenda', rota: '/agenda', icone: 'agenda' },
-    { rotulo: 'Perfil', rota: '/perfil', icone: 'usuario' },
-  ];
+  private sessao = inject(SessaoService);
+
+  // Startup procura mentores e acompanha os convites que enviou; mentor só responde convites.
+  readonly itens = computed<ItemNavegacao[]>(() =>
+    this.sessao.tipo() === 'MENTOR'
+      ? [
+          { rotulo: 'Convites', rota: '/convites', icone: 'agenda' },
+          { rotulo: 'Perfil', rota: '/perfil', icone: 'usuario' },
+        ]
+      : [
+          { rotulo: 'Encontrar Mentores', rota: '/encontrar-mentores', icone: 'busca' },
+          { rotulo: 'Convites', rota: '/convites', icone: 'agenda' },
+          { rotulo: 'Perfil', rota: '/perfil', icone: 'usuario' },
+        ],
+  );
 }

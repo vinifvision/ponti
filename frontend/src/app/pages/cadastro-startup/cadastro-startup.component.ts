@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SessaoService } from '../../auth/sessao.service';
+import { AuthService } from '../../auth/auth.service';
+import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
-import { StartupService } from '../../startups/startup.service';
 import {
   NIVEL_MAXIMO,
   NOMES_NIVEIS,
@@ -15,13 +17,12 @@ import {
 @Component({
   selector: 'app-cadastro-startup',
   standalone: true,
-  imports: [AuthCabecalhoComponent],
+  imports: [AuthCabecalhoComponent, FormsModule],
   templateUrl: './cadastro-startup.component.html',
 })
 export class CadastroStartupComponent {
   private router = inject(Router);
-  private sessao = inject(SessaoService);
-  private startupService = inject(StartupService);
+  private auth = inject(AuthService);
 
   readonly perguntas = PERGUNTAS_MATURIDADE;
   readonly niveis = Array.from({ length: NIVEL_MAXIMO }, (_, i) => i + 1);
@@ -32,6 +33,16 @@ export class CadastroStartupComponent {
   nivel = signal<number | null>(null);
   salvando = signal(false);
   erro = signal('');
+
+  // Depois do resultado do questionário vem a etapa de criar a conta.
+  etapaConta = signal(false);
+  nome = '';
+  usuario = '';
+  senha = '';
+  segmento = '';
+  cidade = '';
+  estado = '';
+  descricao = '';
 
   indice = computed(() => this.respostas().length);
   perguntaAtual = computed(() => this.perguntas[this.indice()]);
@@ -59,20 +70,45 @@ export class CadastroStartupComponent {
   }
 
   continuar() {
+    if (this.nivel() === null) return;
+    this.erro.set('');
+    this.etapaConta.set(true);
+  }
+
+  voltarParaResultado() {
+    this.erro.set('');
+    this.etapaConta.set(false);
+  }
+
+  criarConta() {
     const nivel = this.nivel();
     if (nivel === null || this.salvando()) return;
+
+    if (!this.nome.trim() || !this.usuario.trim() || this.senha.length < 6) {
+      this.erro.set('Preencha o nome da startup, o usuário e uma senha de pelo menos 6 caracteres.');
+      return;
+    }
 
     this.salvando.set(true);
     this.erro.set('');
 
-    // TEMPORÁRIO!!: ainda não existe cadastro de verdade, então o nível é gravado na startup
-    // da sessão (SessaoService). Quando o cadastro criar a startup, gravar o nível junto com ela.
-    this.startupService.atualizarMaturidade(this.sessao.startupId(), nivel).subscribe({
-      next: () => this.router.navigateByUrl('/encontrar-mentores'),
-      error: () => {
-        this.erro.set('Não foi possível salvar o nível. Confira se a API está no ar e tente de novo.');
-        this.salvando.set(false);
-      },
-    });
+    this.auth
+      .cadastrarStartup({
+        usuario: this.usuario,
+        senha: this.senha,
+        nome: this.nome,
+        descricao: this.descricao || undefined,
+        segmento: this.segmento || undefined,
+        cidade: this.cidade || undefined,
+        estado: this.estado || undefined,
+        estagioMaturidade: nivel,
+      })
+      .subscribe({
+        next: () => this.router.navigateByUrl('/encontrar-mentores'),
+        error: (e: HttpErrorResponse) => {
+          this.erro.set(mensagemDeErro(e, 'Não foi possível criar a conta. Confira os dados e tente de novo.'));
+          this.salvando.set(false);
+        },
+      });
   }
 }

@@ -21,7 +21,7 @@
       <p class="mb-2 px-2 text-lg font-medium">Navegação</p>
     }
 
-    @for (item of itens; track item.rota) {
+    @for (item of itens(); track item.rota) {
       <a
         [routerLink]="item.rota"
         routerLinkActive="border-ponti-marinho! bg-ponti-lilas-escuro"

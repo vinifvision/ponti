@@ -111,7 +111,19 @@ gh codespace ports visibility 8080:public -c $CODESPACE_NAME
 | Convites | `/convites` | listar, buscar por id, criar, atualizar, excluir (somente API) |
 | Convites (inbox do mentor) | `/convites?mentorId=1&status=PENDENTE` | filtrar por mentor, startup e status |
 | Convites com detalhes | `GET /convites/detalhados?mentorId=1&status=PENDENTE` | inbox do mentor com os dados da startup (ou enviados da startup, com `startupId`) |
+| Cadastro e login | `POST /auth/cadastro/startup`, `POST /auth/cadastro/mentor`, `POST /auth/login` | cria a conta (senha com BCrypt) e devolve o tipo e o id do perfil |
 | Responder convite | `POST /convites/{id}/aceitar` e `POST /convites/{id}/recusar` | mentor aceita ou recusa um convite pendente |
+
+## Contas de exemplo
+
+Ao subir o backend com o banco vazio, ficam disponíveis estas contas (senha **123456**):
+
+| Usuário | Tipo |
+|---|---|
+| `petcare` | Startup (PetCare Digital) |
+| `saudeagora` | Startup (SaúdeAgora) |
+| `juliana` | Mentor (Juliana G.) |
+| `roberto` | Mentor (Roberto) |
 
 ## Tecnologias
 
