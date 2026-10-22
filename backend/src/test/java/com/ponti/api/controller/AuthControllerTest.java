@@ -94,7 +94,8 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.email").value("contato@agrotech.com"))
                     .andExpect(jsonPath("$.tipo").value("STARTUP"))
                     .andExpect(jsonPath("$.startupId").isNumber())
-                    .andExpect(jsonPath("$.mentorId").value(nullValue()));
+                    .andExpect(jsonPath("$.mentorId").value(nullValue()))
+                    .andExpect(jsonPath("$.nome").value("AgroTech Recife"));
 
             // Verifica o BANCO: cada campo do formulário foi gravado no lugar certo
             Usuario usuario = usuarioRepository.findByEmail("contato@agrotech.com").orElseThrow();
@@ -162,7 +163,8 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.email").value("maria@email.com"))
                     .andExpect(jsonPath("$.tipo").value("MENTOR"))
                     .andExpect(jsonPath("$.mentorId").isNumber())
-                    .andExpect(jsonPath("$.startupId").value(nullValue()));
+                    .andExpect(jsonPath("$.startupId").value(nullValue()))
+                    .andExpect(jsonPath("$.nome").value("Maria Souza"));
 
             Usuario usuario = usuarioRepository.findByEmail("maria@email.com").orElseThrow();
             Mentor mentor = mentorRepository.findById(usuario.getMentorId()).orElseThrow();

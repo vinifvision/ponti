@@ -1,10 +1,13 @@
 import { Routes } from '@angular/router';
+import { autenticadoGuard } from './auth/auth.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
 import { BoasVindasComponent } from './pages/boas-vindas/boas-vindas.component';
 import { LoginComponent } from './pages/login/login.component';
 import { CadastroComponent } from './pages/cadastro/cadastro.component';
 import { CadastroStartupComponent } from './pages/cadastro-startup/cadastro-startup.component';
+import { CadastroMentorComponent } from './pages/cadastro-mentor/cadastro-mentor.component';
+import { ConvitesComponent } from './pages/convites/convites.component';
 import { EncontrarMentoresComponent } from './pages/encontrar-mentores/encontrar-mentores.component';
 import { EmBreveComponent } from './pages/em-breve/em-breve.component';
 import { StartupListComponent } from './startups/startup-list.component';
@@ -25,19 +28,21 @@ export const routes: Routes = [
       { path: 'login', component: LoginComponent, title: 'Login | Ponti' },
       { path: 'cadastro', component: CadastroComponent, title: 'Cadastro | Ponti' },
 
-      // TEMPORÁRIO: telas ainda não desenhadas
       { path: 'cadastro/startup', component: CadastroStartupComponent, title: 'Cadastro de Startup | Ponti' },
-      { path: 'cadastro/mentor', component: EmBreveComponent, data: { titulo: 'Cadastro de Mentor' }, title: 'Cadastro de Mentor | Ponti' },
+      { path: 'cadastro/mentor', component: CadastroMentorComponent, title: 'Cadastro de Mentor | Ponti' },
+      // TEMPORÁRIO: tela ainda não desenhada
       { path: 'recuperar-senha', component: EmBreveComponent, data: { titulo: 'Recuperar senha' }, title: 'Recuperar senha | Ponti' },
     ],
   },
 
-  // Área logada
+  // Área logada (só entra quem fez login)
   {
     path: '',
     component: ShellComponent,
+    canActivate: [autenticadoGuard],
     children: [
       { path: 'encontrar-mentores', component: EncontrarMentoresComponent, title: 'Encontrar Mentores | Ponti' },
+      { path: 'convites', component: ConvitesComponent, title: 'Convites | Ponti' },
       { path: 'agenda', component: EmBreveComponent, data: { titulo: 'Agenda' }, title: 'Agenda | Ponti' },
       { path: 'perfil', component: EmBreveComponent, data: { titulo: 'Perfil' }, title: 'Perfil | Ponti' },
       {

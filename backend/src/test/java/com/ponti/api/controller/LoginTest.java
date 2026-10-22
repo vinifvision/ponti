@@ -71,7 +71,8 @@ class LoginTest {
                     .andExpect(jsonPath("$.expiraEm").isString())
                     .andExpect(jsonPath("$.usuario.email").value(EMAIL))
                     .andExpect(jsonPath("$.usuario.tipo").value("STARTUP"))
-                    .andExpect(jsonPath("$.usuario.startupId").isNumber());
+                    .andExpect(jsonPath("$.usuario.startupId").isNumber())
+                    .andExpect(jsonPath("$.usuario.nome").value("PetCare Digital"));
         }
 
         @Test
@@ -142,7 +143,8 @@ class LoginTest {
             eu("Bearer " + tokenValido())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.email").value(EMAIL))
-                    .andExpect(jsonPath("$.tipo").value("STARTUP"));
+                    .andExpect(jsonPath("$.tipo").value("STARTUP"))
+                    .andExpect(jsonPath("$.nome").value("PetCare Digital"));
         }
 
         @Test

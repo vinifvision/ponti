@@ -20,6 +20,29 @@ export interface Convite {
   status?: StatusConvite;
 }
 
+export interface ConviteDetalhe {
+  id: number;
+  status: StatusConvite;
+  startup: {
+    id: number;
+    nome: string;
+    descricao?: string;
+    segmento?: string;
+    cidade?: string;
+    estado?: string;
+    estagioMaturidade?: number | null;
+    videoPitchUrl?: string;
+    site?: string | null;
+  } | null;
+  mentor: {
+    id: number;
+    nome: string;
+    areasAtuacao?: string;
+    ecossistemas?: string;
+    valorSessao?: number | null;
+  } | null;
+}
+
 export interface Mentor {
   id?: number;
   nome: string;

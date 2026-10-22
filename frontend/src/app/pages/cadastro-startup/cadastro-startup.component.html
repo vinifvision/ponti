@@ -58,6 +58,38 @@
         Voltar para a pergunta anterior
       </button>
     }
+  } @else if (etapaConta()) {
+    <h1 class="mt-12 text-center text-3xl font-semibold text-auth-marinho">Crie a conta da sua startup</h1>
+    <p class="mt-2 text-center text-xl">Seu nível de maturidade: {{ nivel() }} ({{ nomeNivel() }})</p>
+
+    <form (ngSubmit)="criarConta()" class="mt-10 flex w-full flex-col gap-4" autocomplete="off" novalidate>
+      <input name="nome" type="text" placeholder="Nome da startup *" maxlength="255" [(ngModel)]="nome" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+      <input name="areaAtuacao" type="text" placeholder="Área de atuação, ex.: PetTech *" maxlength="255" [(ngModel)]="areaAtuacao" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+      <textarea name="sobre" rows="4" placeholder="Sobre a startup *" maxlength="2000" [(ngModel)]="sobre" [disabled]="contaCriada()" class="w-full resize-none rounded-3xl border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50"></textarea>
+      <input name="email" type="email" placeholder="E-mail *" autocomplete="email" [(ngModel)]="email" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+      <input name="senha" type="password" [placeholder]="'Senha (mínimo ' + senhaMinima + ' caracteres) *'" autocomplete="new-password" [(ngModel)]="senha" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+
+      @if (erro()) {
+        <p class="text-center text-sm text-red-600" role="alert">{{ erro() }}</p>
+      }
+
+      <button
+        type="submit"
+        [disabled]="salvando()"
+        class="mt-4 w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
+      >
+        {{ salvando() ? 'Criando conta...' : contaCriada() ? 'Tentar salvar o nível de novo' : 'Criar conta' }}
+      </button>
+      @if (!contaCriada()) {
+        <button
+          type="button"
+          (click)="voltarParaResultado()"
+          class="cursor-pointer text-center text-base font-semibold text-auth-marinho hover:underline"
+        >
+          Voltar
+        </button>
+      }
+    </form>
   } @else {
     <h1 class="mt-12 text-center text-3xl font-semibold text-auth-marinho">Seu nível de maturidade</h1>
     <p class="mt-2 text-center text-xl">Calculado a partir das suas respostas</p>
@@ -74,18 +106,13 @@
       <p class="mt-3 text-sm text-neutral-500">Nível {{ nivel() }} de {{ niveis.length }}</p>
     </div>
 
-    @if (erro()) {
-      <p class="mt-6 text-center text-sm text-red-600" role="alert">{{ erro() }}</p>
-    }
-
     <div class="mt-8 flex w-full flex-col items-center gap-6">
       <button
         type="button"
         (click)="continuar()"
-        [disabled]="salvando()"
-        class="w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
+        class="w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
       >
-        {{ salvando() ? 'Salvando...' : 'Continuar' }}
+        Continuar
       </button>
       <button
         type="button"

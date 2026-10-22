@@ -1,0 +1,50 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, switchMap, tap } from 'rxjs';
+import { API_URL } from '../api.config';
+import { DadosSessao, SessaoService } from './sessao.service';
+
+// Campos do cadastro (iguais aos do backend). O nível de maturidade não entra aqui:
+// a startup responde o questionário depois de criar a conta.
+export interface CadastroStartup {
+  nome: string;
+  areaAtuacao: string;
+  sobre: string;
+  email: string;
+  senha: string;
+}
+
+export interface CadastroMentor {
+  nome: string;
+  areaAtuacao: string;
+  anosExperiencia: number;
+  sobre: string;
+  email: string;
+  senha: string;
+}
+
+// Fala com /auth/* do backend e, se deu certo, guarda a sessão.
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private http = inject(HttpClient);
+  private sessao = inject(SessaoService);
+
+  login(email: string, senha: string): Observable<DadosSessao> {
+    return this.http
+      .post<DadosSessao>(`${API_URL}/auth/login`, { email, senha })
+      .pipe(tap((dados) => this.sessao.entrar(dados)));
+  }
+
+  // O cadastro não devolve token, então logo em seguida faz o login com o mesmo e-mail e senha.
+  cadastrarStartup(dados: CadastroStartup): Observable<DadosSessao> {
+    return this.http
+      .post(`${API_URL}/auth/cadastro/startup`, dados)
+      .pipe(switchMap(() => this.login(dados.email, dados.senha)));
+  }
+
+  cadastrarMentor(dados: CadastroMentor): Observable<DadosSessao> {
+    return this.http
+      .post(`${API_URL}/auth/cadastro/mentor`, dados)
+      .pipe(switchMap(() => this.login(dados.email, dados.senha)));
+  }
+}
