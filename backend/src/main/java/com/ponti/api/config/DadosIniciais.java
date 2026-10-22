@@ -29,12 +29,14 @@ public class DadosIniciais implements CommandLineRunner {
                     "Juliana G.",
                     "Zootecnista e professora, com experiência ajudando startups de Health-techs a validar o produto com usuários reais.",
                     "Zootecnista, Professora",
-                    "Health-techs, PetTech"));
+                    "Health-techs, PetTech",
+                    8));
             mentorRepository.save(mentor(
                     "Roberto",
                     "Veterinário com foco em PetTechs, ajuda startups a validar hipóteses de produto na área de saúde animal.",
                     "Veterinário",
-                    "Health-techs, PetTech"));
+                    "Health-techs, PetTech",
+                    5));
         }
 
         if (startupRepository.count() == 0) {
@@ -49,12 +51,14 @@ public class DadosIniciais implements CommandLineRunner {
         }
     }
 
-    private Mentor mentor(String nome, String bio, String areasAtuacao, String ecossistemas) {
+    private Mentor mentor(String nome, String bio, String areasAtuacao, String ecossistemas,
+                          Integer anosExperiencia) {
         Mentor m = new Mentor();
         m.setNome(nome);
         m.setBio(bio);
         m.setAreasAtuacao(areasAtuacao);
         m.setEcossistemas(ecossistemas);
+        m.setAnosExperiencia(anosExperiencia);
         m.setValorSessao(BigDecimal.ZERO);
         return m;
     }

@@ -26,6 +26,7 @@ export interface Mentor {
   bio?: string;
   areasAtuacao?: string;
   ecossistemas?: string;
+  anosExperiencia?: number | null;
   valorSessao?: number | null;
   fotoUrl?: string;
 }

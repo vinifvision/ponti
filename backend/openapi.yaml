@@ -10,6 +10,7 @@ tags:
   - name: Startups
   - name: Mentores
   - name: Convites
+  - name: Auth
 paths:
   /startups:
     get:
@@ -356,6 +357,48 @@ paths:
           description: Não encontrado
         "409":
           description: O convite já foi respondido
+  /auth/cadastro/startup:
+    post:
+      tags: [Auth]
+      summary: Cadastra um usuário do tipo startup (credenciais + perfil da startup)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CadastroStartup"
+      responses:
+        "201":
+          description: Usuário e startup criados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsuarioCadastrado"
+        "400":
+          description: Dados inválidos
+        "409":
+          description: Este e-mail já está cadastrado
+  /auth/cadastro/mentor:
+    post:
+      tags: [Auth]
+      summary: Cadastra um usuário do tipo mentor (credenciais + perfil do mentor)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CadastroMentor"
+      responses:
+        "201":
+          description: Usuário e mentor criados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsuarioCadastrado"
+        "400":
+          description: Dados inválidos
+        "409":
+          description: Este e-mail já está cadastrado
 components:
   schemas:
     Startup:
@@ -420,6 +463,12 @@ components:
         ecossistemas:
           type: string
           example: Porto Digital, Cesar
+        anosExperiencia:
+          type: integer
+          minimum: 0
+          maximum: 70
+          description: Tempo de experiência, em anos.
+          example: 10
         valorSessao:
           type: number
           format: double
@@ -480,3 +529,91 @@ components:
           type: string
           enum: [PENDENTE, ACEITO, RECUSADO]
           default: PENDENTE
+    CadastroStartup:
+      type: object
+      description: O nível de maturidade não entra no cadastro; é definido depois, em outro formulário.
+      required: [nome, areaAtuacao, sobre, email, senha]
+      properties:
+        nome:
+          type: string
+          maxLength: 255
+          example: AgroTech Recife
+        areaAtuacao:
+          type: string
+          maxLength: 255
+          description: Gravada no campo segmento da startup.
+          example: Agritech
+        sobre:
+          type: string
+          maxLength: 2000
+          description: Texto "sobre mim". Gravado no campo descricao da startup.
+          example: Plataforma de monitoramento de lavouras com sensores de baixo custo.
+        email:
+          type: string
+          format: email
+          example: contato@agrotechrecife.com.br
+        senha:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          example: senhaSegura123
+    CadastroMentor:
+      type: object
+      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha]
+      properties:
+        nome:
+          type: string
+          maxLength: 255
+          example: Maria Souza
+        areaAtuacao:
+          type: string
+          maxLength: 255
+          description: Gravada no campo areasAtuacao do mentor.
+          example: Produto, Validação de MVP
+        anosExperiencia:
+          type: integer
+          minimum: 0
+          maximum: 70
+          description: Tempo de experiência, em anos.
+          example: 10
+        sobre:
+          type: string
+          maxLength: 2000
+          description: Texto "sobre mim". Gravado no campo bio do mentor.
+          example: Ex-fundadora com 10 anos de experiência em startups de tecnologia.
+        email:
+          type: string
+          format: email
+          example: maria.souza@email.com
+        senha:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          example: senhaSegura123
+    UsuarioCadastrado:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        email:
+          type: string
+          example: contato@agrotechrecife.com.br
+        tipo:
+          type: string
+          enum: [STARTUP, MENTOR]
+        startupId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Preenchido quando tipo = STARTUP.
+          example: 3
+        mentorId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Preenchido quando tipo = MENTOR.
+          example: null
