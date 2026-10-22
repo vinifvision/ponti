@@ -87,11 +87,14 @@ export class EncontrarMentoresComponent implements OnInit {
     });
 
     // Marca como "Solicitação enviada" os mentores que essa startup já convidou.
-    this.conviteService.listarEnviados(this.sessao.startupId()).subscribe({
-      next: (convites) => this.conectados.set(new Set(convites.map((c) => c.mentorId))),
-      // Se falhar, a lista de mentores continua funcionando: o backend recusa convite duplicado (409).
-      error: () => {},
-    });
+    const startupId = this.sessao.startupId();
+    if (startupId !== null) {
+      this.conviteService.listarEnviados(startupId).subscribe({
+        next: (convites) => this.conectados.set(new Set(convites.map((c) => c.mentorId))),
+        // Se falhar, a lista de mentores continua funcionando: o backend recusa convite duplicado (409).
+        error: () => {},
+      });
+    }
   }
 
   ehCompativel(mentor: Mentor): boolean {
@@ -113,14 +116,15 @@ export class EncontrarMentoresComponent implements OnInit {
     }
   }
   conectar(mentor: Mentor) {
-    if (mentor.id == null) return;
+    const startupId = this.sessao.startupId();
+    if (mentor.id == null || startupId === null) return; // só startup envia convite
     const mentorId = mentor.id;
 
     this.erroConexao.set('');
     // Atualiza o botão na hora; se a API falhar, desfaz abaixo.
     this.conectados.update((ids) => new Set(ids).add(mentorId));
 
-    this.conviteService.criar({ startupId: this.sessao.startupId(), mentorId }).subscribe({
+    this.conviteService.criar({ startupId, mentorId }).subscribe({
       error: (e: HttpErrorResponse) => {
         if (e.status === 409) return; // esse convite já existia, então o botão continua "enviado"
 

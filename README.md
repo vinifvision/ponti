@@ -111,7 +111,28 @@ gh codespace ports visibility 8080:public -c $CODESPACE_NAME
 | Convites | `/convites` | listar, buscar por id, criar, atualizar, excluir (somente API) |
 | Convites (inbox do mentor) | `/convites?mentorId=1&status=PENDENTE` | filtrar por mentor, startup e status |
 | Convites com detalhes | `GET /convites/detalhados?mentorId=1&status=PENDENTE` | inbox do mentor com os dados da startup (ou enviados da startup, com `startupId`) |
+| Cadastro | `POST /auth/cadastro/startup`, `POST /auth/cadastro/mentor` | cria a conta (e-mail + senha com BCrypt) e o perfil juntos |
+| Login | `POST /auth/login` | confere e-mail e senha e devolve um token JWT (válido por 8h) |
+| Quem está logado | `GET /auth/me` com `Authorization: Bearer <token>` | devolve o usuário dono do token |
 | Responder convite | `POST /convites/{id}/aceitar` e `POST /convites/{id}/recusar` | mentor aceita ou recusa um convite pendente |
+
+## Contas de exemplo
+
+Ao subir o backend com o banco vazio, ficam disponíveis estas contas (senha **ponti1234**):
+
+| E-mail | Tipo |
+|---|---|
+| `petcare@exemplo.com` | Startup (PetCare Digital) |
+| `saudeagora@exemplo.com` | Startup (SaúdeAgora) |
+| `juliana@exemplo.com` | Mentor (Juliana G.) |
+| `roberto@exemplo.com` | Mentor (Roberto) |
+
+## Testes
+
+```bash
+cd backend
+mvn test
+```
 
 ## Tecnologias
 
