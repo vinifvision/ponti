@@ -86,7 +86,9 @@ class LoginTest {
                                     "anosExperiencia", 10,
                                     "sobre", "Mentora de produto.",
                                     "email", "maria@email.com",
-                                    "senha", "senhaSegura123"))))
+                                    "senha", "senhaSegura123",
+                                    "valorSessao", 150,
+                                    "duracaoSessaoMinutos", 60))))
                     .andExpect(status().isCreated());
 
             login("maria@email.com", "senhaSegura123")

@@ -2,10 +2,13 @@ package com.ponti.api.service;
 
 import com.ponti.api.dto.CadastroMentor;
 import com.ponti.api.dto.CadastroStartup;
+import com.ponti.api.dto.NovaCertificacao;
+import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.model.Usuario;
+import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.repository.UsuarioRepository;
@@ -23,15 +26,18 @@ public class CadastroService {
     private final UsuarioRepository usuarioRepository;
     private final StartupRepository startupRepository;
     private final MentorRepository mentorRepository;
+    private final CertificacaoRepository certificacaoRepository;
     private final PasswordEncoder passwordEncoder;
 
     public CadastroService(UsuarioRepository usuarioRepository,
                            StartupRepository startupRepository,
                            MentorRepository mentorRepository,
+                           CertificacaoRepository certificacaoRepository,
                            PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
+        this.certificacaoRepository = certificacaoRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -58,8 +64,24 @@ public class CadastroService {
         mentor.setAreasAtuacao(dados.areaAtuacao());
         mentor.setAnosExperiencia(dados.anosExperiencia());
         mentor.setBio(dados.sobre());
+        mentor.setEcossistemas(dados.ecossistemas());
+        mentor.setFotoUrl(dados.fotoUrl());
+        mentor.setVideoUrl(dados.videoUrl());
+        mentor.setLinkedinUrl(dados.linkedinUrl());
+        mentor.setWhatsapp(dados.whatsapp());
+        mentor.setValorSessao(dados.valorSessao());
+        mentor.setDuracaoSessaoMinutos(dados.duracaoSessaoMinutos());
 
-        usuario.setMentorId(mentorRepository.save(mentor).getId());
+        Long mentorId = mentorRepository.save(mentor).getId();
+        if (dados.certificacoes() != null) {
+            for (NovaCertificacao nova : dados.certificacoes()) {
+                Certificacao certificacao = nova.paraEntidade();
+                certificacao.setMentorId(mentorId);
+                certificacaoRepository.save(certificacao);
+            }
+        }
+
+        usuario.setMentorId(mentorId);
         return usuarioRepository.save(usuario);
     }
 
