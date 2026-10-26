@@ -52,6 +52,35 @@
                   @if (c.mentor?.ecossistemas) {
                     <p class="text-gray-600">{{ c.mentor?.ecossistemas }}</p>
                   }
+                  <p class="mt-2 text-ponti-marinho">
+                    <span class="font-semibold">{{ valor(c) }}</span>
+                    @if (duracao(c)) {
+                      <span class="text-sm"> por sessão de {{ duracao(c) }}</span>
+                    }
+                  </p>
+                  @if (c.status === 'ACEITO') {
+                    <div class="mt-3 flex flex-col gap-1 rounded-lg bg-green-50 p-3 text-sm text-green-900">
+                      <span class="font-semibold">Contato liberado</span>
+                      @if (whatsapp(c); as link) {
+                        <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">
+                          WhatsApp: {{ c.mentor?.whatsapp }}
+                        </a>
+                      }
+                      @if (linkedin(c); as link) {
+                        <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">
+                          LinkedIn: {{ c.mentor?.linkedinUrl }}
+                        </a>
+                      }
+                      @if (!whatsapp(c) && !linkedin(c)) {
+                        <span>O mentor ainda não informou um contato. Ele vai falar com você pela plataforma.</span>
+                      }
+                    </div>
+                  }
+                  @if (c.mentor) {
+                    <a [routerLink]="['/mentores', c.mentor.id, 'perfil']" class="mt-3 inline-block text-sm font-semibold text-ponti-roxo hover:underline">
+                      Ver perfil do mentor
+                    </a>
+                  }
                 }
               </div>
 

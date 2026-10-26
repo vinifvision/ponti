@@ -33,8 +33,7 @@ import { iniciais } from '../../shared/texto.utils';
           Ver calendário do Mentor
         </a>
         <a
-          routerLink="/perfil"
-          [queryParams]="{ mentor: mentor().id }"
+          [routerLink]="['/mentores', mentor().id, 'perfil']"
           class="rounded-lg border border-ponti-lilas py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-ponti-lilas/20"
         >
           Ver Perfil

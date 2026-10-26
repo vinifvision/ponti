@@ -1,0 +1,141 @@
+<section class="max-w-5xl pt-6">
+  <button
+    type="button"
+    (click)="voltar()"
+    class="flex cursor-pointer items-center gap-3 text-2xl font-medium hover:text-ponti-roxo sm:text-3xl"
+  >
+    <app-icone nome="seta-esquerda" [tamanho]="28" />
+    Mentores recomendados
+  </button>
+
+  @if (carregando()) {
+    <p class="mt-8 text-gray-500" role="status">Carregando perfil...</p>
+  } @else if (erro()) {
+    <p class="mt-8 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+  } @else {
+  @if (mentor(); as m) {
+    <!-- Cabeçalho -->
+    <div class="mt-8 flex flex-col gap-6 sm:flex-row">
+      @if (m.fotoUrl) {
+        <img [src]="m.fotoUrl" [alt]="'Foto de ' + m.nome" class="size-40 shrink-0 rounded-md border border-gray-300 object-cover" />
+      } @else {
+        <div
+          class="flex size-40 shrink-0 items-center justify-center rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho"
+          aria-hidden="true"
+        >
+          {{ iniciais() }}
+        </div>
+      }
+
+      <div class="flex min-w-0 flex-col">
+        <h1 class="text-3xl font-bold">{{ m.nome }}</h1>
+        @if (m.areasAtuacao) {
+          <p class="mt-2 flex items-center gap-2 text-gray-600">
+            <app-icone nome="maleta" [tamanho]="20" />
+            <span class="sr-only">Áreas de atuação:</span>
+            {{ m.areasAtuacao }}
+          </p>
+        }
+        @if (m.ecossistemas) {
+          <p class="mt-1 flex items-center gap-2 text-gray-600">
+            <app-icone nome="alvo" [tamanho]="20" />
+            <span class="sr-only">Setores:</span>
+            {{ m.ecossistemas }}
+          </p>
+        }
+        @if (m.anosExperiencia !== null && m.anosExperiencia !== undefined) {
+          <p class="mt-1 text-gray-600">{{ m.anosExperiencia }} {{ m.anosExperiencia === 1 ? 'ano' : 'anos' }} de experiência</p>
+        }
+
+        <p class="mt-4 inline-flex w-fit flex-wrap items-baseline gap-x-2 rounded-lg bg-ponti-lilas/25 px-4 py-2 text-ponti-marinho">
+          <span class="text-2xl font-semibold">{{ valor() }}</span>
+          @if (duracao()) {
+            <span>por sessão de {{ duracao() }}</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="mt-6 flex flex-wrap gap-4">
+      @if (ehStartup()) {
+        <button
+          type="button"
+          (click)="conectar()"
+          [disabled]="conectado() || enviando()"
+          class="cursor-pointer rounded-lg bg-ponti-roxo px-12 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90 disabled:cursor-default disabled:bg-gray-200 disabled:text-gray-600"
+        >
+          {{ conectado() ? 'Solicitação enviada' : enviando() ? 'Enviando...' : 'Conectar' }}
+        </button>
+      }
+      <button
+        type="button"
+        disabled
+        title="Em breve: escolher dia e horário com o mentor"
+        class="rounded-lg border border-ponti-lilas px-8 py-3 text-lg font-medium text-gray-500"
+      >
+        Ver calendário do mentor (em breve)
+      </button>
+    </div>
+    @if (erroConexao()) {
+      <p class="mt-3 text-sm text-red-600" role="alert">{{ erroConexao() }}</p>
+    }
+
+    <!-- Sobre mim -->
+    <h2 class="mt-10 text-2xl font-medium">Sobre mim</h2>
+    @if (video(); as url) {
+      <div class="mt-4 aspect-video w-full max-w-3xl overflow-hidden rounded-md border border-gray-300 bg-black">
+        <iframe
+          [src]="url"
+          class="size-full"
+          [title]="'Vídeo de apresentação de ' + m.nome"
+          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    }
+    <p class="mt-4 whitespace-pre-line text-pretty text-lg leading-relaxed text-gray-800">
+      {{ m.bio || 'Este mentor ainda não adicionou uma descrição.' }}
+    </p>
+
+    <!-- Experiência -->
+    @if (certificacoes().length) {
+      <h2 class="mt-10 text-2xl font-medium">Experiência</h2>
+      <h3 class="mt-3 font-medium text-ponti-marinho">Certificações</h3>
+      <ul class="mt-4 flex flex-col gap-6">
+        @for (c of certificacoes(); track c.id) {
+          <li class="grid gap-1 sm:grid-cols-[9rem_1fr] sm:gap-6">
+            <span class="text-gray-600">{{ formatarPeriodo(c.anoInicio, c.anoFim) }}</span>
+            <div>
+              <p class="font-semibold">{{ c.titulo }}</p>
+              @if (c.instituicao) {
+                <p class="text-gray-600">{{ c.instituicao }}</p>
+              }
+              @if (c.descricao) {
+                <p class="mt-1 max-w-prose text-gray-700">{{ c.descricao }}</p>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Redes de contato -->
+    <h2 class="mt-10 text-2xl font-medium">Redes de contato</h2>
+    <div class="mt-3 flex flex-col gap-4 pb-12">
+      @if (linkedin(); as link) {
+        <div>
+          <h3 class="font-medium text-ponti-marinho">LinkedIn</h3>
+          <a [href]="link" target="_blank" rel="noopener noreferrer" class="text-gray-700 underline-offset-2 hover:underline">
+            {{ m.linkedinUrl }}
+          </a>
+        </div>
+      }
+      <div>
+        <h3 class="font-medium text-ponti-marinho">WhatsApp</h3>
+        <p class="text-gray-600">Aparece na sua tela de Convites depois que o mentor aceitar a conexão.</p>
+      </div>
+    </div>
+  }
+  }
+</section>
