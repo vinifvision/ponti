@@ -40,6 +40,11 @@ export interface ConviteDetalhe {
     areasAtuacao?: string;
     ecossistemas?: string;
     valorSessao?: number | null;
+    duracaoSessaoMinutos?: number | null;
+    fotoUrl?: string | null;
+    linkedinUrl?: string | null;
+    // Só vem preenchido depois que o convite é aceito
+    whatsapp?: string | null;
   } | null;
 }
 
@@ -51,5 +56,20 @@ export interface Mentor {
   ecossistemas?: string;
   anosExperiencia?: number | null;
   valorSessao?: number | null;
-  fotoUrl?: string;
+  duracaoSessaoMinutos?: number | null;
+  fotoUrl?: string | null;
+  videoUrl?: string | null;
+  linkedinUrl?: string | null;
+  // O WhatsApp nunca vem nas listagens: só em ConviteDetalhe, depois do aceite.
+  whatsapp?: string | null;
+}
+
+// Certificação ou experiência que aparece no perfil
+export interface Certificacao {
+  id?: number;
+  titulo: string;
+  instituicao?: string | null;
+  anoInicio?: number | null;
+  anoFim?: number | null;
+  descricao?: string | null;
 }

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, switchMap, tap } from 'rxjs';
 import { API_URL } from '../api.config';
+import { Certificacao } from '../models';
 import { DadosSessao, SessaoService } from './sessao.service';
 
 // Campos do cadastro (iguais aos do backend). O nível de maturidade não entra aqui:
@@ -15,12 +16,23 @@ export interface CadastroStartup {
 }
 
 export interface CadastroMentor {
+  // Etapa 1: conta
   nome: string;
-  areaAtuacao: string;
-  anosExperiencia: number;
-  sobre: string;
   email: string;
   senha: string;
+  // Etapa 2: perfil profissional
+  areaAtuacao: string;
+  ecossistemas?: string;
+  anosExperiencia: number;
+  sobre: string;
+  fotoUrl?: string;
+  videoUrl?: string;
+  linkedinUrl?: string;
+  whatsapp?: string;
+  certificacoes?: Certificacao[];
+  // Etapa 3: como é a mentoria (0 = gratuita)
+  valorSessao: number;
+  duracaoSessaoMinutos: number;
 }
 
 // Fala com /auth/* do backend e, se deu certo, guarda a sessão.

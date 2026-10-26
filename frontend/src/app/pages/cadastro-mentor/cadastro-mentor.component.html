@@ -1,27 +1,154 @@
-<section class="flex w-full max-w-[30rem] flex-col items-center">
+<section class="flex w-full max-w-[34rem] flex-col items-center">
   <app-auth-cabecalho voltarPara="/cadastro" />
 
   <h1 class="mt-12 text-center text-3xl font-semibold text-auth-marinho">Cadastro de mentor</h1>
-  <p class="mt-2 text-center text-xl">Conte um pouco sobre a sua experiência</p>
+  <p class="mt-2 text-center text-xl">{{ etapas[etapa()] }}</p>
 
-  <form (ngSubmit)="criarConta()" class="mt-10 flex w-full flex-col gap-4" autocomplete="off" novalidate>
-    <input name="nome" type="text" placeholder="Nome *" maxlength="255" [(ngModel)]="nome" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
-    <input name="areaAtuacao" type="text" placeholder="Área de atuação, ex.: Veterinário *" maxlength="255" [(ngModel)]="areaAtuacao" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
-    <input name="anosExperiencia" type="number" min="0" max="70" step="1" placeholder="Tempo de experiência (anos) *" [(ngModel)]="anosExperiencia" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
-    <textarea name="sobre" rows="4" placeholder="Sobre mim *" maxlength="2000" [(ngModel)]="sobre" class="w-full resize-none rounded-3xl border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50"></textarea>
-    <input name="email" type="email" placeholder="E-mail *" autocomplete="email" [(ngModel)]="email" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
-    <input name="senha" type="password" [placeholder]="'Senha (mínimo ' + senhaMinima + ' caracteres) *'" autocomplete="new-password" [(ngModel)]="senha" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+  <div class="mt-8 w-full">
+    <div class="flex items-center justify-between text-base text-auth-marinho">
+      <span class="font-semibold">Etapa {{ etapa() + 1 }} de {{ etapas.length }}</span>
+      <span>{{ etapas[etapa()] }}</span>
+    </div>
+    <div
+      class="mt-2 h-2 w-full overflow-hidden rounded-full bg-neutral-200"
+      role="progressbar"
+      aria-label="Progresso do cadastro"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="progresso()"
+    >
+      <div class="h-full rounded-full bg-auth-lilas transition-all" [style.width.%]="progresso()"></div>
+    </div>
+  </div>
+
+  <form
+    (ngSubmit)="etapa() === etapas.length - 1 ? criarConta() : avancar()"
+    class="mt-8 flex w-full flex-col gap-4"
+    autocomplete="off"
+    novalidate
+  >
+    @switch (etapa()) {
+      @case (0) {
+        <input name="nome" type="text" placeholder="Nome completo *" maxlength="255" [(ngModel)]="nome" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <input name="email" type="email" placeholder="E-mail *" autocomplete="email" [(ngModel)]="email" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <input
+          name="senha"
+          type="password"
+          [placeholder]="'Senha (mínimo ' + senhaMinima + ' caracteres) *'"
+          autocomplete="new-password"
+          [(ngModel)]="senha"
+          class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50"
+        />
+      }
+
+      @case (1) {
+        <input name="areaAtuacao" type="text" placeholder="Área de atuação, ex.: Veterinário, Professora *" maxlength="255" [(ngModel)]="areaAtuacao" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <input name="ecossistemas" type="text" placeholder="Setores em que atua, ex.: PetTech, Health-techs" maxlength="255" [(ngModel)]="ecossistemas" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <input name="anosExperiencia" type="number" min="0" max="70" step="1" placeholder="Tempo de experiência (anos) *" [(ngModel)]="anosExperiencia" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <textarea name="sobre" rows="5" placeholder="Sobre mim: como você pode ajudar uma startup? *" maxlength="2000" [(ngModel)]="sobre" class="w-full resize-none rounded-3xl border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50"></textarea>
+        <input name="linkedinUrl" type="url" placeholder="LinkedIn (opcional), ex.: linkedin.com/in/seu-nome" maxlength="500" [(ngModel)]="linkedinUrl" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <input name="whatsapp" type="tel" placeholder="WhatsApp com DDD (opcional)" maxlength="30" [(ngModel)]="whatsapp" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <p class="px-4 text-sm text-neutral-500">
+          O WhatsApp só aparece para a startup depois que você aceitar o convite dela.
+        </p>
+      }
+
+      @case (2) {
+        <input name="fotoUrl" type="url" placeholder="Link da sua foto de perfil (opcional)" maxlength="500" [(ngModel)]="fotoUrl" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        <input name="videoUrl" type="url" placeholder="Vídeo de apresentação no YouTube (opcional)" maxlength="500" [(ngModel)]="videoUrl" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+
+        <fieldset class="mt-2 rounded-3xl border border-auth-lilas p-5">
+          <legend class="px-2 text-lg font-semibold text-auth-marinho">Certificações e experiências</legend>
+          <p class="text-sm text-neutral-500">Ex.: programas de mentoria, cursos e certificados importantes (opcional).</p>
+
+          @if (certificacoes().length) {
+            <ul class="mt-4 flex flex-col gap-2">
+              @for (c of certificacoes(); track $index) {
+                <li class="flex items-start justify-between gap-3 rounded-2xl bg-neutral-100 px-4 py-3">
+                  <div class="min-w-0">
+                    <p class="font-semibold">{{ c.titulo }}</p>
+                    <p class="text-sm text-neutral-600">
+                      {{ c.instituicao }}{{ c.instituicao && formatarPeriodo(c.anoInicio, c.anoFim) ? ' · ' : '' }}{{ formatarPeriodo(c.anoInicio, c.anoFim) }}
+                    </p>
+                  </div>
+                  <button type="button" (click)="removerCertificacao($index)" class="cursor-pointer text-sm font-semibold text-red-600 hover:underline">
+                    Remover
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          <div class="mt-4 flex flex-col gap-2">
+            <input name="certTitulo" type="text" placeholder="Título, ex.: Mentoria programa Sebrae" maxlength="255" [(ngModel)]="novaCertificacao.titulo" class="w-full rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-base text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+            <input name="certInstituicao" type="text" placeholder="Instituição (opcional)" maxlength="255" [(ngModel)]="novaCertificacao.instituicao" class="w-full rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-base text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+            <div class="flex gap-2">
+              <input name="certInicio" type="number" placeholder="Ano de início" [(ngModel)]="novaCertificacao.anoInicio" class="w-full rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-base text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+              <input name="certFim" type="number" placeholder="Ano de término" [(ngModel)]="novaCertificacao.anoFim" class="w-full rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-base text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+            </div>
+            <textarea name="certDescricao" rows="2" placeholder="Descrição (opcional)" maxlength="1000" [(ngModel)]="novaCertificacao.descricao" class="w-full rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-base text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50"></textarea>
+            <button
+              type="button"
+              (click)="adicionarCertificacao()"
+              class="mt-1 cursor-pointer rounded-full border border-auth-lilas bg-white py-2 text-base font-medium text-auth-marinho transition-colors hover:bg-auth-lilas/15"
+            >
+              + Adicionar certificação
+            </button>
+          </div>
+        </fieldset>
+      }
+
+      @case (3) {
+        <label class="flex cursor-pointer items-center gap-3 px-4 text-lg">
+          <input name="gratuita" type="checkbox" [(ngModel)]="gratuita" class="size-5 accent-auth-lilas" />
+          Mentoria gratuita
+        </label>
+
+        @if (!gratuita) {
+          <input name="valorSessao" type="number" min="1" step="0.01" placeholder="Valor por sessão (R$) *" [(ngModel)]="valorSessao" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+        }
+
+        <fieldset class="flex flex-col gap-2">
+          <legend class="mb-2 px-4 text-lg text-auth-marinho">Duração de cada sessão</legend>
+          <div class="grid grid-cols-4 gap-2">
+            @for (d of duracoes; track d) {
+              <label
+                class="cursor-pointer rounded-full border py-3 text-center text-base transition-colors"
+                [class]="duracaoSessaoMinutos === d ? 'border-auth-lilas bg-auth-lilas text-white' : 'border-auth-lilas bg-white text-auth-marinho hover:bg-auth-lilas/15'"
+              >
+                <input type="radio" name="duracao" class="sr-only" [value]="d" [(ngModel)]="duracaoSessaoMinutos" />
+                {{ d }} min
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <p class="mt-2 rounded-2xl bg-auth-lilas/15 px-5 py-4 text-center text-auth-marinho">
+          As startups vão ver: <strong>{{ resumoValor() }}</strong> por sessão de <strong>{{ duracaoSessaoMinutos }} min</strong>.
+        </p>
+      }
+    }
 
     @if (erro()) {
       <p class="text-center text-sm text-red-600" role="alert">{{ erro() }}</p>
     }
 
-    <button
-      type="submit"
-      [disabled]="salvando()"
-      class="mt-4 w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
-    >
-      {{ salvando() ? 'Criando conta...' : 'Criar conta' }}
+    <button type="submit" [disabled]="salvando()" class="w-full cursor-pointer rounded-full bg-auth-lilas py-5 text-xl font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho">
+      @if (etapa() < etapas.length - 1) {
+        Continuar
+      } @else {
+        {{ salvando() ? 'Criando conta...' : 'Criar conta' }}
+      }
     </button>
+
+    @if (etapa() > 0) {
+      <button
+        type="button"
+        (click)="voltar()"
+        class="cursor-pointer text-center text-base font-semibold text-auth-marinho hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-marinho"
+      >
+        Voltar para a etapa anterior
+      </button>
+    }
   </form>
 </section>
