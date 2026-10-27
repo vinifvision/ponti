@@ -1,0 +1,38 @@
+<section class="pt-6">
+  <h1 class="text-balance text-3xl font-medium sm:text-4xl">Startups na plataforma</h1>
+  <p class="mt-2 text-gray-500">Encontre startups para mentorar e convide as que combinam com a sua experiência.</p>
+
+  <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+    <app-filtro-select rotulo="Segmento" placeholder="Todos" [opcoes]="opcoesSegmento()" [limpavel]="true" [(valor)]="segmento" />
+    <app-filtro-select rotulo="Maturidade" placeholder="Todas" [opcoes]="opcoesMaturidade" [limpavel]="true" [(valor)]="maturidade" />
+    <app-filtro-select rotulo="Ordenar" placeholder="Padrão" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
+  </div>
+
+  @if (erroConvite()) {
+    <p class="mt-6 max-w-3xl rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erroConvite() }}</p>
+  }
+
+  <div class="mt-8">
+    @if (carregando()) {
+      <p class="text-gray-500" role="status">Carregando startups...</p>
+    } @else if (erro()) {
+      <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+    } @else if (startupsFiltradas().length === 0) {
+      <p class="max-w-3xl rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500">
+        Nenhuma startup encontrada com esses filtros.
+      </p>
+    } @else {
+      <ul class="flex max-w-4xl flex-col gap-8">
+        @for (startup of startupsFiltradas(); track startup.id) {
+          <li>
+            <app-startup-card
+              [startup]="startup"
+              [situacao]="enviandoId() === startup.id ? 'Enviando...' : situacao(startup)"
+              (convidar)="convidar($event)"
+            />
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>
