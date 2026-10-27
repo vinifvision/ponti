@@ -72,6 +72,8 @@ class AuthControllerTest {
         body.put("sobre", "Ex-fundadora com 10 anos de experiência em startups.");
         body.put("email", "maria@email.com");
         body.put("senha", "senhaSegura123");
+        body.put("valorSessao", 150);
+        body.put("duracaoSessaoMinutos", 60);
         return body;
     }
 
@@ -210,7 +212,13 @@ class AuthControllerTest {
                 Arguments.of("anos de experiência não numérico", "anosExperiencia", "dez"),
                 Arguments.of("sem sobre", "sobre", null),
                 Arguments.of("e-mail inválido", "email", "nao-e-um-email"),
-                Arguments.of("senha com menos de 8 caracteres", "senha", "1234567"));
+                Arguments.of("senha com menos de 8 caracteres", "senha", "1234567"),
+                Arguments.of("sem valor por sessão", "valorSessao", null),
+                Arguments.of("valor por sessão negativo", "valorSessao", -1),
+                Arguments.of("valor por sessão com 3 casas decimais", "valorSessao", 10.555),
+                Arguments.of("sem duração da sessão", "duracaoSessaoMinutos", null),
+                Arguments.of("duração da sessão abaixo de 15 minutos", "duracaoSessaoMinutos", 10),
+                Arguments.of("duração da sessão acima de 240 minutos", "duracaoSessaoMinutos", 300));
     }
 
     // =====================================================================================

@@ -7,6 +7,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { CadastroComponent } from './pages/cadastro/cadastro.component';
 import { CadastroStartupComponent } from './pages/cadastro-startup/cadastro-startup.component';
 import { CadastroMentorComponent } from './pages/cadastro-mentor/cadastro-mentor.component';
+import { PerfilMentorComponent } from './pages/perfil-mentor/perfil-mentor.component';
 import { ConvitesComponent } from './pages/convites/convites.component';
 import { EncontrarMentoresComponent } from './pages/encontrar-mentores/encontrar-mentores.component';
 import { EmBreveComponent } from './pages/em-breve/em-breve.component';
@@ -43,6 +44,7 @@ export const routes: Routes = [
     children: [
       { path: 'encontrar-mentores', component: EncontrarMentoresComponent, title: 'Encontrar Mentores | Ponti' },
       { path: 'convites', component: ConvitesComponent, title: 'Convites | Ponti' },
+      { path: 'mentores/:id/perfil', component: PerfilMentorComponent, title: 'Perfil do mentor | Ponti' },
       { path: 'agenda', component: EmBreveComponent, data: { titulo: 'Agenda' }, title: 'Agenda | Ponti' },
       { path: 'perfil', component: EmBreveComponent, data: { titulo: 'Perfil' }, title: 'Perfil | Ponti' },
       {

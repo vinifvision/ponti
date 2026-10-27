@@ -1,9 +1,11 @@
 package com.ponti.api.config;
 
+import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.model.Usuario;
+import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.repository.UsuarioRepository;
@@ -25,15 +27,18 @@ public class DadosIniciais implements CommandLineRunner {
     public static final String SENHA_EXEMPLO = "ponti1234";
 
     private final MentorRepository mentorRepository;
+    private final CertificacaoRepository certificacaoRepository;
     private final StartupRepository startupRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DadosIniciais(MentorRepository mentorRepository,
+                         CertificacaoRepository certificacaoRepository,
                          StartupRepository startupRepository,
                          UsuarioRepository usuarioRepository,
                          PasswordEncoder passwordEncoder) {
         this.mentorRepository = mentorRepository;
+        this.certificacaoRepository = certificacaoRepository;
         this.startupRepository = startupRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
@@ -47,13 +52,20 @@ public class DadosIniciais implements CommandLineRunner {
                     "Zootecnista e professora, com experiência ajudando startups de Health-techs a validar o produto com usuários reais.",
                     "Zootecnista, Professora",
                     "Health-techs, PetTech",
-                    8));
+                    8, new BigDecimal("120.00"), 60));
+            juliana.setLinkedinUrl("https://www.linkedin.com/in/exemplo-juliana");
+            juliana.setWhatsapp("+55 (81) 99876-5432");
+            juliana = mentorRepository.save(juliana);
+            certificacaoRepository.save(certificacao(juliana, "Mentoria programa Porto Digital", "Porto Digital",
+                    2026, 2026, "Mentoria de validação de produto para startups do programa de aceleração."));
+            certificacaoRepository.save(certificacao(juliana, "Mentoria programa Sebrae", "Sebrae",
+                    2025, 2026, "Acompanhamento de startups de saúde na fase de validação com usuários."));
             Mentor roberto = mentorRepository.save(mentor(
                     "Roberto",
                     "Veterinário com foco em PetTechs, ajuda startups a validar hipóteses de produto na área de saúde animal.",
                     "Veterinário",
                     "Health-techs, PetTech",
-                    5));
+                    5, BigDecimal.ZERO, 45));
             usuarioRepository.save(usuarioDoMentor("juliana@exemplo.com", juliana));
             usuarioRepository.save(usuarioDoMentor("roberto@exemplo.com", roberto));
         }
@@ -73,15 +85,28 @@ public class DadosIniciais implements CommandLineRunner {
     }
 
     private Mentor mentor(String nome, String bio, String areasAtuacao, String ecossistemas,
-                          Integer anosExperiencia) {
+                          Integer anosExperiencia, BigDecimal valorSessao, Integer duracaoSessaoMinutos) {
         Mentor m = new Mentor();
         m.setNome(nome);
         m.setBio(bio);
         m.setAreasAtuacao(areasAtuacao);
         m.setEcossistemas(ecossistemas);
         m.setAnosExperiencia(anosExperiencia);
-        m.setValorSessao(BigDecimal.ZERO);
+        m.setValorSessao(valorSessao);
+        m.setDuracaoSessaoMinutos(duracaoSessaoMinutos);
         return m;
+    }
+
+    private Certificacao certificacao(Mentor mentor, String titulo, String instituicao,
+                                      Integer anoInicio, Integer anoFim, String descricao) {
+        Certificacao c = new Certificacao();
+        c.setMentorId(mentor.getId());
+        c.setTitulo(titulo);
+        c.setInstituicao(instituicao);
+        c.setAnoInicio(anoInicio);
+        c.setAnoFim(anoFim);
+        c.setDescricao(descricao);
+        return c;
     }
 
     private Startup startup(String nome, String descricao, String segmento,

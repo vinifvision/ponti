@@ -3,7 +3,9 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { ConviteService } from '../../convites/convite.service';
+import { RouterLink } from '@angular/router';
 import { ConviteDetalhe, StatusConvite } from '../../models';
+import { formatarDuracao, formatarValorSessao, linkSeguro, linkWhatsapp } from '../../shared/mentoria.utils';
 
 // Uma tela para os dois lados:
 //  - mentor: convites recebidos, com os botões Aceitar e Recusar;
@@ -11,6 +13,7 @@ import { ConviteDetalhe, StatusConvite } from '../../models';
 @Component({
   selector: 'app-convites',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './convites.component.html',
 })
 export class ConvitesComponent implements OnInit {
@@ -73,6 +76,22 @@ export class ConvitesComponent implements OnInit {
         this.respondendoId.set(null);
       },
     });
+  }
+
+  valor(c: ConviteDetalhe): string {
+    return formatarValorSessao(c.mentor?.valorSessao);
+  }
+
+  duracao(c: ConviteDetalhe): string {
+    return formatarDuracao(c.mentor?.duracaoSessaoMinutos);
+  }
+
+  whatsapp(c: ConviteDetalhe): string | null {
+    return linkWhatsapp(c.mentor?.whatsapp);
+  }
+
+  linkedin(c: ConviteDetalhe): string | null {
+    return linkSeguro(c.mentor?.linkedinUrl);
   }
 
   rotulo(status: StatusConvite): string {

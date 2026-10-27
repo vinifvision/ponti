@@ -357,6 +357,70 @@ paths:
           description: Não encontrado
         "409":
           description: O convite já foi respondido
+  /mentores/{id}/certificacoes:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Mentores]
+      summary: Lista as certificações do mentor (mais recentes primeiro)
+      responses:
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Certificacao"
+        "404":
+          description: Mentor não encontrado
+    post:
+      tags: [Mentores]
+      summary: Adiciona uma certificação ao perfil do mentor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Certificacao"
+      responses:
+        "201":
+          description: Criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificacao"
+        "400":
+          description: Dados inválidos
+        "404":
+          description: Mentor não encontrado
+  /mentores/{id}/certificacoes/{certificacaoId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: certificacaoId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    delete:
+      tags: [Mentores]
+      summary: Remove uma certificação do perfil do mentor
+      responses:
+        "204":
+          description: Removida com sucesso
+        "404":
+          description: Certificação não encontrada para esse mentor
   /auth/cadastro/startup:
     post:
       tags: [Auth]
@@ -513,8 +577,52 @@ components:
         valorSessao:
           type: number
           format: double
-          description: Valor por sessão definido pelo mentor.
+          description: Valor por sessão definido pelo mentor. 0 = mentoria gratuita.
           example: 150.00
+        duracaoSessaoMinutos:
+          type: integer
+          minimum: 15
+          maximum: 240
+          description: Duração de cada sessão, em minutos.
+          example: 60
+        fotoUrl:
+          type: string
+          maxLength: 500
+          nullable: true
+        videoUrl:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Vídeo de apresentação (link do YouTube).
+        linkedinUrl:
+          type: string
+          maxLength: 500
+          nullable: true
+        whatsapp:
+          type: string
+          maxLength: 30
+          writeOnly: true
+          description: >
+            Só é gravado, nunca devolvido nas listagens. A startup recebe o WhatsApp em
+            GET /convites/detalhados depois que o mentor aceita o convite.
+    Certificacao:
+      type: object
+      required: [titulo]
+      properties:
+        id: { type: integer, format: int64, readOnly: true }
+        mentorId: { type: integer, format: int64, readOnly: true, nullable: true }
+        startupId: { type: integer, format: int64, readOnly: true, nullable: true }
+        titulo: { type: string, maxLength: 255, example: Mentoria programa Sebrae }
+        instituicao: { type: string, maxLength: 255, nullable: true, example: Sebrae }
+        anoInicio: { type: integer, minimum: 1950, maximum: 2100, nullable: true, example: 2025 }
+        anoFim:
+          type: integer
+          minimum: 1950
+          maximum: 2100
+          nullable: true
+          description: Vazio = em andamento. Não pode ser anterior ao ano de início.
+          example: 2026
+        descricao: { type: string, maxLength: 1000, nullable: true }
     ConviteDetalhe:
       type: object
       properties:
@@ -549,6 +657,13 @@ components:
             areasAtuacao: { type: string }
             ecossistemas: { type: string }
             valorSessao: { type: number }
+            duracaoSessaoMinutos: { type: integer, nullable: true }
+            fotoUrl: { type: string, nullable: true }
+            linkedinUrl: { type: string, nullable: true }
+            whatsapp:
+              type: string
+              nullable: true
+              description: Só vem preenchido quando o convite está ACEITO.
     Convite:
       type: object
       required: [startupId, mentorId]
@@ -601,7 +716,7 @@ components:
           example: senhaSegura123
     CadastroMentor:
       type: object
-      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha]
+      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, valorSessao, duracaoSessaoMinutos]
       properties:
         nome:
           type: string
@@ -633,6 +748,27 @@ components:
           minLength: 8
           maxLength: 72
           example: senhaSegura123
+        ecossistemas: { type: string, maxLength: 255, example: "PetTech, Health-techs" }
+        fotoUrl: { type: string, maxLength: 500 }
+        videoUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
+        linkedinUrl: { type: string, maxLength: 500 }
+        whatsapp: { type: string, maxLength: 30, example: "+55 (81) 99999-0000" }
+        certificacoes:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/Certificacao"
+        valorSessao:
+          type: number
+          minimum: 0
+          maximum: 100000
+          description: Valor por sessão, com até 2 casas decimais. 0 = mentoria gratuita.
+          example: 150.00
+        duracaoSessaoMinutos:
+          type: integer
+          minimum: 15
+          maximum: 240
+          example: 60
     UsuarioResumo:
       type: object
       properties:
