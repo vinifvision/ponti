@@ -26,8 +26,7 @@ import { iniciais } from '../../shared/texto.utils';
 
       <div class="mt-3 flex flex-col gap-2">
         <a
-          routerLink="/agenda"
-          [queryParams]="{ mentor: mentor().id }"
+          [routerLink]="['/mentores', mentor().id, 'agendar']"
           class="rounded-lg border border-ponti-lilas py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-ponti-lilas/20"
         >
           Ver calendário do Mentor

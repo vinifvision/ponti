@@ -1,7 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { SessaoService } from '../../auth/sessao.service';
-import { ConviteService } from '../../convites/convite.service';
 import { BuscaService } from '../../layout/busca.service';
 import { MentorCardComponent } from '../../mentores/mentor-card/mentor-card.component';
 import { MentorDestaqueComponent } from '../../mentores/mentor-destaque/mentor-destaque.component';
@@ -18,21 +15,17 @@ import { separarLista } from '../../shared/texto.utils';
 })
 export class EncontrarMentoresComponent implements OnInit {
   private mentorService = inject(MentorService);
-  private conviteService = inject(ConviteService);
-  private sessao = inject(SessaoService);
   private busca = inject(BuscaService);
 
   mentores = signal<Mentor[]>([]);
   carregando = signal(true);
   erro = signal('');
-  erroConexao = signal('');
 
   area = signal('');
   experiencia = signal('');
   ordenacao = signal('');
   selecionadoId = signal<number | undefined>(undefined);
   focoId = signal<number | undefined>(undefined);
-  conectados = signal<Set<number>>(new Set());
 
   readonly opcoesExperiencia: OpcaoFiltro[] = [
     { valor: 'iniciante', rotulo: 'Até 2 anos' },
@@ -85,16 +78,6 @@ export class EncontrarMentoresComponent implements OnInit {
         this.carregando.set(false);
       },
     });
-
-    // Marca os mentores com quem essa startup já tem convite (enviado por ela ou pelo mentor).
-    const startupId = this.sessao.startupId();
-    if (startupId !== null) {
-      this.conviteService.listarEnviados(startupId).subscribe({
-        next: (convites) => this.conectados.set(new Set(convites.map((c) => c.mentorId))),
-        // Se falhar, a lista de mentores continua funcionando: o backend recusa convite duplicado (409).
-        error: () => {},
-      });
-    }
   }
 
   ehCompativel(mentor: Mentor): boolean {
@@ -115,26 +98,5 @@ export class EncontrarMentoresComponent implements OnInit {
       this.focoId.set(undefined);
     }
   }
-  conectar(mentor: Mentor) {
-    const startupId = this.sessao.startupId();
-    if (mentor.id == null || startupId === null) return; // só startup envia convite
-    const mentorId = mentor.id;
 
-    this.erroConexao.set('');
-    // Atualiza o botão na hora; se a API falhar, desfaz abaixo.
-    this.conectados.update((ids) => new Set(ids).add(mentorId));
-
-    this.conviteService.criar({ startupId, mentorId }).subscribe({
-      error: (e: HttpErrorResponse) => {
-        if (e.status === 409) return; // esse convite já existia, então o botão continua "enviado"
-
-        this.conectados.update((ids) => {
-          const restantes = new Set(ids);
-          restantes.delete(mentorId);
-          return restantes;
-        });
-        this.erroConexao.set(e.error?.message ?? 'Não foi possível enviar a solicitação. Tente novamente.');
-      },
-    });
-  }
 }

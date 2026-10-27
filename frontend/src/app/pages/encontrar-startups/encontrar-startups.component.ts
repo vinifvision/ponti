@@ -16,7 +16,8 @@ const FAIXAS: Record<string, [number, number]> = {
   operacao: [7, 9],
 };
 
-// Tela do mentor: ver as startups da plataforma e convidar as que quiser mentorar.
+// Tela do mentor: ver as startups da plataforma e sugerir mentoria às que quiser acompanhar.
+// A sugestão chega para a startup em Mentorias, com o atalho para o calendário do mentor.
 @Component({
   selector: 'app-encontrar-startups',
   standalone: true,
@@ -105,13 +106,13 @@ export class EncontrarStartupsComponent implements OnInit {
     }
   }
 
-  // Texto do botão quando já existe convite com essa startup, em qualquer sentido
+  // Texto do botão quando o mentor já sugeriu mentoria a essa startup
   situacao(startup: Startup): string | null {
-    const convite = this.convites().find((c) => c.startupId === startup.id);
-    if (!convite) return null;
-    if (convite.status === 'ACEITO') return 'Conectados';
-    if (convite.status === 'RECUSADO') return 'Convite recusado';
-    return convite.enviadoPor === 'MENTOR' ? 'Convite enviado' : 'Ela te convidou';
+    const sugestao = this.convites().find((c) => c.startupId === startup.id && c.enviadoPor === 'MENTOR');
+    if (!sugestao) return null;
+    if (sugestao.status === 'ACEITO') return 'Ela agendou com você';
+    if (sugestao.status === 'RECUSADO') return 'Sugestão dispensada';
+    return 'Sugestão enviada';
   }
 
   convidar(startup: Startup) {
@@ -130,8 +131,8 @@ export class EncontrarStartupsComponent implements OnInit {
         this.enviandoId.set(null);
         this.erroConvite.set(
           e.status === 409
-            ? 'Já existe um convite entre você e essa startup. Veja na tela de Convites.'
-            : mensagemDeErro(e, 'Não foi possível enviar o convite. Tente novamente.'),
+            ? 'Você já sugeriu uma mentoria para essa startup.'
+            : mensagemDeErro(e, 'Não foi possível enviar a sugestão. Tente novamente.'),
         );
       },
     });

@@ -10,6 +10,14 @@ tags:
   - name: Startups
   - name: Mentores
   - name: Convites
+    description: >
+      Sugestões de mentoria. O mentor sugere uma mentoria a uma startup (enviadoPor MENTOR);
+      quando a startup agenda com esse mentor, a sugestão vira ACEITO sozinha.
+  - name: Agenda
+    description: >
+      Fluxo de agendamento parecido com o do Preply: o mentor define os horários semanais,
+      a startup escolhe um horário livre e paga (pagamento SIMULADO), e o mentor confirma
+      com o link do Google Meet ou recusa.
   - name: Auth
 paths:
   /startups:
@@ -485,6 +493,159 @@ paths:
           description: Removida com sucesso
         "404":
           description: Certificação não encontrada para essa startup
+  /mentores/{id}/disponibilidade:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Agenda]
+      summary: Horários em que o mentor atende na semana
+      responses:
+        "200":
+          description: Faixas semanais, ordenadas de segunda a domingo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FaixaDisponibilidade" }
+        "404": { description: Mentor não encontrado }
+    put:
+      tags: [Agenda]
+      summary: Substitui a disponibilidade semanal inteira do mentor
+      description: Lista vazia = o mentor não atende. Faixas do mesmo dia não podem se sobrepor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 50
+              items: { $ref: "#/components/schemas/FaixaDisponibilidade" }
+      responses:
+        "200":
+          description: Disponibilidade salva
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FaixaDisponibilidade" }
+        "400": { description: Faixa inválida ou sobreposta }
+        "404": { description: Mentor não encontrado }
+  /mentores/{id}/horarios:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Agenda]
+      summary: Horários livres para agendar entre duas datas
+      description: >
+        Gerados a partir da disponibilidade semanal, em blocos do tamanho da sessão do mentor,
+        sem os horários que já passaram ou estão ocupados. No máximo 62 dias por consulta.
+      parameters:
+        - { name: de, in: query, required: true, schema: { type: string, format: date, example: "2026-11-01" } }
+        - { name: ate, in: query, required: true, schema: { type: string, format: date, example: "2026-11-30" } }
+      responses:
+        "200":
+          description: Início de cada horário livre (horário de Recife)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string, format: date-time, example: "2026-11-03T09:00:00" }
+        "400": { description: Período inválido }
+        "404": { description: Mentor não encontrado }
+  /agendamentos:
+    get:
+      tags: [Agenda]
+      summary: Mentorias de uma startup ou de um mentor
+      parameters:
+        - { name: startupId, in: query, required: false, schema: { type: integer, format: int64 } }
+        - { name: mentorId, in: query, required: false, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Agendamentos em ordem de data
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Agendamento" }
+        "400": { description: Informe startupId ou mentorId }
+    post:
+      tags: [Agenda]
+      summary: A startup agenda um horário livre (pagamento simulado)
+      description: >
+        O preço e o fim da sessão vêm do perfil do mentor. Mentoria paga exige metodoPagamento
+        e fica com statusPagamento PAGO; gratuita fica GRATUITA. Nasce PENDENTE.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NovoAgendamento" }
+      responses:
+        "201":
+          description: Pedido criado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agendamento" }
+        "400": { description: Dados inválidos ou falta a forma de pagamento }
+        "404": { description: Startup ou mentor não encontrado }
+        "409": { description: Horário fora da disponibilidade, no passado ou já ocupado }
+  /agendamentos/{id}/confirmar:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    post:
+      tags: [Agenda]
+      summary: O mentor confirma o pedido e informa o link da reunião
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [linkReuniao]
+              properties:
+                linkReuniao: { type: string, maxLength: 500, pattern: "^https://\\S+$", example: "https://meet.google.com/abc-defg-hij" }
+      responses:
+        "200":
+          description: Confirmado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agendamento" }
+        "400": { description: Link ausente ou que não começa com https:// }
+        "404": { description: Agendamento não encontrado }
+        "409": { description: Só pedidos pendentes podem ser confirmados }
+  /agendamentos/{id}/recusar:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    post:
+      tags: [Agenda]
+      summary: O mentor recusa o pedido (pagamento vira REEMBOLSADO)
+      responses:
+        "200":
+          description: Recusado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agendamento" }
+        "404": { description: Agendamento não encontrado }
+        "409": { description: Só pedidos pendentes podem ser recusados }
+  /agendamentos/{id}/cancelar:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    post:
+      tags: [Agenda]
+      summary: Cancela uma mentoria pendente ou confirmada que ainda não começou
+      responses:
+        "200":
+          description: Cancelado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agendamento" }
+        "404": { description: Agendamento não encontrado }
+        "409": { description: Já começou, já aconteceu ou já foi recusado/cancelado }
   /auth/cadastro/startup:
     post:
       tags: [Auth]
@@ -667,13 +828,6 @@ components:
           type: string
           maxLength: 500
           nullable: true
-        whatsapp:
-          type: string
-          maxLength: 30
-          writeOnly: true
-          description: >
-            Só é gravado, nunca devolvido nas listagens. A startup recebe o WhatsApp em
-            GET /convites/detalhados depois que o mentor aceita o convite.
     Certificacao:
       type: object
       required: [titulo]
@@ -733,10 +887,44 @@ components:
             duracaoSessaoMinutos: { type: integer, nullable: true }
             fotoUrl: { type: string, nullable: true }
             linkedinUrl: { type: string, nullable: true }
-            whatsapp:
-              type: string
-              nullable: true
-              description: Só vem preenchido quando o convite está ACEITO.
+    FaixaDisponibilidade:
+      type: object
+      required: [diaSemana, horaInicio, horaFim]
+      properties:
+        diaSemana: { type: string, enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY] }
+        horaInicio: { type: string, example: "09:00" }
+        horaFim: { type: string, example: "12:00", description: Precisa ser depois de horaInicio }
+    NovoAgendamento:
+      type: object
+      required: [startupId, mentorId, inicio]
+      properties:
+        startupId: { type: integer, format: int64 }
+        mentorId: { type: integer, format: int64 }
+        inicio: { type: string, format: date-time, example: "2026-11-03T09:00:00" }
+        metodoPagamento: { type: string, enum: [PIX, CARTAO], description: Obrigatório se a mentoria for paga }
+        mensagem: { type: string, maxLength: 1000, description: O que a startup quer tratar na sessão }
+    Agendamento:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        inicio: { type: string, format: date-time }
+        fim: { type: string, format: date-time }
+        valor: { type: number, description: Preço do mentor no momento do agendamento }
+        status: { type: string, enum: [PENDENTE, CONFIRMADO, RECUSADO, CANCELADO] }
+        statusPagamento: { type: string, enum: [GRATUITA, PAGO, REEMBOLSADO], description: Pagamento simulado }
+        metodoPagamento: { type: string, enum: [PIX, CARTAO], nullable: true }
+        linkReuniao: { type: string, nullable: true, description: Só vem quando CONFIRMADO }
+        mensagem: { type: string, nullable: true }
+        startup: { $ref: "#/components/schemas/ParteAgendamento" }
+        mentor: { $ref: "#/components/schemas/ParteAgendamento" }
+    ParteAgendamento:
+      type: object
+      nullable: true
+      properties:
+        id: { type: integer, format: int64 }
+        nome: { type: string }
+        fotoUrl: { type: string, nullable: true }
+        descricao: { type: string, nullable: true, description: Segmento da startup ou área do mentor }
     Convite:
       type: object
       required: [startupId, mentorId]
@@ -837,7 +1025,6 @@ components:
         fotoUrl: { type: string, maxLength: 500 }
         videoUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
         linkedinUrl: { type: string, maxLength: 500 }
-        whatsapp: { type: string, maxLength: 30, example: "+55 (81) 99999-0000" }
         certificacoes:
           type: array
           maxItems: 20

@@ -1,0 +1,242 @@
+<section class="max-w-5xl pb-12 pt-6">
+  <button
+    type="button"
+    (click)="etapa() === 2 ? voltarParaCalendario() : voltar()"
+    class="flex cursor-pointer items-center gap-3 text-2xl font-medium hover:text-ponti-roxo sm:text-3xl"
+  >
+    <app-icone nome="seta-esquerda" [tamanho]="28" />
+    {{ etapa() === 2 ? 'Escolher outro horário' : 'Mentores recomendados' }}
+  </button>
+
+  @if (mentor(); as m) {
+    <!-- Cabeçalho do mentor -->
+    <div class="mt-8 flex flex-col gap-6 sm:flex-row">
+      @if (m.fotoUrl) {
+        <img [src]="m.fotoUrl" [alt]="'Foto de ' + m.nome" class="size-36 shrink-0 rounded-md border border-gray-300 object-cover" />
+      } @else {
+        <div class="flex size-36 shrink-0 items-center justify-center rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho" aria-hidden="true">
+          {{ iniciais() }}
+        </div>
+      }
+      <div class="flex min-w-0 flex-col">
+        <h1 class="text-3xl font-bold">{{ m.nome }}</h1>
+        @if (m.areasAtuacao) {
+          <p class="mt-2 flex items-center gap-2 text-gray-600">
+            <app-icone nome="maleta" [tamanho]="20" />
+            {{ m.areasAtuacao }}
+          </p>
+        }
+        @if (m.ecossistemas) {
+          <p class="mt-1 flex items-center gap-2 text-gray-600">
+            <app-icone nome="alvo" [tamanho]="20" />
+            {{ m.ecossistemas }}
+          </p>
+        }
+        <p class="mt-4 inline-flex w-fit flex-wrap items-baseline gap-x-2 rounded-lg bg-ponti-lilas/25 px-4 py-2 text-ponti-marinho">
+          <span class="text-xl font-semibold">{{ valor() }}</span>
+          <span>por sessão de {{ duracao() }}</span>
+        </p>
+      </div>
+    </div>
+
+    @if (!ehStartup()) {
+      <p class="mt-8 rounded-lg bg-ponti-lilas/20 p-4 text-ponti-marinho">
+        Só startups agendam mentorias. Como mentor, você define seus horários em
+        <a routerLink="/agenda" class="font-semibold underline">Minha agenda</a>.
+      </p>
+    } @else {
+      @switch (etapa()) {
+        <!-- Etapa 1: calendário -->
+        @case (1) {
+          <h2 class="mt-10 text-3xl font-medium">Agendar</h2>
+
+          <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,26rem)_16rem]">
+            <!-- Calendário do mês -->
+            <div>
+              <div class="flex items-center gap-4">
+                <button
+                  type="button"
+                  (click)="mudarMes(-1)"
+                  [disabled]="!podeVoltarMes()"
+                  class="cursor-pointer rounded p-1 text-gray-800 disabled:cursor-default disabled:opacity-30"
+                  aria-label="Mês anterior"
+                >
+                  &#9664;
+                </button>
+                <span class="min-w-40 text-center text-xl">{{ tituloMes() }}</span>
+                <button type="button" (click)="mudarMes(1)" class="cursor-pointer rounded p-1 text-gray-800" aria-label="Próximo mês">
+                  &#9654;
+                </button>
+              </div>
+
+              <div class="mt-6 grid grid-cols-7 gap-2 text-center" role="grid" aria-label="Dias do mês">
+                @for (d of diasDaSemana; track $index) {
+                  <span class="pb-2 text-lg font-medium text-gray-800">{{ d }}</span>
+                }
+                @for (dia of grade(); track dia.iso) {
+                  @if (!dia.doMes) {
+                    <span></span>
+                  } @else if (dia.temHorario) {
+                    <button
+                      type="button"
+                      (click)="escolherDia(dia)"
+                      [attr.aria-pressed]="diaSelecionado() === dia.iso"
+                      [attr.aria-label]="'Dia ' + diaDoMes(dia) + ' com horários livres'"
+                      class="mx-auto flex size-12 cursor-pointer items-center justify-center rounded-full text-lg font-semibold transition-colors"
+                      [class]="diaSelecionado() === dia.iso ? 'bg-ponti-lilas text-ponti-marinho ring-2 ring-ponti-roxo' : 'bg-gray-200 text-ponti-marinho hover:bg-ponti-lilas/50'"
+                    >
+                      {{ diaDoMes(dia) }}
+                    </button>
+                  } @else {
+                    <span class="mx-auto flex size-12 items-center justify-center text-lg text-gray-400">{{ diaDoMes(dia) }}</span>
+                  }
+                }
+              </div>
+
+              @if (carregandoHorarios()) {
+                <p class="mt-4 text-sm text-gray-500" role="status">Carregando horários...</p>
+              } @else if (!horarios().length) {
+                <p class="mt-4 rounded-lg bg-gray-100 p-3 text-sm text-gray-600">
+                  Este mentor não tem horários livres neste mês. Veja o próximo mês.
+                </p>
+              }
+            </div>
+
+            <!-- Horários do dia -->
+            <div>
+              <h3 class="text-xl font-medium">Selecionar horário</h3>
+              @if (horariosDoDia().length) {
+                <div class="mt-4 flex flex-col gap-2">
+                  @for (h of horariosDoDia(); track h) {
+                    <button
+                      type="button"
+                      (click)="escolherHorario(h)"
+                      [attr.aria-pressed]="horarioSelecionado() === h"
+                      class="cursor-pointer rounded-lg border py-3 text-lg transition-colors"
+                      [class]="horarioSelecionado() === h ? 'border-ponti-lilas bg-ponti-lilas font-semibold text-white' : 'border-ponti-lilas bg-white hover:bg-ponti-lilas/20'"
+                    >
+                      {{ horarioCurto(h) }}
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="mt-4 text-gray-500">Escolha um dia destacado no calendário.</p>
+              }
+            </div>
+          </div>
+
+          @if (erro()) {
+            <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+          }
+
+          @if (horarioSelecionado()) {
+            <h3 class="mt-10 text-2xl font-medium">Data selecionada</h3>
+            <p class="mt-4 text-2xl">{{ textoSelecionado() }}</p>
+            <p class="mt-3 max-w-3xl text-gray-700">
+              Sessão de {{ duracao() }} pelo Google Meet. Depois do pagamento, o mentor confirma o horário e envia o link da reunião.
+            </p>
+            <div class="mt-8 flex justify-center">
+              <button
+                type="button"
+                (click)="irParaPagamento()"
+                class="flex cursor-pointer items-center gap-3 rounded-lg bg-ponti-lilas px-10 py-3 text-xl font-medium text-white transition hover:bg-ponti-roxo"
+              >
+                Seguinte <span aria-hidden="true">&rarr;</span>
+              </button>
+            </div>
+          }
+        }
+
+        <!-- Etapa 2: resumo e pagamento simulado -->
+        @case (2) {
+          <h2 class="mt-10 text-3xl font-medium">Resumo e pagamento</h2>
+          <div class="mt-6 grid max-w-3xl gap-6">
+            <div class="rounded-xl border border-gray-300 bg-white p-6">
+              <p class="text-lg"><span class="font-semibold">Mentor:</span> {{ m.nome }}</p>
+              <p class="mt-1 text-lg"><span class="font-semibold">Quando:</span> {{ textoSelecionado() }}</p>
+              <p class="mt-1 text-lg"><span class="font-semibold">Duração:</span> {{ duracao() }}</p>
+              <p class="mt-1 text-lg"><span class="font-semibold">Valor:</span> {{ valor() }}</p>
+            </div>
+
+            <label class="flex flex-col gap-2">
+              <span class="text-lg font-medium">O que você quer tratar na mentoria? (opcional)</span>
+              <textarea
+                name="mensagem"
+                rows="3"
+                maxlength="1000"
+                [(ngModel)]="mensagem"
+                placeholder="Ex.: queremos validar o preço do nosso MVP com o mercado pet."
+                class="rounded-lg border border-gray-300 p-3 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+              ></textarea>
+            </label>
+
+            @if (!gratuita()) {
+              <fieldset class="rounded-xl border border-gray-300 p-6">
+                <legend class="px-2 text-lg font-medium">Forma de pagamento</legend>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                  <label class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4" [class]="metodoPagamento === 'PIX' ? 'border-ponti-roxo bg-ponti-lilas/15' : 'border-gray-300'">
+                    <input type="radio" name="metodo" value="PIX" [(ngModel)]="metodoPagamento" class="accent-ponti-roxo" />
+                    Pix
+                  </label>
+                  <label class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4" [class]="metodoPagamento === 'CARTAO' ? 'border-ponti-roxo bg-ponti-lilas/15' : 'border-gray-300'">
+                    <input type="radio" name="metodo" value="CARTAO" [(ngModel)]="metodoPagamento" class="accent-ponti-roxo" />
+                    Cartão de crédito
+                  </label>
+                </div>
+                <p class="mt-4 rounded-lg bg-ponti-amarelo/20 p-3 text-sm text-gray-800">
+                  <strong>Pagamento simulado:</strong> esta é uma versão de demonstração e nenhuma cobrança é feita.
+                  Se o mentor recusar ou alguém cancelar, o valor aparece como reembolsado.
+                </p>
+              </fieldset>
+            }
+
+            @if (erro()) {
+              <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+            }
+
+            <button
+              type="button"
+              (click)="agendar()"
+              [disabled]="enviando()"
+              class="cursor-pointer rounded-lg bg-ponti-roxo py-4 text-xl font-medium text-white transition hover:bg-ponti-roxo/90 disabled:cursor-default disabled:opacity-60"
+            >
+              @if (enviando()) {
+                Enviando...
+              } @else if (gratuita()) {
+                Agendar mentoria gratuita
+              } @else {
+                Pagar {{ valor() }} e agendar
+              }
+            </button>
+          </div>
+        }
+
+        <!-- Etapa 3: pedido enviado -->
+        @case (3) {
+          <div class="mt-10 max-w-3xl rounded-xl border border-green-200 bg-green-50 p-8">
+            <h2 class="text-3xl font-medium text-green-900">Pedido enviado!</h2>
+            <p class="mt-4 text-lg text-green-900">
+              Sua mentoria com {{ m.nome }} para {{ textoConfirmado() }} está aguardando a confirmação do mentor.
+            </p>
+            <p class="mt-2 text-green-900">
+              Quando ele confirmar, o link do Google Meet aparece na sua tela de Mentorias.
+              @if (!gratuita()) {
+                Pagamento simulado registrado.
+              }
+            </p>
+            <a
+              routerLink="/mentorias"
+              class="mt-6 inline-block rounded-lg bg-ponti-roxo px-8 py-3 text-lg font-medium text-white transition hover:bg-ponti-roxo/90"
+            >
+              Ver minhas mentorias
+            </a>
+          </div>
+        }
+      }
+    }
+  } @else if (erro()) {
+    <p class="mt-8 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+  } @else {
+    <p class="mt-8 text-gray-500" role="status">Carregando...</p>
+  }
+</section>

@@ -30,7 +30,6 @@ public record CadastroMentor(
         @Size(max = 500) String fotoUrl,
         @Size(max = 500) String videoUrl,
         @Size(max = 500) String linkedinUrl,
-        @Size(max = 30) String whatsapp,
         @Valid @Size(max = 20) List<NovaCertificacao> certificacoes,
 
         // Etapa 3: como é a mentoria. Valor 0 = mentoria gratuita.

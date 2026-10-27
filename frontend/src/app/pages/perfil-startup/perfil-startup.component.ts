@@ -13,7 +13,7 @@ import { iniciais } from '../../shared/texto.utils';
 import { StartupService } from '../../startups/startup.service';
 
 // Página pública da startup, vista pelo mentor: maturidade, pitch em vídeo, sobre e conquistas.
-// O site e os contatos ficam de fora até o convite ser aceito (aparecem na tela de Convites).
+// O site fica de fora do perfil público.
 @Component({
   selector: 'app-perfil-startup',
   standalone: true,
@@ -56,10 +56,10 @@ export class PerfilStartupComponent implements OnInit {
   textoBotao = computed(() => {
     const c = this.convite();
     if (this.enviando()) return 'Enviando...';
-    if (!c) return 'Convidar para mentoria';
-    if (c.status === 'ACEITO') return 'Conectados';
-    if (c.status === 'RECUSADO') return 'Convite recusado';
-    return c.enviadoPor === 'MENTOR' ? 'Convite enviado' : 'Ela te convidou: responda em Convites';
+    if (!c) return 'Sugerir mentoria';
+    if (c.status === 'ACEITO') return 'Ela agendou com você';
+    if (c.status === 'RECUSADO') return 'Sugestão dispensada';
+    return 'Sugestão enviada';
   });
 
   ngOnInit() {
@@ -89,7 +89,7 @@ export class PerfilStartupComponent implements OnInit {
     const mentorId = this.sessao.mentorId();
     if (mentorId !== null) {
       this.conviteService.listarDoMentor(mentorId).subscribe({
-        next: (lista) => this.convite.set(lista.find((c) => c.startupId === startupId) ?? null),
+        next: (lista) => this.convite.set(lista.find((c) => c.startupId === startupId && c.enviadoPor === 'MENTOR') ?? null),
         error: () => {},
       });
     }
@@ -115,8 +115,8 @@ export class PerfilStartupComponent implements OnInit {
         this.enviando.set(false);
         this.erroConvite.set(
           e.status === 409
-            ? 'Já existe um convite entre você e essa startup. Veja na tela de Convites.'
-            : mensagemDeErro(e, 'Não foi possível enviar o convite. Tente novamente.'),
+            ? 'Você já sugeriu uma mentoria para essa startup.'
+            : mensagemDeErro(e, 'Não foi possível enviar a sugestão. Tente novamente.'),
         );
       },
     });

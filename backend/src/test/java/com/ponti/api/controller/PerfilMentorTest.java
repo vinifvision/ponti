@@ -6,11 +6,9 @@ import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Usuario;
@@ -50,7 +48,6 @@ class PerfilMentorTest {
         body.put("fotoUrl", "https://exemplo.com/foto.jpg");
         body.put("videoUrl", "https://www.youtube.com/watch?v=abc123");
         body.put("linkedinUrl", "https://www.linkedin.com/in/maria");
-        body.put("whatsapp", "+55 (81) 99999-0000");
         body.put("certificacoes", List.of(
                 Map.of("titulo", "Mentoria programa Sebrae", "instituicao", "Sebrae",
                         "anoInicio", 2024, "anoFim", 2025, "descricao", "Mentoria de produto"),
@@ -74,7 +71,7 @@ class PerfilMentorTest {
     class Cadastro {
 
         @Test
-        void gravaPrecoDuracaoVideoEContatos() throws Exception {
+        void gravaPrecoDuracaoVideoELinkedin() throws Exception {
             Mentor mentor = cadastrar(mentorCompleto());
 
             assertThat(mentor.getValorSessao()).isEqualByComparingTo(new BigDecimal("150"));
@@ -83,7 +80,6 @@ class PerfilMentorTest {
             assertThat(mentor.getFotoUrl()).isEqualTo("https://exemplo.com/foto.jpg");
             assertThat(mentor.getVideoUrl()).isEqualTo("https://www.youtube.com/watch?v=abc123");
             assertThat(mentor.getLinkedinUrl()).isEqualTo("https://www.linkedin.com/in/maria");
-            assertThat(mentor.getWhatsapp()).isEqualTo("+55 (81) 99999-0000");
         }
 
         @Test
@@ -126,10 +122,10 @@ class PerfilMentorTest {
     }
 
     @Nested
-    class Privacidade {
+    class Listagem {
 
         @Test
-        void listagemDeMentoresMostraPrecoMasNuncaOWhatsapp() throws Exception {
+        void perfilPublicoMostraPrecoDuracaoELinkedin() throws Exception {
             Mentor mentor = cadastrar(mentorCompleto());
 
             mockMvc.perform(get("/mentores/" + mentor.getId()))
@@ -139,51 +135,6 @@ class PerfilMentorTest {
                     .andExpect(jsonPath("$.linkedinUrl").value("https://www.linkedin.com/in/maria"))
                     .andExpect(jsonPath("$", not(hasKey("whatsapp"))));
         }
-
-        @Test
-        void editarPerfilSemEnviarWhatsappNaoApagaONumero() throws Exception {
-            Mentor mentor = cadastrar(mentorCompleto());
-
-            enviarJson(put("/mentores/" + mentor.getId()),
-                    Map.of("nome", "Maria S.", "valorSessao", 200, "duracaoSessaoMinutos", 45))
-                    .andExpect(status().isOk());
-
-            Mentor atualizado = mentorRepository.findById(mentor.getId()).orElseThrow();
-            assertThat(atualizado.getNome()).isEqualTo("Maria S.");
-            assertThat(atualizado.getWhatsapp()).isEqualTo("+55 (81) 99999-0000");
-        }
-
-        @Test
-        void startupSoRecebeOWhatsappDepoisQueOConviteEAceito() throws Exception {
-            Mentor mentor = cadastrar(mentorCompleto());
-            Long startupId = 1L; // PetCare Digital, criada em DadosIniciais
-
-            String json = enviarJson(post("/convites"), Map.of("startupId", startupId, "mentorId", mentor.getId()))
-                    .andExpect(status().isCreated())
-                    .andReturn().getResponse().getContentAsString();
-            Long conviteId = objectMapper.readTree(json).get("id").asLong();
-
-            assertThat(mentorDoConvite(startupId, conviteId).get("whatsapp").isNull()).isTrue();
-
-            mockMvc.perform(post("/convites/" + conviteId + "/aceitar")).andExpect(status().isOk());
-
-            JsonNode depois = mentorDoConvite(startupId, conviteId);
-            assertThat(depois.get("whatsapp").asText()).isEqualTo("+55 (81) 99999-0000");
-            assertThat(depois.get("valorSessao").decimalValue()).isEqualByComparingTo("150");
-        }
-
-        // Procura o convite na lista de enviados da startup e devolve os dados do mentor
-        JsonNode mentorDoConvite(Long startupId, Long conviteId) throws Exception {
-            String json = mockMvc.perform(get("/convites/detalhados").param("startupId", startupId.toString()))
-                    .andExpect(status().isOk())
-                    .andReturn().getResponse().getContentAsString();
-            for (JsonNode convite : objectMapper.readTree(json)) {
-                if (convite.get("id").asLong() == conviteId) {
-                    return convite.get("mentor");
-                }
-            }
-            throw new AssertionError("Convite " + conviteId + " não apareceu na lista da startup");
-    }
     }
 
     @Nested

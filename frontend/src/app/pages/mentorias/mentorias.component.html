@@ -1,0 +1,222 @@
+<section class="max-w-3xl pb-12 pt-6">
+  <h1 class="text-balance text-3xl font-medium sm:text-4xl">Mentorias</h1>
+  <p class="mt-2 text-gray-500">
+    {{
+      ehMentor()
+        ? 'Confirme os pedidos das startups, acompanhe as próximas sessões e as sugestões que você enviou.'
+        : 'Suas sessões agendadas, com o link do Google Meet quando o mentor confirma.'
+    }}
+  </p>
+
+  @if (erro()) {
+    <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+  }
+
+  @if (carregando()) {
+    <p class="mt-8 text-gray-500" role="status">Carregando mentorias...</p>
+  } @else {
+    <!-- Startup: sugestões que os mentores enviaram -->
+    @if (!ehMentor() && sugestoesPendentes().length) {
+      <h2 class="mt-10 text-2xl font-medium">Mentores sugeriram uma mentoria</h2>
+      <ul class="mt-4 flex flex-col gap-4">
+        @for (c of sugestoesPendentes(); track c.id) {
+          <li class="rounded-xl border border-ponti-lilas bg-ponti-lilas/10 p-6">
+            <h3 class="text-xl font-bold">{{ c.mentor?.nome }}</h3>
+            @if (c.mentor?.areasAtuacao) {
+              <p class="mt-1 text-gray-600">{{ c.mentor?.areasAtuacao }}</p>
+            }
+            <p class="mt-2 text-ponti-marinho">{{ valorDoMentor(c) }}</p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <a
+                [routerLink]="['/mentores', c.mentor?.id, 'agendar']"
+                class="rounded-lg bg-ponti-roxo px-6 py-2 font-medium text-white transition hover:bg-ponti-roxo/90"
+              >
+                Ver horários e agendar
+              </a>
+              <a [routerLink]="['/mentores', c.mentor?.id, 'perfil']" class="rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">
+                Ver perfil
+              </a>
+              <button
+                type="button"
+                (click)="dispensarSugestao(c)"
+                [disabled]="agindoId() !== null"
+                class="cursor-pointer px-2 py-2 text-sm font-semibold text-gray-500 hover:underline disabled:opacity-60"
+              >
+                Dispensar
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Mentor: pedidos para confirmar -->
+    @if (ehMentor()) {
+      <h2 class="mt-10 flex items-center gap-3 text-2xl font-medium">
+        Pedidos para confirmar
+        @if (pedidos().length) {
+          <span class="rounded-full bg-ponti-roxo px-3 py-0.5 text-sm font-medium text-white">{{ pedidos().length }}</span>
+        }
+      </h2>
+      @if (pedidos().length === 0) {
+        <p class="mt-4 rounded-lg border border-dashed border-gray-300 p-6 text-center text-gray-500">
+          Nenhum pedido novo. As startups agendam pelos horários de
+          <a routerLink="/agenda" class="font-semibold text-ponti-roxo hover:underline">Minha agenda</a>.
+        </p>
+      } @else {
+        <ul class="mt-4 flex flex-col gap-4">
+          @for (a of pedidos(); track a.id) {
+            <li class="rounded-xl border border-gray-300 bg-white p-6">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <h3 class="text-xl font-bold">{{ a.startup?.nome }}</h3>
+                  @if (a.startup?.descricao) {
+                    <p class="text-gray-600">{{ a.startup?.descricao }}</p>
+                  }
+                  <p class="mt-2 font-medium text-ponti-marinho">{{ quando(a) }}</p>
+                  <p class="text-sm text-gray-600">{{ pagamento(a) }}</p>
+                  @if (a.mensagem) {
+                    <p class="mt-3 rounded-lg bg-gray-50 p-3 text-gray-700">"{{ a.mensagem }}"</p>
+                  }
+                  @if (a.startup) {
+                    <a [routerLink]="['/startups', a.startup.id, 'perfil']" class="mt-2 inline-block text-sm font-semibold text-ponti-roxo hover:underline">
+                      Ver perfil da startup
+                    </a>
+                  }
+                </div>
+                <span class="shrink-0 rounded-full px-4 py-1 text-sm font-medium" [class]="classe(a)">{{ rotulo(a) }}</span>
+              </div>
+
+              <div class="mt-5 flex flex-col gap-3">
+                <label class="flex flex-col gap-1">
+                  <span class="text-sm font-medium">Link da reunião no Google Meet</span>
+                  <input
+                    type="url"
+                    [name]="'link-' + a.id"
+                    [(ngModel)]="links[a.id]"
+                    placeholder="https://meet.google.com/abc-defg-hij"
+                    class="rounded-lg border border-gray-300 px-3 py-2 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+                  />
+                </label>
+                <p class="text-xs text-gray-500">
+                  Dica: crie a reunião em
+                  <a href="https://meet.google.com/new" target="_blank" rel="noopener noreferrer" class="underline">meet.google.com/new</a>
+                  e cole o link aqui.
+                </p>
+                <div class="flex gap-3">
+                  <button
+                    type="button"
+                    (click)="confirmar(a)"
+                    [disabled]="agindoId() !== null"
+                    class="cursor-pointer rounded-lg bg-ponti-roxo px-6 py-2 font-medium text-white transition hover:brightness-95 disabled:opacity-60"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    type="button"
+                    (click)="recusar(a)"
+                    [disabled]="agindoId() !== null"
+                    class="cursor-pointer rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    Recusar
+                  </button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    <!-- Próximas sessões -->
+    <h2 class="mt-10 text-2xl font-medium">Próximas mentorias</h2>
+    @if (proximas().length === 0) {
+      <p class="mt-4 rounded-lg border border-dashed border-gray-300 p-6 text-center text-gray-500">
+        @if (ehMentor()) {
+          Nenhuma sessão confirmada por enquanto.
+        } @else {
+          Você ainda não agendou mentorias.
+          <a routerLink="/encontrar-mentores" class="font-semibold text-ponti-roxo hover:underline">Encontrar mentores</a>
+        }
+      </p>
+    } @else {
+      <ul class="mt-4 flex flex-col gap-4">
+        @for (a of proximas(); track a.id) {
+          <li class="rounded-xl border border-gray-300 bg-white p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <h3 class="text-xl font-bold">{{ outraParte(a)?.nome }}</h3>
+                @if (outraParte(a)?.descricao) {
+                  <p class="text-gray-600">{{ outraParte(a)?.descricao }}</p>
+                }
+                <p class="mt-2 font-medium text-ponti-marinho">{{ quando(a) }}</p>
+                <p class="text-sm text-gray-600">{{ pagamento(a) }}</p>
+                @if (a.status === 'PENDENTE') {
+                  <p class="mt-2 text-sm text-gray-500">O link do Google Meet aparece aqui quando o mentor confirmar.</p>
+                }
+              </div>
+              <span class="shrink-0 rounded-full px-4 py-1 text-sm font-medium" [class]="classe(a)">{{ rotulo(a) }}</span>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+              @if (link(a); as url) {
+                <a
+                  [href]="url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="rounded-lg bg-ponti-roxo px-6 py-2 font-medium text-white transition hover:bg-ponti-roxo/90"
+                >
+                  Entrar na reunião
+                </a>
+              }
+              @if (podeCancelar(a)) {
+                <button
+                  type="button"
+                  (click)="cancelar(a)"
+                  [disabled]="agindoId() !== null"
+                  class="cursor-pointer px-2 py-2 text-sm font-semibold text-red-600 hover:underline disabled:opacity-60"
+                >
+                  Cancelar mentoria
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Histórico -->
+    @if (historico().length) {
+      <h2 class="mt-10 text-2xl font-medium">Histórico</h2>
+      <ul class="mt-4 flex flex-col gap-3">
+        @for (a of historico(); track a.id) {
+          <li class="flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div class="min-w-0">
+              <p class="font-semibold">{{ outraParte(a)?.nome }}</p>
+              <p class="text-sm text-gray-600">{{ quando(a) }}</p>
+              <p class="text-sm text-gray-500">{{ pagamento(a) }}</p>
+            </div>
+            <span class="shrink-0 rounded-full px-3 py-1 text-xs font-medium" [class]="classe(a)">{{ rotulo(a) }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Mentor: sugestões enviadas -->
+    @if (ehMentor() && sugestoes().length) {
+      <h2 class="mt-10 text-2xl font-medium">Sugestões de mentoria enviadas</h2>
+      <ul class="mt-4 flex flex-col gap-3">
+        @for (c of sugestoes(); track c.id) {
+          <li class="flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4">
+            <div class="min-w-0">
+              <p class="font-semibold">{{ c.startup?.nome }}</p>
+              @if (maturidade(c)) {
+                <p class="text-sm text-gray-600">{{ maturidade(c) }}</p>
+              }
+            </div>
+            <span class="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">{{ rotuloSugestao(c) }}</span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

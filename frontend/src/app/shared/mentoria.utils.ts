@@ -41,9 +41,3 @@ export function linkSeguro(url: string | null | undefined): string | null {
   if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(limpo)) return `https://${limpo}`;
   return null;
 }
-
-// Link do WhatsApp a partir do número (só os dígitos)
-export function linkWhatsapp(numero: string | null | undefined): string | null {
-  const digitos = (numero ?? '').replace(/\D/g, '');
-  return digitos.length >= 10 ? `https://wa.me/${digitos}` : null;
-}

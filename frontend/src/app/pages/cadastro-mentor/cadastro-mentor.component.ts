@@ -43,7 +43,6 @@ export class CadastroMentorComponent {
   anosExperiencia: number | null = null;
   sobre = '';
   linkedinUrl = '';
-  whatsapp = '';
 
   // Etapa 3: vitrine (foto, vídeo e certificações)
   fotoUrl = '';
@@ -130,7 +129,6 @@ export class CadastroMentorComponent {
         anosExperiencia: this.anosExperiencia!,
         sobre: this.sobre.trim(),
         linkedinUrl: this.opcional(linkSeguro(this.linkedinUrl) ?? ''),
-        whatsapp: this.opcional(this.whatsapp),
         fotoUrl: this.opcional(linkSeguro(this.fotoUrl) ?? ''),
         videoUrl: this.opcional(this.videoUrl),
         certificacoes: this.certificacoes(),
@@ -138,7 +136,7 @@ export class CadastroMentorComponent {
         duracaoSessaoMinutos: this.duracaoSessaoMinutos,
       })
       .subscribe({
-        next: () => this.router.navigateByUrl('/encontrar-startups'),
+        next: () => this.router.navigate(['/agenda'], { queryParams: { novo: 1 } }),
         error: (e: HttpErrorResponse) => {
           this.erro.set(mensagemDeErro(e, 'Não foi possível criar a conta. Confira os dados e tente de novo.'));
           this.salvando.set(false);
@@ -164,8 +162,6 @@ export class CadastroMentorComponent {
         if (!this.sobre.trim()) return 'Conte um pouco sobre você no campo "Sobre mim".';
         if (this.sobre.length > 2000) return 'O campo "Sobre mim" pode ter no máximo 2000 caracteres.';
         if (this.linkedinUrl.trim() && !linkSeguro(this.linkedinUrl)) return 'O link do LinkedIn não parece válido.';
-        if (this.whatsapp.trim() && this.whatsapp.replace(/\D/g, '').length < 10)
-          return 'Informe o WhatsApp com DDD (ex.: (81) 99999-0000).';
         return '';
       }
       case 2:
