@@ -49,6 +49,11 @@ public class CadastroService {
         startup.setNome(dados.nome());
         startup.setSegmento(dados.areaAtuacao());
         startup.setDescricao(dados.sobre());
+        startup.setCidade(dados.cidade());
+        startup.setEstado(dados.estado());
+        startup.setVideoPitchUrl(dados.videoPitchUrl());
+        startup.setFotoUrl(dados.fotoUrl());
+        startup.setSite(dados.site());
         // estagioMaturidade fica vazio: é preenchido depois, pelo formulário de maturidade
 
         usuario.setStartupId(startupRepository.save(startup).getId());

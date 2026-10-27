@@ -1,14 +1,16 @@
 package com.ponti.api.dto;
 
 import com.ponti.api.model.StatusConvite;
+import com.ponti.api.model.TipoUsuario;
 import java.math.BigDecimal;
 
-// Convite já com os dados de quem enviou (startup) e de quem recebeu (mentor).
-// Serve para o front montar a inbox do mentor e a lista de enviados da startup
+// Convite já com os dados da startup e do mentor, e de quem foi a iniciativa (enviadoPor).
+// Serve para o front montar as listas de recebidos e enviados dos dois lados
 // sem precisar de uma chamada extra por convite.
 public record ConviteDetalhe(
         Long id,
         StatusConvite status,
+        TipoUsuario enviadoPor,
         StartupResumo startup,
         MentorResumo mentor) {
 
@@ -22,6 +24,7 @@ public record ConviteDetalhe(
             String estado,
             Integer estagioMaturidade,
             String videoPitchUrl,
+            String fotoUrl,
             String site) {
     }
 

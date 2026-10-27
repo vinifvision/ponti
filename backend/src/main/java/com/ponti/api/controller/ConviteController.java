@@ -5,6 +5,7 @@ import com.ponti.api.model.Convite;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.StatusConvite;
+import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
@@ -52,8 +53,9 @@ public class ConviteController {
     }
 
     // READ (todos), já com os dados da startup e do mentor. Aceita os mesmos filtros de GET /convites.
-    //   /convites/detalhados?mentorId=1&status=PENDENTE  -> inbox do mentor
-    //   /convites/detalhados?startupId=2                 -> enviados pela startup
+    //   /convites/detalhados?mentorId=1   -> convites do mentor (recebidos e enviados)
+    //   /convites/detalhados?startupId=2  -> convites da startup (recebidos e enviados)
+    // O campo enviadoPor diz de quem foi a iniciativa.
     @GetMapping("/detalhados")
     public List<ConviteDetalhe> listarDetalhados(@RequestParam(required = false) Long mentorId,
                                                  @RequestParam(required = false) Long startupId,
@@ -67,7 +69,8 @@ public class ConviteController {
         return procurar(id);
     }
 
-    // CREATE: a startup envia um convite para um mentor (sempre nasce PENDENTE)
+    // CREATE: a startup convida um mentor, ou o mentor convida uma startup (enviadoPor).
+    // Sempre nasce PENDENTE. Só existe um convite por par startup + mentor, seja qual for o sentido.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Convite criar(@Valid @RequestBody Convite body) {
@@ -79,20 +82,24 @@ public class ConviteController {
         }
         if (repository.existsByStartupIdAndMentorId(body.getStartupId(), body.getMentorId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Essa startup já enviou um convite para esse mentor");
+                    "Já existe um convite entre essa startup e esse mentor");
         }
         body.setId(null);
         body.setStatus(StatusConvite.PENDENTE);
+        if (body.getEnviadoPor() == null) {
+            body.setEnviadoPor(TipoUsuario.STARTUP);
+        }
         return repository.save(body);
     }
 
-    // O mentor aceita o convite
+    // Quem recebeu o convite aceita
+    // TODO (PR de segurança): conferir pelo token que quem responde é o lado que recebeu
     @PostMapping("/{id}/aceitar")
     public Convite aceitar(@PathVariable Long id) {
         return responder(id, StatusConvite.ACEITO);
     }
 
-    // O mentor recusa o convite
+    // Quem recebeu o convite recusa
     @PostMapping("/{id}/recusar")
     public Convite recusar(@PathVariable Long id) {
         return responder(id, StatusConvite.RECUSADO);
@@ -125,12 +132,12 @@ public class ConviteController {
 
         ConviteDetalhe.StartupResumo startup = s == null ? null : new ConviteDetalhe.StartupResumo(
                 s.getId(), s.getNome(), s.getDescricao(), s.getSegmento(), s.getCidade(), s.getEstado(),
-                s.getEstagioMaturidade(), s.getVideoPitchUrl(), aceito ? s.getSite() : null);
+                s.getEstagioMaturidade(), s.getVideoPitchUrl(), s.getFotoUrl(), aceito ? s.getSite() : null);
         ConviteDetalhe.MentorResumo mentor = m == null ? null : new ConviteDetalhe.MentorResumo(
                 m.getId(), m.getNome(), m.getAreasAtuacao(), m.getEcossistemas(), m.getValorSessao(),
                 m.getDuracaoSessaoMinutos(), m.getFotoUrl(), m.getLinkedinUrl(), aceito ? m.getWhatsapp() : null);
 
-        return new ConviteDetalhe(convite.getId(), convite.getStatus(), startup, mentor);
+        return new ConviteDetalhe(convite.getId(), convite.getStatus(), convite.getEnviadoPor(), startup, mentor);
     }
 
     private Convite procurar(Long id) {
