@@ -135,7 +135,7 @@ public class ConviteController {
                 s.getEstagioMaturidade(), s.getVideoPitchUrl(), s.getFotoUrl(), aceito ? s.getSite() : null);
         ConviteDetalhe.MentorResumo mentor = m == null ? null : new ConviteDetalhe.MentorResumo(
                 m.getId(), m.getNome(), m.getAreasAtuacao(), m.getEcossistemas(), m.getValorSessao(),
-                m.getDuracaoSessaoMinutos(), m.getFotoUrl(), m.getLinkedinUrl(), aceito ? m.getWhatsapp() : null);
+                m.getDuracaoSessaoMinutos(), m.getFotoUrl(), m.getLinkedinUrl());
 
         return new ConviteDetalhe(convite.getId(), convite.getStatus(), convite.getEnviadoPor(), startup, mentor);
     }

@@ -1,15 +1,19 @@
 package com.ponti.api.config;
 
 import com.ponti.api.model.Certificacao;
+import com.ponti.api.model.Disponibilidade;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.CertificacaoRepository;
+import com.ponti.api.repository.DisponibilidadeRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.repository.UsuarioRepository;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -28,17 +32,20 @@ public class DadosIniciais implements CommandLineRunner {
 
     private final MentorRepository mentorRepository;
     private final CertificacaoRepository certificacaoRepository;
+    private final DisponibilidadeRepository disponibilidadeRepository;
     private final StartupRepository startupRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DadosIniciais(MentorRepository mentorRepository,
                          CertificacaoRepository certificacaoRepository,
+                         DisponibilidadeRepository disponibilidadeRepository,
                          StartupRepository startupRepository,
                          UsuarioRepository usuarioRepository,
                          PasswordEncoder passwordEncoder) {
         this.mentorRepository = mentorRepository;
         this.certificacaoRepository = certificacaoRepository;
+        this.disponibilidadeRepository = disponibilidadeRepository;
         this.startupRepository = startupRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
@@ -54,7 +61,6 @@ public class DadosIniciais implements CommandLineRunner {
                     "Health-techs, PetTech",
                     8, new BigDecimal("120.00"), 60));
             juliana.setLinkedinUrl("https://www.linkedin.com/in/exemplo-juliana");
-            juliana.setWhatsapp("+55 (81) 99876-5432");
             juliana = mentorRepository.save(juliana);
             certificacaoRepository.save(certificacao(juliana, "Mentoria programa Porto Digital", "Porto Digital",
                     2026, 2026, "Mentoria de validação de produto para startups do programa de aceleração."));
@@ -66,6 +72,13 @@ public class DadosIniciais implements CommandLineRunner {
                     "Veterinário",
                     "Health-techs, PetTech",
                     5, BigDecimal.ZERO, 45));
+            // Horários em que cada mentor atende, para a agenda já aparecer com opções
+            disponivel(juliana, DayOfWeek.TUESDAY, "09:00", "12:00");
+            disponivel(juliana, DayOfWeek.THURSDAY, "09:00", "12:00");
+            disponivel(juliana, DayOfWeek.THURSDAY, "14:00", "16:00");
+            disponivel(roberto, DayOfWeek.MONDAY, "14:00", "17:00");
+            disponivel(roberto, DayOfWeek.WEDNESDAY, "14:00", "17:00");
+            disponivel(roberto, DayOfWeek.FRIDAY, "09:00", "11:15");
             usuarioRepository.save(usuarioDoMentor("juliana@exemplo.com", juliana));
             usuarioRepository.save(usuarioDoMentor("roberto@exemplo.com", roberto));
         }
@@ -95,6 +108,15 @@ public class DadosIniciais implements CommandLineRunner {
         m.setValorSessao(valorSessao);
         m.setDuracaoSessaoMinutos(duracaoSessaoMinutos);
         return m;
+    }
+
+    private void disponivel(Mentor mentor, DayOfWeek dia, String inicio, String fim) {
+        Disponibilidade d = new Disponibilidade();
+        d.setMentorId(mentor.getId());
+        d.setDiaSemana(dia);
+        d.setHoraInicio(LocalTime.parse(inicio));
+        d.setHoraFim(LocalTime.parse(fim));
+        disponibilidadeRepository.save(d);
     }
 
     private Certificacao certificacao(Mentor mentor, String titulo, String instituicao,

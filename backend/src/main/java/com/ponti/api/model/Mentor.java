@@ -1,6 +1,5 @@
 package com.ponti.api.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -49,13 +48,6 @@ public class Mentor {
     @Column(length = 500)
     private String linkedinUrl;
 
-    // Contato direto. Só é gravado, nunca devolvido nas listagens:
-    // a startup só recebe o WhatsApp depois que o convite é aceito (ver ConviteDetalhe).
-    @Size(max = 30)
-    @Column(length = 30)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String whatsapp;
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
@@ -78,6 +70,4 @@ public class Mentor {
     public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
     public String getLinkedinUrl() { return linkedinUrl; }
     public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
-    public String getWhatsapp() { return whatsapp; }
-    public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
 }

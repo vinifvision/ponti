@@ -73,7 +73,6 @@ public class CadastroService {
         mentor.setFotoUrl(dados.fotoUrl());
         mentor.setVideoUrl(dados.videoUrl());
         mentor.setLinkedinUrl(dados.linkedinUrl());
-        mentor.setWhatsapp(dados.whatsapp());
         mentor.setValorSessao(dados.valorSessao());
         mentor.setDuracaoSessaoMinutos(dados.duracaoSessaoMinutos());
 

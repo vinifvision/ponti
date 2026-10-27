@@ -36,8 +36,6 @@ public record ConviteDetalhe(
             BigDecimal valorSessao,
             Integer duracaoSessaoMinutos,
             String fotoUrl,
-            String linkedinUrl,
-            // O WhatsApp do mentor só aparece depois que o convite é aceito
-            String whatsapp) {
+            String linkedinUrl) {
     }
 }

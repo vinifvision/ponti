@@ -82,14 +82,10 @@ public class MentorController {
     // UPDATE
     @PutMapping("/{id}")
     public Mentor atualizar(@PathVariable Long id, @Valid @RequestBody Mentor body) {
-        Mentor atual = repository.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)"));
-        body.setId(id);
-        // O WhatsApp nunca volta nas respostas, então quem edita o perfil não o reenvia:
-        // se não vier no corpo, mantém o que já estava gravado.
-        if (body.getWhatsapp() == null) {
-            body.setWhatsapp(atual.getWhatsapp());
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)");
         }
+        body.setId(id);
         return repository.save(body);
     }
 
