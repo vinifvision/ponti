@@ -13,9 +13,6 @@
     <app-filtro-select rotulo="Filtro" placeholder="Filtrar" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
   </div>
 
-  @if (erroConexao()) {
-    <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erroConexao() }}</p>
-  }
 
   <div class="mt-8">
     @if (carregando()) {
@@ -35,9 +32,7 @@
               [mentor]="mentor"
               [compativel]="ehCompativel(mentor)"
               [selecionado]="mentor.id === selecionadoId()"
-              [conectado]="conectados().has(mentor.id!)"
               (selecionar)="selecionar($event)"
-              (conectar)="conectar($event)"
             />
 
             @if (focoId() === mentor.id) {

@@ -47,10 +47,6 @@
         <input name="anosExperiencia" type="number" min="0" max="70" step="1" placeholder="Tempo de experiência (anos) *" [(ngModel)]="anosExperiencia" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
         <textarea name="sobre" rows="5" placeholder="Sobre mim: como você pode ajudar uma startup? *" maxlength="2000" [(ngModel)]="sobre" class="w-full resize-none rounded-3xl border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50"></textarea>
         <input name="linkedinUrl" type="url" placeholder="LinkedIn (opcional), ex.: linkedin.com/in/seu-nome" maxlength="500" [(ngModel)]="linkedinUrl" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
-        <input name="whatsapp" type="tel" placeholder="WhatsApp com DDD (opcional)" maxlength="30" [(ngModel)]="whatsapp" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
-        <p class="px-4 text-sm text-neutral-500">
-          O WhatsApp só aparece para a startup depois que você aceitar o convite dela.
-        </p>
       }
 
       @case (2) {

@@ -15,10 +15,8 @@ export class MentorCardComponent {
   mentor = input.required<Mentor>();
   compativel = input(false);
   selecionado = input(false);
-  conectado = input(false);
 
   selecionar = output<Mentor>();
-  conectar = output<Mentor>();
 
   iniciais = computed(() => iniciais(this.mentor().nome));
   valor = computed(() => formatarValorSessao(this.mentor().valorSessao));

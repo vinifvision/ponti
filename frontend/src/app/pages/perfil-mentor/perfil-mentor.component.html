@@ -57,28 +57,15 @@
     </div>
 
     <!-- Ações -->
-    <div class="mt-6 flex flex-wrap gap-4">
-      @if (ehStartup()) {
-        <button
-          type="button"
-          (click)="conectar()"
-          [disabled]="conectado() || enviando()"
-          class="cursor-pointer rounded-lg bg-ponti-roxo px-12 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90 disabled:cursor-default disabled:bg-gray-200 disabled:text-gray-600"
+    @if (ehStartup()) {
+      <div class="mt-6 flex flex-wrap gap-4">
+        <a
+          [routerLink]="['/mentores', m.id, 'agendar']"
+          class="rounded-lg bg-ponti-roxo px-12 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90"
         >
-          {{ conectado() ? 'Convite em andamento' : enviando() ? 'Enviando...' : 'Conectar' }}
-        </button>
-      }
-      <button
-        type="button"
-        disabled
-        title="Em breve: escolher dia e horário com o mentor"
-        class="rounded-lg border border-ponti-lilas px-8 py-3 text-lg font-medium text-gray-500"
-      >
-        Ver calendário do mentor (em breve)
-      </button>
-    </div>
-    @if (erroConexao()) {
-      <p class="mt-3 text-sm text-red-600" role="alert">{{ erroConexao() }}</p>
+          Ver calendário e agendar
+        </a>
+      </div>
     }
 
     <!-- Sobre mim -->
@@ -131,10 +118,10 @@
           </a>
         </div>
       }
-      <div>
-        <h3 class="font-medium text-ponti-marinho">WhatsApp</h3>
-        <p class="text-gray-600">Aparece na sua tela de Convites depois que o mentor aceitar a conexão.</p>
-      </div>
+      @if (!linkedin()) {
+        <p class="text-gray-600">Este mentor ainda não adicionou redes de contato.</p>
+      }
+      <p class="text-gray-600">As sessões acontecem pelo link do Google Meet que o mentor envia ao confirmar o horário.</p>
     </div>
   }
   }

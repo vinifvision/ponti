@@ -50,8 +50,6 @@ export interface ConviteDetalhe {
     duracaoSessaoMinutos?: number | null;
     fotoUrl?: string | null;
     linkedinUrl?: string | null;
-    // Só vem preenchido depois que o convite é aceito
-    whatsapp?: string | null;
   } | null;
 }
 
@@ -67,8 +65,6 @@ export interface Mentor {
   fotoUrl?: string | null;
   videoUrl?: string | null;
   linkedinUrl?: string | null;
-  // O WhatsApp nunca vem nas listagens: só em ConviteDetalhe, depois do aceite.
-  whatsapp?: string | null;
 }
 
 // Certificação ou experiência que aparece no perfil
@@ -79,4 +75,48 @@ export interface Certificacao {
   anoInicio?: number | null;
   anoFim?: number | null;
   descricao?: string | null;
+}
+
+// ---------- Agenda (fluxo estilo Preply) ----------
+
+export type DiaSemana = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+// Faixa semanal em que o mentor atende. Horas no formato "09:00" (o backend devolve "09:00:00").
+export interface FaixaDisponibilidade {
+  diaSemana: DiaSemana;
+  horaInicio: string;
+  horaFim: string;
+}
+
+export type StatusAgendamento = 'PENDENTE' | 'CONFIRMADO' | 'RECUSADO' | 'CANCELADO';
+export type StatusPagamento = 'GRATUITA' | 'PAGO' | 'REEMBOLSADO';
+export type MetodoPagamento = 'PIX' | 'CARTAO';
+
+export interface NovoAgendamento {
+  startupId: number;
+  mentorId: number;
+  inicio: string; // "2026-11-03T09:00:00", horário de Recife
+  metodoPagamento?: MetodoPagamento;
+  mensagem?: string;
+}
+
+export interface ParteAgendamento {
+  id: number;
+  nome: string;
+  fotoUrl?: string | null;
+  descricao?: string | null; // segmento da startup ou área do mentor
+}
+
+export interface Agendamento {
+  id: number;
+  inicio: string;
+  fim: string;
+  valor: number;
+  status: StatusAgendamento;
+  statusPagamento: StatusPagamento;
+  metodoPagamento?: MetodoPagamento | null;
+  linkReuniao?: string | null; // só quando CONFIRMADO
+  mensagem?: string | null;
+  startup: ParteAgendamento | null;
+  mentor: ParteAgendamento | null;
 }

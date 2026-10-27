@@ -10,7 +10,9 @@ import { CadastroMentorComponent } from './pages/cadastro-mentor/cadastro-mentor
 import { EncontrarStartupsComponent } from './pages/encontrar-startups/encontrar-startups.component';
 import { PerfilStartupComponent } from './pages/perfil-startup/perfil-startup.component';
 import { PerfilMentorComponent } from './pages/perfil-mentor/perfil-mentor.component';
-import { ConvitesComponent } from './pages/convites/convites.component';
+import { AgendarMentoriaComponent } from './pages/agendar-mentoria/agendar-mentoria.component';
+import { MentoriasComponent } from './pages/mentorias/mentorias.component';
+import { MinhaAgendaComponent } from './pages/minha-agenda/minha-agenda.component';
 import { EncontrarMentoresComponent } from './pages/encontrar-mentores/encontrar-mentores.component';
 import { EmBreveComponent } from './pages/em-breve/em-breve.component';
 import { StartupListComponent } from './startups/startup-list.component';
@@ -45,11 +47,13 @@ export const routes: Routes = [
     canActivate: [autenticadoGuard],
     children: [
       { path: 'encontrar-mentores', component: EncontrarMentoresComponent, title: 'Encontrar Mentores | Ponti' },
-      { path: 'convites', component: ConvitesComponent, title: 'Convites | Ponti' },
+      { path: 'mentorias', component: MentoriasComponent, title: 'Mentorias | Ponti' },
+      { path: 'convites', pathMatch: 'full', redirectTo: 'mentorias' },
+      { path: 'mentores/:id/agendar', component: AgendarMentoriaComponent, title: 'Agendar mentoria | Ponti' },
       { path: 'mentores/:id/perfil', component: PerfilMentorComponent, title: 'Perfil do mentor | Ponti' },
       { path: 'encontrar-startups', component: EncontrarStartupsComponent, title: 'Encontrar Startups | Ponti' },
       { path: 'startups/:id/perfil', component: PerfilStartupComponent, title: 'Perfil da startup | Ponti' },
-      { path: 'agenda', component: EmBreveComponent, data: { titulo: 'Agenda' }, title: 'Agenda | Ponti' },
+      { path: 'agenda', component: MinhaAgendaComponent, title: 'Minha agenda | Ponti' },
       { path: 'perfil', component: EmBreveComponent, data: { titulo: 'Perfil' }, title: 'Perfil | Ponti' },
       {
         path: 'configuracoes',

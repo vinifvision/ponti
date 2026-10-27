@@ -28,7 +28,6 @@ export interface CadastroMentor {
   fotoUrl?: string;
   videoUrl?: string;
   linkedinUrl?: string;
-  whatsapp?: string;
   certificacoes?: Certificacao[];
   // Etapa 3: como é a mentoria (0 = gratuita)
   valorSessao: number;
