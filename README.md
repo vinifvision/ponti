@@ -25,7 +25,7 @@ A plataforma atua como um canal bidirecional e sem ruídos para o ecossistema de
 ## 🎯 A Problemática e a Solução
 
 - **O Problema:** Cerca de 1 em cada 4 startups fecha no primeiro ano de vida por falta de experiência. Hoje, encontrar um mentor depende de redes genéricas (como o LinkedIn) ou de eventos presenciais, sem uma ferramenta dedicada para filtrar o encaixe técnico dos envolvidos.
-- **A Solução:** O Ponti centraliza a oferta e busca de mentoria. As startups apresentam seu negócio e vídeo de pitch para mentores específicos; os mentores recebem convites organizados em um *inbox*, aceitando ou recusando conexões em poucos cliques, sem expor dados pessoais antes do aceite mútuo.
+- **A Solução:** O Ponti centraliza a oferta e a busca de mentoria, num fluxo parecido com o do Preply. A startup encontra mentores com preço e calendário visíveis, escolhe um horário livre e paga (nesta versão, o pagamento é simulado). O mentor confirma enviando o link do Google Meet. O mentor também encontra startups e pode sugerir uma mentoria a elas. Nenhum contato pessoal (como WhatsApp) é exposto: a sessão acontece pelo link da reunião.
 
 ---
 
@@ -44,9 +44,10 @@ O projeto adota o modelo **Cliente-Servidor (API RESTful)** e uma arquitetura de
 
 - [ ] **Gestão de Perfis Segregados:** Cadastro separado para fundadores de Startups e Mentores.
 - [ ] **Busca Bidirecional Qualificada:** Filtros por área de expertise, estágio da startup e ecossistema de atuação.
-- [ ] **Inbox de Conexões:** Painel para o mentor gerenciar (aceitar/recusar) solicitações de mentoria.
+- [x] **Agenda e Agendamento:** O mentor define os horários semanais; a startup agenda um horário livre e o mentor confirma com o link do Google Meet.
+- [x] **Pagamento Simulado:** Pix ou cartão de demonstração, com reembolso simulado em recusas e cancelamentos.
 - [ ] **Apresentação em Vídeo:** Suporte para inclusão do vídeo de pitch no perfil da startup.
-- [ ] **Privacidade e Segurança:** Dados de contato direto ofuscados até a confirmação do *match*.
+- [ ] **Privacidade e Segurança:** Sem exposição de contato pessoal; as sessões acontecem pelo link da reunião.
 
 ---
 
@@ -108,13 +109,14 @@ gh codespace ports visibility 8080:public -c $CODESPACE_NAME
 |---|---|---|
 | Startups | `/startups` | listar, buscar por id, criar, atualizar, excluir |
 | Mentores | `/mentores` | listar, buscar por id, criar, atualizar, excluir |
-| Convites | `/convites` | listar, buscar por id, criar, atualizar, excluir (somente API) |
-| Convites (inbox do mentor) | `/convites?mentorId=1&status=PENDENTE` | filtrar por mentor, startup e status |
-| Convites com detalhes | `GET /convites/detalhados?mentorId=1&status=PENDENTE` | inbox do mentor com os dados da startup (ou enviados da startup, com `startupId`) |
+| Disponibilidade do mentor | `GET` e `PUT /mentores/{id}/disponibilidade` | horários em que o mentor atende na semana |
+| Horários livres | `GET /mentores/{id}/horarios?de=2026-11-01&ate=2026-11-30` | blocos livres para agendar |
+| Agendamentos | `GET /agendamentos?startupId=1` ou `?mentorId=1`, `POST /agendamentos` | lista e cria mentorias (pagamento simulado) |
+| Responder agendamento | `POST /agendamentos/{id}/confirmar` (com o link do Meet), `/recusar`, `/cancelar` | ciclo de vida da mentoria |
+| Sugestões de mentoria | `/convites` e `GET /convites/detalhados?startupId=1` | o mentor sugere uma mentoria a uma startup |
 | Cadastro | `POST /auth/cadastro/startup`, `POST /auth/cadastro/mentor` | cria a conta (e-mail + senha com BCrypt) e o perfil juntos |
 | Login | `POST /auth/login` | confere e-mail e senha e devolve um token JWT (válido por 8h) |
 | Quem está logado | `GET /auth/me` com `Authorization: Bearer <token>` | devolve o usuário dono do token |
-| Responder convite | `POST /convites/{id}/aceitar` e `POST /convites/{id}/recusar` | mentor aceita ou recusa um convite pendente |
 
 ## Contas de exemplo
 
@@ -126,6 +128,8 @@ Ao subir o backend com o banco vazio, ficam disponíveis estas contas (senha **p
 | `saudeagora@exemplo.com` | Startup (SaúdeAgora) |
 | `juliana@exemplo.com` | Mentor (Juliana G.) |
 | `roberto@exemplo.com` | Mentor (Roberto) |
+
+Os mentores de exemplo já têm horários cadastrados: a Juliana atende às terças e quintas de manhã (e quinta à tarde), e o Roberto às segundas e quartas à tarde e sexta de manhã.
 
 ## Testes
 
