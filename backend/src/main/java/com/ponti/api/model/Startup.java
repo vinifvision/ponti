@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Startup {
@@ -19,6 +20,11 @@ public class Startup {
     private String descricao;
 
     private String videoPitchUrl;
+
+    // Logo ou foto da startup
+    @Size(max = 500)
+    @Column(length = 500)
+    private String fotoUrl;
 
     @Column(length = 2000)
     private String atuacoes;
@@ -40,6 +46,8 @@ public class Startup {
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public String getVideoPitchUrl() { return videoPitchUrl; }
     public void setVideoPitchUrl(String videoPitchUrl) { this.videoPitchUrl = videoPitchUrl; }
+    public String getFotoUrl() { return fotoUrl; }
+    public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
     public String getAtuacoes() { return atuacoes; }
     public void setAtuacoes(String atuacoes) { this.atuacoes = atuacoes; }
     public String getSegmento() { return segmento; }

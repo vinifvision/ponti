@@ -19,6 +19,9 @@ export class TopbarComponent {
   menuAberto = signal(false);
   temNotificacao = signal(true);
 
+  // O mentor busca startups; a startup busca mentores
+  textoBusca = computed(() => (this.sessao.tipo() === 'MENTOR' ? 'Buscar startups...' : 'Buscar mentores...'));
+
   // Nome e tipo de quem está logado
   usuario = computed(() => ({
     nome: this.sessao.nome() ?? 'Visitante',

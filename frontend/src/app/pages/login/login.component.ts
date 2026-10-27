@@ -33,7 +33,7 @@ export class LoginComponent {
     this.entrando.set(true);
     this.auth.login(this.email, this.senha).subscribe({
       // Startup começa procurando mentores; mentor começa na caixa de convites recebidos.
-      next: (sessao) => this.router.navigateByUrl(sessao.usuario.tipo === 'MENTOR' ? '/convites' : '/encontrar-mentores'),
+      next: (sessao) => this.router.navigateByUrl(sessao.usuario.tipo === 'MENTOR' ? '/encontrar-startups' : '/encontrar-mentores'),
       error: (e: HttpErrorResponse) => {
         this.erro.set(e.status === 401 ? 'E-mail ou senha inválidos.' : mensagemDeErro(e, 'Não foi possível entrar. Tente novamente.'));
         this.entrando.set(false);

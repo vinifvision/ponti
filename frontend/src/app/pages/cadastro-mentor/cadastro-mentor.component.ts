@@ -138,7 +138,7 @@ export class CadastroMentorComponent {
         duracaoSessaoMinutos: this.duracaoSessaoMinutos,
       })
       .subscribe({
-        next: () => this.router.navigateByUrl('/convites'),
+        next: () => this.router.navigateByUrl('/encontrar-startups'),
         error: (e: HttpErrorResponse) => {
           this.erro.set(mensagemDeErro(e, 'Não foi possível criar a conta. Confira os dados e tente de novo.'));
           this.salvando.set(false);

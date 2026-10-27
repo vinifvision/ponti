@@ -13,7 +13,14 @@ public record CadastroStartup(
         @NotBlank @Size(max = 255) String areaAtuacao,
         @NotBlank @Size(max = 2000) String sobre,
         @NotBlank @Email String email,
-        @NotBlank @Size(min = 8, max = 72) String senha) {
+        @NotBlank @Size(min = 8, max = 72) String senha,
+
+        // Opcionais: completam o perfil público da startup
+        @Size(max = 255) String cidade,
+        @Size(max = 2) String estado,
+        @Size(max = 500) String videoPitchUrl,
+        @Size(max = 500) String fotoUrl,
+        @Size(max = 500) String site) {
 
     // Normaliza antes da validação, para " Ana@Email.com " ser aceito e não duplicar "ana@email.com"
     public CadastroStartup {

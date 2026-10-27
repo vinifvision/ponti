@@ -16,6 +16,11 @@ export class ConviteService extends CrudService<Convite> {
     return this.http.get<Convite[]>(this.url, { params: { startupId } });
   }
 
+  // GET /convites?mentorId=1 -> todos os convites desse mentor (recebidos e enviados)
+  listarDoMentor(mentorId: number): Observable<Convite[]> {
+    return this.http.get<Convite[]>(this.url, { params: { mentorId } });
+  }
+
   // GET /convites/detalhados?startupId=1 -> enviados, já com os dados do mentor
   detalhadosDaStartup(startupId: number): Observable<ConviteDetalhe[]> {
     return this.http.get<ConviteDetalhe[]>(`${this.url}/detalhados`, { params: { startupId } });

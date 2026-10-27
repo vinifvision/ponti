@@ -421,6 +421,70 @@ paths:
           description: Removida com sucesso
         "404":
           description: Certificação não encontrada para esse mentor
+  /startups/{id}/certificacoes:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Startups]
+      summary: Lista as certificações da startup (mais recentes primeiro)
+      responses:
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Certificacao"
+        "404":
+          description: Startup não encontrada
+    post:
+      tags: [Startups]
+      summary: Adiciona uma certificação ao perfil da startup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Certificacao"
+      responses:
+        "201":
+          description: Criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificacao"
+        "400":
+          description: Dados inválidos
+        "404":
+          description: Startup não encontrada
+  /startups/{id}/certificacoes/{certificacaoId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: certificacaoId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    delete:
+      tags: [Startups]
+      summary: Remove uma certificação do perfil da startup
+      responses:
+        "204":
+          description: Removida com sucesso
+        "404":
+          description: Certificação não encontrada para essa startup
   /auth/cadastro/startup:
     post:
       tags: [Auth]
@@ -525,6 +589,11 @@ components:
           type: string
           format: uri
           example: https://www.youtube.com/watch?v=exemplo
+        fotoUrl:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Logo ou foto da startup.
         atuacoes:
           type: string
           example: Agricultura, IoT, sustentabilidade
@@ -632,6 +701,9 @@ components:
         status:
           type: string
           enum: [PENDENTE, ACEITO, RECUSADO]
+        enviadoPor:
+          type: string
+          enum: [STARTUP, MENTOR]
         startup:
           type: object
           nullable: true
@@ -644,6 +716,7 @@ components:
             estado: { type: string }
             estagioMaturidade: { type: integer }
             videoPitchUrl: { type: string }
+            fotoUrl: { type: string, nullable: true }
             site:
               type: string
               nullable: true
@@ -685,6 +758,13 @@ components:
           type: string
           enum: [PENDENTE, ACEITO, RECUSADO]
           default: PENDENTE
+        enviadoPor:
+          type: string
+          enum: [STARTUP, MENTOR]
+          default: STARTUP
+          description: >
+            Quem tomou a iniciativa. Quem responde (aceita ou recusa) é o outro lado.
+            Só existe um convite por par startup + mentor, seja qual for o sentido.
     CadastroStartup:
       type: object
       description: O nível de maturidade não entra no cadastro; é definido depois, em outro formulário.
@@ -714,6 +794,11 @@ components:
           minLength: 8
           maxLength: 72
           example: senhaSegura123
+        cidade: { type: string, maxLength: 255, example: Recife }
+        estado: { type: string, maxLength: 2, example: PE }
+        videoPitchUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
+        fotoUrl: { type: string, maxLength: 500 }
+        site: { type: string, maxLength: 500 }
     CadastroMentor:
       type: object
       required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, valorSessao, duracaoSessaoMinutos]

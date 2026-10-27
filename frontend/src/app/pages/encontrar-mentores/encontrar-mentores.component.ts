@@ -86,7 +86,7 @@ export class EncontrarMentoresComponent implements OnInit {
       },
     });
 
-    // Marca como "Solicitação enviada" os mentores que essa startup já convidou.
+    // Marca os mentores com quem essa startup já tem convite (enviado por ela ou pelo mentor).
     const startupId = this.sessao.startupId();
     if (startupId !== null) {
       this.conviteService.listarEnviados(startupId).subscribe({

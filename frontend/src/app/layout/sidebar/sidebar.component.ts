@@ -21,10 +21,14 @@ export class SidebarComponent {
 
   private sessao = inject(SessaoService);
 
+  // Tela inicial de cada tipo de conta (o logo leva para ela)
+  readonly inicio = computed(() => (this.sessao.tipo() === 'MENTOR' ? '/encontrar-startups' : '/encontrar-mentores'));
+
   // Startup procura mentores e acompanha os convites que enviou; mentor só responde convites.
   readonly itens = computed<ItemNavegacao[]>(() =>
     this.sessao.tipo() === 'MENTOR'
       ? [
+          { rotulo: 'Encontrar Startups', rota: '/encontrar-startups', icone: 'busca' },
           { rotulo: 'Convites', rota: '/convites', icone: 'agenda' },
           { rotulo: 'Perfil', rota: '/perfil', icone: 'usuario' },
         ]

@@ -65,7 +65,7 @@
           [disabled]="conectado() || enviando()"
           class="cursor-pointer rounded-lg bg-ponti-roxo px-12 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90 disabled:cursor-default disabled:bg-gray-200 disabled:text-gray-600"
         >
-          {{ conectado() ? 'Solicitação enviada' : enviando() ? 'Enviando...' : 'Conectar' }}
+          {{ conectado() ? 'Convite em andamento' : enviando() ? 'Enviando...' : 'Conectar' }}
         </button>
       }
       <button

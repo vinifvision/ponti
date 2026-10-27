@@ -1,19 +1,25 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { ConviteService } from '../../convites/convite.service';
-import { RouterLink } from '@angular/router';
 import { ConviteDetalhe, StatusConvite } from '../../models';
+import { descreverMaturidade } from '../../shared/maturidade.utils';
 import { formatarDuracao, formatarValorSessao, linkSeguro, linkWhatsapp } from '../../shared/mentoria.utils';
 
-// Uma tela para os dois lados:
-//  - mentor: convites recebidos, com os botões Aceitar e Recusar;
-//  - startup: convites enviados, com o status de cada um.
+// Ordem das listas: pendentes primeiro, depois aceitos, por último recusados
+const ORDEM: Record<StatusConvite, number> = { PENDENTE: 0, ACEITO: 1, RECUSADO: 2 };
+
+// Uma tela para os dois lados, com duas listas:
+//  - Recebidos: convites que o outro lado mandou; aqui se aceita ou recusa;
+//  - Enviados: convites que você mandou, com a resposta de cada um.
+// O convite pode partir da startup ou do mentor (campo enviadoPor).
 @Component({
   selector: 'app-convites',
   standalone: true,
-  imports: [RouterLink],
+  imports: [NgTemplateOutlet, RouterLink],
   templateUrl: './convites.component.html',
 })
 export class ConvitesComponent implements OnInit {
@@ -25,6 +31,11 @@ export class ConvitesComponent implements OnInit {
   carregando = signal(true);
   erro = signal('');
   respondendoId = signal<number | null>(null);
+
+  private meuLado = computed(() => (this.ehMentor() ? 'MENTOR' : 'STARTUP'));
+  recebidos = computed(() => this.ordenar(this.convites().filter((c) => c.enviadoPor !== this.meuLado())));
+  enviados = computed(() => this.ordenar(this.convites().filter((c) => c.enviadoPor === this.meuLado())));
+  pendentesRecebidos = computed(() => this.recebidos().filter((c) => c.status === 'PENDENTE').length);
 
   ngOnInit() {
     this.carregar();
@@ -78,6 +89,8 @@ export class ConvitesComponent implements OnInit {
     });
   }
 
+  // ---------- textos usados no template ----------
+
   valor(c: ConviteDetalhe): string {
     return formatarValorSessao(c.mentor?.valorSessao);
   }
@@ -86,12 +99,20 @@ export class ConvitesComponent implements OnInit {
     return formatarDuracao(c.mentor?.duracaoSessaoMinutos);
   }
 
+  maturidade(c: ConviteDetalhe): string {
+    return descreverMaturidade(c.startup?.estagioMaturidade);
+  }
+
   whatsapp(c: ConviteDetalhe): string | null {
     return linkWhatsapp(c.mentor?.whatsapp);
   }
 
   linkedin(c: ConviteDetalhe): string | null {
     return linkSeguro(c.mentor?.linkedinUrl);
+  }
+
+  site(c: ConviteDetalhe): string | null {
+    return linkSeguro(c.startup?.site);
   }
 
   rotulo(status: StatusConvite): string {
@@ -104,5 +125,9 @@ export class ConvitesComponent implements OnInit {
       ACEITO: 'bg-green-100 text-green-800',
       RECUSADO: 'bg-red-100 text-red-700',
     }[status];
+  }
+
+  private ordenar(lista: ConviteDetalhe[]): ConviteDetalhe[] {
+    return [...lista].sort((a, b) => ORDEM[a.status] - ORDEM[b.status] || b.id - a.id);
   }
 }

@@ -1,117 +1,157 @@
 <section class="pt-6">
-  <h1 class="text-balance text-3xl font-medium sm:text-4xl">
-    {{ ehMentor() ? 'Convites recebidos' : 'Convites enviados' }}
-  </h1>
+  <h1 class="text-balance text-3xl font-medium sm:text-4xl">Convites</h1>
   <p class="mt-2 text-gray-500">
     {{
       ehMentor()
-        ? 'Startups que querem a sua mentoria. Aceite ou recuse cada convite.'
-        : 'Mentores que você convidou e a resposta de cada um.'
+        ? 'Startups que querem a sua mentoria e startups que você convidou.'
+        : 'Mentores que você convidou e mentores que convidaram a sua startup.'
     }}
   </p>
 
   @if (erro()) {
-    <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+    <p class="mt-6 max-w-3xl rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
   }
 
-  <div class="mt-8">
-    @if (carregando()) {
-      <p class="text-gray-500" role="status">Carregando convites...</p>
-    } @else if (convites().length === 0) {
-      <p class="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500">
-        {{ ehMentor() ? 'Você ainda não recebeu convites.' : 'Você ainda não enviou convites. Procure um mentor e clique em Conectar.' }}
+  @if (carregando()) {
+    <p class="mt-8 text-gray-500" role="status">Carregando convites...</p>
+  } @else {
+    <!-- Recebidos -->
+    <h2 class="mt-10 flex items-center gap-3 text-2xl font-medium">
+      Recebidos
+      @if (pendentesRecebidos()) {
+        <span class="rounded-full bg-ponti-roxo px-3 py-0.5 text-sm font-medium text-white">
+          {{ pendentesRecebidos() }} {{ pendentesRecebidos() === 1 ? 'novo' : 'novos' }}
+        </span>
+      }
+    </h2>
+    @if (recebidos().length === 0) {
+      <p class="mt-4 max-w-3xl rounded-lg border border-dashed border-gray-300 p-6 text-center text-gray-500">
+        {{ ehMentor() ? 'Nenhuma startup convidou você ainda.' : 'Nenhum mentor convidou a sua startup ainda.' }}
       </p>
     } @else {
-      <ul class="flex max-w-3xl flex-col gap-6">
-        @for (c of convites(); track c.id) {
-          <li class="rounded-xl border border-gray-300 bg-white p-6">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div class="min-w-0">
-                @if (ehMentor()) {
-                  <h2 class="text-2xl font-bold">{{ c.startup?.nome ?? 'Startup removida' }}</h2>
-                  @if (c.startup?.segmento) {
-                    <p class="mt-1 text-gray-600">{{ c.startup?.segmento }}</p>
-                  }
-                  @if (c.startup?.cidade || c.startup?.estado) {
-                    <p class="text-gray-600">{{ c.startup?.cidade }}{{ c.startup?.cidade && c.startup?.estado ? ' - ' : '' }}{{ c.startup?.estado }}</p>
-                  }
-                  @if (c.startup?.estagioMaturidade) {
-                    <p class="mt-1 text-gray-600">Maturidade: nível {{ c.startup?.estagioMaturidade }} de 9</p>
-                  }
-                  @if (c.startup?.descricao) {
-                    <p class="mt-3 text-gray-700">{{ c.startup?.descricao }}</p>
-                  }
-                  @if (c.status === 'ACEITO' && c.startup?.site) {
-                    <p class="mt-3 text-sm text-gray-600">Site: {{ c.startup?.site }}</p>
-                  }
-                } @else {
-                  <h2 class="text-2xl font-bold">{{ c.mentor?.nome ?? 'Mentor removido' }}</h2>
-                  @if (c.mentor?.areasAtuacao) {
-                    <p class="mt-1 text-gray-600">{{ c.mentor?.areasAtuacao }}</p>
-                  }
-                  @if (c.mentor?.ecossistemas) {
-                    <p class="text-gray-600">{{ c.mentor?.ecossistemas }}</p>
-                  }
-                  <p class="mt-2 text-ponti-marinho">
-                    <span class="font-semibold">{{ valor(c) }}</span>
-                    @if (duracao(c)) {
-                      <span class="text-sm"> por sessão de {{ duracao(c) }}</span>
-                    }
-                  </p>
-                  @if (c.status === 'ACEITO') {
-                    <div class="mt-3 flex flex-col gap-1 rounded-lg bg-green-50 p-3 text-sm text-green-900">
-                      <span class="font-semibold">Contato liberado</span>
-                      @if (whatsapp(c); as link) {
-                        <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">
-                          WhatsApp: {{ c.mentor?.whatsapp }}
-                        </a>
-                      }
-                      @if (linkedin(c); as link) {
-                        <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">
-                          LinkedIn: {{ c.mentor?.linkedinUrl }}
-                        </a>
-                      }
-                      @if (!whatsapp(c) && !linkedin(c)) {
-                        <span>O mentor ainda não informou um contato. Ele vai falar com você pela plataforma.</span>
-                      }
-                    </div>
-                  }
-                  @if (c.mentor) {
-                    <a [routerLink]="['/mentores', c.mentor.id, 'perfil']" class="mt-3 inline-block text-sm font-semibold text-ponti-roxo hover:underline">
-                      Ver perfil do mentor
-                    </a>
-                  }
-                }
-              </div>
-
-              <span class="rounded-full px-4 py-1 text-sm font-medium" [class]="classeStatus(c.status)">
-                {{ rotulo(c.status) }}
-              </span>
-            </div>
-
-            @if (ehMentor() && c.status === 'PENDENTE') {
-              <div class="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  (click)="responder(c, true)"
-                  [disabled]="respondendoId() !== null"
-                  class="cursor-pointer rounded-lg bg-ponti-roxo px-6 py-2 font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60"
-                >
-                  Aceitar
-                </button>
-                <button
-                  type="button"
-                  (click)="responder(c, false)"
-                  [disabled]="respondendoId() !== null"
-                  class="cursor-pointer rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-default disabled:opacity-60"
-                >
-                  Recusar
-                </button>
-              </div>
-            }
-          </li>
+      <ul class="mt-4 flex max-w-3xl flex-col gap-6">
+        @for (c of recebidos(); track c.id) {
+          <ng-container *ngTemplateOutlet="cartao; context: { $implicit: c, recebido: true }" />
         }
       </ul>
     }
-  </div>
+
+    <!-- Enviados -->
+    <h2 class="mt-12 text-2xl font-medium">Enviados</h2>
+    @if (enviados().length === 0) {
+      <p class="mt-4 max-w-3xl rounded-lg border border-dashed border-gray-300 p-6 text-center text-gray-500">
+        @if (ehMentor()) {
+          Você ainda não convidou nenhuma startup. <a routerLink="/encontrar-startups" class="font-semibold text-ponti-roxo hover:underline">Encontrar startups</a>
+        } @else {
+          Você ainda não convidou nenhum mentor. <a routerLink="/encontrar-mentores" class="font-semibold text-ponti-roxo hover:underline">Encontrar mentores</a>
+        }
+      </p>
+    } @else {
+      <ul class="mt-4 flex max-w-3xl flex-col gap-6 pb-12">
+        @for (c of enviados(); track c.id) {
+          <ng-container *ngTemplateOutlet="cartao; context: { $implicit: c, recebido: false }" />
+        }
+      </ul>
+    }
+  }
 </section>
+
+<!-- Um convite: mostra sempre o OUTRO lado (o mentor vê a startup; a startup vê o mentor) -->
+<ng-template #cartao let-c let-recebido="recebido">
+  <li class="rounded-xl border border-gray-300 bg-white p-6">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        @if (ehMentor()) {
+          <h3 class="text-2xl font-bold">{{ c.startup?.nome ?? 'Startup removida' }}</h3>
+          @if (c.startup?.segmento) {
+            <p class="mt-1 text-gray-600">{{ c.startup?.segmento }}</p>
+          }
+          @if (c.startup?.cidade || c.startup?.estado) {
+            <p class="text-gray-600">{{ c.startup?.cidade }}{{ c.startup?.cidade && c.startup?.estado ? ' - ' : '' }}{{ c.startup?.estado }}</p>
+          }
+          @if (maturidade(c)) {
+            <p class="mt-1 text-gray-600">Maturidade: {{ maturidade(c) }}</p>
+          }
+          @if (c.startup?.descricao) {
+            <p class="mt-3 text-gray-700">{{ c.startup?.descricao }}</p>
+          }
+          @if (c.status === 'ACEITO') {
+            <div class="mt-3 flex flex-col gap-1 rounded-lg bg-green-50 p-3 text-sm text-green-900">
+              <span class="font-semibold">Vocês estão conectados</span>
+              @if (site(c); as link) {
+                <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">Site: {{ c.startup?.site }}</a>
+              } @else {
+                <span>A startup ainda não informou um site.</span>
+              }
+            </div>
+          }
+          @if (c.startup) {
+            <a [routerLink]="['/startups', c.startup.id, 'perfil']" class="mt-3 inline-block text-sm font-semibold text-ponti-roxo hover:underline">
+              Ver perfil da startup
+            </a>
+          }
+        } @else {
+          <h3 class="text-2xl font-bold">{{ c.mentor?.nome ?? 'Mentor removido' }}</h3>
+          @if (c.mentor?.areasAtuacao) {
+            <p class="mt-1 text-gray-600">{{ c.mentor?.areasAtuacao }}</p>
+          }
+          @if (c.mentor?.ecossistemas) {
+            <p class="text-gray-600">{{ c.mentor?.ecossistemas }}</p>
+          }
+          <p class="mt-2 text-ponti-marinho">
+            <span class="font-semibold">{{ valor(c) }}</span>
+            @if (duracao(c)) {
+              <span class="text-sm"> por sessão de {{ duracao(c) }}</span>
+            }
+          </p>
+          @if (c.status === 'ACEITO') {
+            <div class="mt-3 flex flex-col gap-1 rounded-lg bg-green-50 p-3 text-sm text-green-900">
+              <span class="font-semibold">Contato liberado</span>
+              @if (whatsapp(c); as link) {
+                <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">WhatsApp: {{ c.mentor?.whatsapp }}</a>
+              }
+              @if (linkedin(c); as link) {
+                <a [href]="link" target="_blank" rel="noopener noreferrer" class="underline-offset-2 hover:underline">LinkedIn: {{ c.mentor?.linkedinUrl }}</a>
+              }
+              @if (!whatsapp(c) && !linkedin(c)) {
+                <span>O mentor ainda não informou um contato.</span>
+              }
+            </div>
+          }
+          @if (c.mentor) {
+            <a [routerLink]="['/mentores', c.mentor.id, 'perfil']" class="mt-3 inline-block text-sm font-semibold text-ponti-roxo hover:underline">
+              Ver perfil do mentor
+            </a>
+          }
+        }
+      </div>
+
+      <span class="shrink-0 rounded-full px-4 py-1 text-sm font-medium" [class]="classeStatus(c.status)">
+        {{ rotulo(c.status) }}
+      </span>
+    </div>
+
+    @if (recebido && c.status === 'PENDENTE') {
+      <div class="mt-6 flex gap-3">
+        <button
+          type="button"
+          (click)="responder(c, true)"
+          [disabled]="respondendoId() !== null"
+          class="cursor-pointer rounded-lg bg-ponti-roxo px-6 py-2 font-medium text-white transition hover:brightness-95 disabled:cursor-default disabled:opacity-60"
+        >
+          Aceitar
+        </button>
+        <button
+          type="button"
+          (click)="responder(c, false)"
+          [disabled]="respondendoId() !== null"
+          class="cursor-pointer rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-default disabled:opacity-60"
+        >
+          Recusar
+        </button>
+      </div>
+    } @else if (!recebido && c.status === 'PENDENTE') {
+      <p class="mt-4 text-sm text-gray-500">Aguardando resposta.</p>
+    }
+  </li>
+</ng-template>

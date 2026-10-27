@@ -3,6 +3,7 @@ export interface Startup {
   nome: string;
   descricao?: string;
   videoPitchUrl?: string;
+  fotoUrl?: string | null;
   atuacoes?: string;
   segmento?: string;
   cidade?: string;
@@ -13,16 +14,21 @@ export interface Startup {
 
 export type StatusConvite = 'PENDENTE' | 'ACEITO' | 'RECUSADO';
 
+// Quem tomou a iniciativa do convite. Quem responde é sempre o outro lado.
+export type LadoConvite = 'STARTUP' | 'MENTOR';
+
 export interface Convite {
   id?: number;
   startupId: number;
   mentorId: number;
   status?: StatusConvite;
+  enviadoPor?: LadoConvite;
 }
 
 export interface ConviteDetalhe {
   id: number;
   status: StatusConvite;
+  enviadoPor: LadoConvite;
   startup: {
     id: number;
     nome: string;
@@ -32,6 +38,7 @@ export interface ConviteDetalhe {
     estado?: string;
     estagioMaturidade?: number | null;
     videoPitchUrl?: string;
+    fotoUrl?: string | null;
     site?: string | null;
   } | null;
   mentor: {

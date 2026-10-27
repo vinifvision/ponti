@@ -2,12 +2,17 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, switchMap } from 'rxjs';
 import { CrudService } from '../crud.service';
-import { Startup } from '../models';
+import { Certificacao, Startup } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class StartupService extends CrudService<Startup> {
   constructor(http: HttpClient) {
     super(http, 'startups');
+  }
+
+  // GET /startups/{id}/certificacoes -> conquistas e programas da startup
+  certificacoes(startupId: number): Observable<Certificacao[]> {
+    return this.http.get<Certificacao[]>(`${this.url}/${startupId}/certificacoes`);
   }
 
   // O PUT da API substitui a startup inteira, então primeiro busca os dados atuais
