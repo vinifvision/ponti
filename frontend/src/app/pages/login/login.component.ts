@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { rotaInicialDe } from '../../auth/acesso';
 import { AuthService } from '../../auth/auth.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
@@ -32,8 +33,8 @@ export class LoginComponent {
 
     this.entrando.set(true);
     this.auth.login(this.email, this.senha).subscribe({
-      // Startup começa procurando mentores; mentor começa na caixa de convites recebidos.
-      next: (sessao) => this.router.navigateByUrl(sessao.usuario.tipo === 'MENTOR' ? '/encontrar-startups' : '/encontrar-mentores'),
+      // Startup começa procurando mentores; mentor começa procurando startups.
+      next: (sessao) => this.router.navigateByUrl(rotaInicialDe(sessao.usuario.tipo)),
       error: (e: HttpErrorResponse) => {
         this.erro.set(e.status === 401 ? 'E-mail ou senha inválidos.' : mensagemDeErro(e, 'Não foi possível entrar. Tente novamente.'));
         this.entrando.set(false);

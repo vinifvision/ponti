@@ -13,7 +13,7 @@ import {
   NOMES_NIVEIS,
   PERGUNTAS_MATURIDADE,
   calcularNivel,
-} from './maturidade';
+} from '../../shared/maturidade';
 
 // Cadastro da startup em três etapas:
 // 1. questionário de maturidade (uma pergunta por vez);

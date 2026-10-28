@@ -3,6 +3,8 @@ import { BuscaService } from '../../layout/busca.service';
 import { MentorCardComponent } from '../../mentores/mentor-card/mentor-card.component';
 import { MentorDestaqueComponent } from '../../mentores/mentor-destaque/mentor-destaque.component';
 import { MentorService } from '../../mentores/mentor.service';
+import { atendeFaixaExperiencia } from '../../shared/experiencia.utils';
+import { FAIXAS_PRECO, atendeFaixaPreco } from '../../shared/preco.utils';
 import { Mentor } from '../../models';
 import { FiltroSelectComponent, OpcaoFiltro } from '../../shared/filtro-select/filtro-select.component';
 import { separarLista } from '../../shared/texto.utils';
@@ -23,15 +25,18 @@ export class EncontrarMentoresComponent implements OnInit {
 
   area = signal('');
   experiencia = signal('');
+  faixaPreco = signal('');
   ordenacao = signal('');
   selecionadoId = signal<number | undefined>(undefined);
   focoId = signal<number | undefined>(undefined);
 
   readonly opcoesExperiencia: OpcaoFiltro[] = [
     { valor: 'iniciante', rotulo: 'Até 2 anos' },
-    { valor: 'intermediario', rotulo: '2 a 5 anos' },
+    { valor: 'intermediario', rotulo: '3 a 5 anos' },
     { valor: 'senior', rotulo: 'Mais de 5 anos' },
   ];
+
+  readonly opcoesPreco: OpcaoFiltro[] = FAIXAS_PRECO;
 
   readonly opcoesOrdenacao: OpcaoFiltro[] = [
     { valor: 'nome', rotulo: 'Nome (A-Z)' },
@@ -52,7 +57,9 @@ export class EncontrarMentoresComponent implements OnInit {
       const texto = [m.nome, m.bio, m.areasAtuacao, m.ecossistemas].join(' ').toLowerCase();
       const passaBusca = !termo || texto.includes(termo);
       const passaArea = !area || separarLista(m.ecossistemas).some((e) => e.toLowerCase() === area);
-      return passaBusca && passaArea;
+      const passaExperiencia = atendeFaixaExperiencia(m.anosExperiencia, this.experiencia());
+      const passaPreco = atendeFaixaPreco(m.valorSessao, this.faixaPreco());
+      return passaBusca && passaArea && passaExperiencia && passaPreco;
     });
 
     switch (this.ordenacao()) {

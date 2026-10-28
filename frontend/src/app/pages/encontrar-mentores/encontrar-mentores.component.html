@@ -9,7 +9,20 @@
       [limpavel]="true"
       [(valor)]="area"
     />
-    <app-filtro-select rotulo="Experiência" [opcoes]="opcoesExperiencia" [(valor)]="experiencia" />
+    <app-filtro-select
+      rotulo="Experiência"
+      placeholder="Todas"
+      [opcoes]="opcoesExperiencia"
+      [limpavel]="true"
+      [(valor)]="experiencia"
+    />
+    <app-filtro-select
+      rotulo="Faixa de preço"
+      placeholder="Qualquer valor"
+      [opcoes]="opcoesPreco"
+      [limpavel]="true"
+      [(valor)]="faixaPreco"
+    />
     <app-filtro-select rotulo="Filtro" placeholder="Filtrar" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
   </div>
 
