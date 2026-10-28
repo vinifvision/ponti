@@ -1,12 +1,14 @@
-<section class="max-w-5xl pt-6">
-  <button
-    type="button"
-    (click)="voltar()"
-    class="flex cursor-pointer items-center gap-3 text-2xl font-medium hover:text-ponti-roxo sm:text-3xl"
-  >
-    <app-icone nome="seta-esquerda" [tamanho]="28" />
-    Startups na plataforma
-  </button>
+<section class="max-w-4xl pb-12 pt-6">
+  @if (!proprio()) {
+    <button
+      type="button"
+      (click)="voltar()"
+      class="flex cursor-pointer items-center gap-3 text-2xl font-medium hover:text-ponti-roxo sm:text-3xl"
+    >
+      <app-icone nome="seta-esquerda" [tamanho]="28" />
+      Startups na plataforma
+    </button>
+  }
 
   @if (carregando()) {
     <p class="mt-8 text-gray-500" role="status">Carregando perfil...</p>
@@ -28,32 +30,46 @@
         }
 
         <div class="flex min-w-0 flex-col">
-          <h1 class="text-3xl font-bold">{{ s.nome }}</h1>
+          <h1 class="text-balance text-3xl font-bold">{{ s.nome }}</h1>
+
           @if (s.segmento) {
-            <p class="mt-2 flex items-center gap-2 text-gray-600">
+            <p class="mt-3 flex items-center gap-2 text-gray-700">
               <app-icone nome="alvo" [tamanho]="20" />
               <span class="sr-only">Segmento:</span>
               {{ s.segmento }}
             </p>
           }
+          <p class="flex items-center gap-2 text-gray-700" [class]="s.segmento ? 'mt-2' : 'mt-3'">
+            <app-icone nome="grafico" [tamanho]="20" />
+            <span class="sr-only">Maturidade:</span>
+            @if (nivel(); as n) {
+              Nível {{ n }} de {{ nivelMaximo }} · {{ nomeNivel() }}
+            } @else {
+              Maturidade ainda não informada
+            }
+          </p>
           @if (local()) {
-            <p class="mt-1 text-gray-600">{{ local() }}</p>
+            <p class="mt-1 pl-7 text-sm text-gray-500">{{ local() }}</p>
           }
 
-          <div class="mt-4 w-full max-w-sm rounded-lg bg-ponti-lilas/25 px-4 py-3 text-ponti-marinho">
-            @if (nivel(); as n) {
-              <p><span class="text-2xl font-semibold">Nível {{ n }}</span> de {{ nivelMaximo }} · {{ nomeNivel() }}</p>
-              <div class="mt-2 flex gap-1" aria-hidden="true">
-                @for (i of niveis; track i) {
-                  <span class="h-2 flex-1 rounded-full" [class]="i <= n ? 'bg-ponti-roxo' : 'bg-white'"></span>
-                }
-              </div>
-            } @else {
-              <p>Maturidade ainda não informada</p>
-            }
-          </div>
+          @if (s.descricao) {
+            <p class="mt-4 line-clamp-3 whitespace-pre-line text-pretty text-lg text-gray-800">{{ s.descricao }}</p>
+          }
         </div>
       </div>
+
+      <!-- Ação da própria startup -->
+      @if (proprio()) {
+        <div class="mt-6 flex flex-wrap items-center gap-4">
+          <a
+            routerLink="/perfil/editar"
+            class="rounded-lg bg-ponti-roxo px-10 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+          >
+            Editar perfil
+          </a>
+          <p class="text-sm text-gray-500">É assim que os mentores veem a sua startup.</p>
+        </div>
+      }
 
       <!-- Ação do mentor -->
       @if (ehMentor()) {
@@ -72,10 +88,10 @@
         </div>
       }
 
-      <!-- Pitch -->
+      <!-- Startup Pitch -->
       @if (video(); as url) {
-        <h2 class="mt-10 text-2xl font-medium">Pitch</h2>
-        <div class="mt-4 aspect-video w-full max-w-3xl overflow-hidden rounded-md border border-gray-300 bg-black">
+        <h2 class="mt-10 text-2xl font-medium">Startup Pitch</h2>
+        <div class="mt-4 aspect-video w-full overflow-hidden rounded-md border border-gray-300 bg-black">
           <iframe
             [src]="url"
             class="size-full"
@@ -86,19 +102,34 @@
         </div>
       }
 
-      <!-- Sobre -->
-      <h2 class="mt-10 text-2xl font-medium">Sobre a startup</h2>
-      <p class="mt-4 whitespace-pre-line text-pretty text-lg leading-relaxed text-gray-800">
-        {{ s.descricao || 'Esta startup ainda não adicionou uma descrição.' }}
-      </p>
+      @if (!video() && proprio()) {
+        <h2 class="mt-10 text-2xl font-medium">Startup Pitch</h2>
+        <p class="mt-3 rounded-lg bg-gray-100 p-4 text-gray-600">
+          Você ainda não adicionou o vídeo do pitch.
+          <a routerLink="/perfil/editar" class="font-medium text-ponti-roxo hover:underline">Adicionar agora</a>
+        </p>
+      }
+
+      <!-- Sobre a startup -->
+      @if (textoCompleto(); as texto) {
+        <p class="mt-8 whitespace-pre-line text-pretty leading-relaxed text-gray-800">{{ texto }}</p>
+      } @else if (!s.descricao) {
+        <p class="mt-8 text-gray-600">
+          {{ proprio() ? 'Você ainda não adicionou uma descrição.' : 'Esta startup ainda não adicionou uma descrição.' }}
+          @if (proprio()) {
+            <a routerLink="/perfil/editar" class="font-medium text-ponti-roxo hover:underline">Adicionar agora</a>
+          }
+        </p>
+      }
       @if (s.atuacoes) {
         <h3 class="mt-6 font-medium text-ponti-marinho">Áreas de atuação</h3>
         <p class="mt-1 text-gray-700">{{ s.atuacoes }}</p>
       }
 
-      <!-- Conquistas -->
+      <!-- Premiações -->
       @if (certificacoes().length) {
-        <h2 class="mt-10 text-2xl font-medium">Conquistas e programas</h2>
+        <h2 class="mt-10 text-2xl font-medium">Premiações</h2>
+        <h3 class="mt-3 font-medium text-ponti-marinho">Certificações</h3>
         <ul class="mt-4 flex flex-col gap-6">
           @for (c of certificacoes(); track c.id) {
             <li class="grid gap-1 sm:grid-cols-[9rem_1fr] sm:gap-6">
@@ -117,9 +148,34 @@
         </ul>
       }
 
-      <!-- Contato -->
-      <h2 class="mt-10 text-2xl font-medium">Contato</h2>
-      <p class="mt-3 pb-12 text-gray-600">As mentorias acontecem pelo link do Google Meet que você envia ao confirmar o horário que a startup agendar.</p>
+      @if (!certificacoes().length && proprio()) {
+        <h2 class="mt-10 text-2xl font-medium">Premiações</h2>
+        <p class="mt-3 rounded-lg bg-gray-100 p-4 text-gray-600">
+          Você ainda não adicionou premiações ou certificações.
+          <a routerLink="/perfil/editar" class="font-medium text-ponti-roxo hover:underline">Adicionar agora</a>
+        </p>
+      }
+
+      <!-- Redes de contato -->
+      @if (linkedin(); as link) {
+        <h2 class="mt-10 text-2xl font-medium">Redes de contato</h2>
+        <h3 class="mt-3 font-medium text-ponti-marinho">LinkedIn</h3>
+        <a
+          [href]="link"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-2 inline-flex items-center gap-2 text-gray-700 underline-offset-2 hover:underline"
+        >
+          <app-icone nome="linkedin" [tamanho]="20" />
+          <span class="sr-only">LinkedIn:</span>
+          {{ s.linkedinUrl }}
+        </a>
+      }
+      @if (ehMentor() && !proprio()) {
+        <p class="mt-10 text-gray-600">
+          As mentorias acontecem pelo link do Google Meet que você envia ao confirmar o horário que a startup agendar.
+        </p>
+      }
     }
   }
 </section>

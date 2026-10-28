@@ -1,13 +1,13 @@
 <section class="max-w-4xl pb-12 pt-6">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-medium sm:text-4xl">Meu perfil</h1>
+      <h1 class="text-3xl font-medium sm:text-4xl">Editar perfil</h1>
       <p class="mt-2 text-gray-500">
         {{ ehMentor() ? 'É assim que as startups conhecem você. Um perfil completo recebe mais pedidos.' : 'É assim que os mentores conhecem a sua startup.' }}
       </p>
     </div>
-    <a [routerLink]="linkPublico()" class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50">
-      Ver perfil público
+    <a routerLink="/perfil" class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50">
+      Voltar ao meu perfil
     </a>
   </div>
 
@@ -104,6 +104,15 @@
             Os horários em que você atende ficam em <a routerLink="/agenda" class="font-medium text-ponti-roxo hover:underline">Minha agenda</a>.
           </p>
         </fieldset>
+
+        @if (mentorId !== null) {
+          <app-editor-certificacoes
+            dono="mentores"
+            [donoId]="mentorId"
+            titulo="Experiência e certificações"
+            ajuda="Programas de mentoria, cursos e certificados importantes (opcional)."
+          />
+        }
       } @else {
         <!-- Startup -->
         <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
@@ -141,8 +150,18 @@
               <span class="text-sm font-medium text-gray-700">Vídeo pitch (YouTube)</span>
               <input name="pitch" maxlength="500" [(ngModel)]="startup.videoPitchUrl" class="campo" placeholder="https://www.youtube.com/watch?v=..." />
             </label>
+            @if (suportaLinkedin()) {
+              <label class="grid gap-1 sm:col-span-2">
+                <span class="text-sm font-medium text-gray-700">LinkedIn</span>
+                <input name="linkedinStartup" maxlength="500" [(ngModel)]="startup.linkedinUrl" class="campo" placeholder="https://www.linkedin.com/company/..." />
+              </label>
+            }
           </div>
         </fieldset>
+
+        @if (startupId !== null) {
+          <app-editor-certificacoes dono="startups" [donoId]="startupId" />
+        }
       }
 
       @if (erro()) {
@@ -160,7 +179,8 @@
         @if (sucesso()) {
           <span class="flex items-center gap-2 font-medium text-green-700" role="status">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-            Perfil atualizado
+            Perfil atualizado.
+            <a routerLink="/perfil" class="underline-offset-2 hover:underline">Ver meu perfil</a>
           </span>
         }
       </div>

@@ -16,6 +16,7 @@ import { MinhaAgendaComponent } from './pages/minha-agenda/minha-agenda.componen
 import { EncontrarMentoresComponent } from './pages/encontrar-mentores/encontrar-mentores.component';
 import { EmBreveComponent } from './pages/em-breve/em-breve.component';
 import { MeuPerfilComponent } from './pages/meu-perfil/meu-perfil.component';
+import { PerfilProprioComponent } from './pages/meu-perfil/perfil-proprio.component';
 import { ConfiguracoesComponent } from './pages/configuracoes/configuracoes.component';
 import { StartupListComponent } from './startups/startup-list.component';
 import { StartupFormComponent } from './startups/startup-form.component';
@@ -61,7 +62,9 @@ export const routes: Routes = [
       { path: 'convites', pathMatch: 'full', redirectTo: 'mentorias' },
       { path: 'mentores/:id/perfil', component: PerfilMentorComponent, title: 'Perfil do mentor | Ponti' },
       { path: 'startups/:id/perfil', component: PerfilStartupComponent, title: 'Perfil da startup | Ponti' },
-      { path: 'perfil', component: MeuPerfilComponent, title: 'Meu perfil | Ponti' },
+      // /perfil mostra o próprio perfil; o botão "Editar perfil" leva para /perfil/editar
+      { path: 'perfil', component: PerfilProprioComponent, title: 'Meu perfil | Ponti' },
+      { path: 'perfil/editar', component: MeuPerfilComponent, title: 'Editar perfil | Ponti' },
       { path: 'configuracoes', component: ConfiguracoesComponent, title: 'Configurações | Ponti' },
 
       // Telas de CRUD feitas para a atividade (continuam funcionando dentro do novo layout)

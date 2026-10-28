@@ -1,12 +1,14 @@
 <section class="max-w-5xl pt-6">
-  <button
-    type="button"
-    (click)="voltar()"
-    class="flex cursor-pointer items-center gap-3 text-2xl font-medium hover:text-ponti-roxo sm:text-3xl"
-  >
-    <app-icone nome="seta-esquerda" [tamanho]="28" />
-    Mentores recomendados
-  </button>
+  @if (!proprio()) {
+    <button
+      type="button"
+      (click)="voltar()"
+      class="flex cursor-pointer items-center gap-3 text-2xl font-medium hover:text-ponti-roxo sm:text-3xl"
+    >
+      <app-icone nome="seta-esquerda" [tamanho]="28" />
+      Mentores recomendados
+    </button>
+  }
 
   @if (carregando()) {
     <p class="mt-8 text-gray-500" role="status">Carregando perfil...</p>
@@ -64,6 +66,19 @@
         </p>
       </div>
     </div>
+
+    <!-- Ação do próprio mentor -->
+    @if (proprio()) {
+      <div class="mt-6 flex flex-wrap items-center gap-4">
+        <a
+          routerLink="/perfil/editar"
+          class="rounded-lg bg-ponti-roxo px-12 py-3 text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+        >
+          Editar perfil
+        </a>
+        <p class="text-sm text-gray-500">É assim que as startups veem você. Um perfil completo recebe mais pedidos.</p>
+      </div>
+    }
 
     <!-- Ações -->
     @if (ehStartup()) {
