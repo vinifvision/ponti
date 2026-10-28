@@ -20,6 +20,13 @@
       }
       <div class="flex min-w-0 flex-col">
         <h1 class="text-3xl font-bold">{{ m.nome }}</h1>
+        @if (m.notaMedia) {
+          <p class="mt-1 flex items-center gap-2 text-gray-700">
+            <app-estrelas [nota]="m.notaMedia" />
+            <span class="font-semibold">{{ m.notaMedia.toLocaleString('pt-BR', { minimumFractionDigits: 1 }) }}</span>
+            <span class="text-gray-500">· {{ m.totalAvaliacoes }} {{ m.totalAvaliacoes === 1 ? 'avaliação' : 'avaliações' }} · {{ m.totalMentorias }} {{ m.totalMentorias === 1 ? 'mentoria' : 'mentorias' }}</span>
+          </p>
+        }
         @if (m.areasAtuacao) {
           <p class="mt-2 flex items-center gap-2 text-gray-600">
             <app-icone nome="maleta" [tamanho]="20" />
@@ -147,90 +154,257 @@
           }
         }
 
-        <!-- Etapa 2: resumo e pagamento simulado -->
+        <!-- Etapa 2: resumo e pagamento -->
         @case (2) {
           <h2 class="mt-10 text-3xl font-medium">Resumo e pagamento</h2>
-          <div class="mt-6 grid max-w-3xl gap-6">
-            <div class="rounded-xl border border-gray-300 bg-white p-6">
-              <p class="text-lg"><span class="font-semibold">Mentor:</span> {{ m.nome }}</p>
-              <p class="mt-1 text-lg"><span class="font-semibold">Quando:</span> {{ textoSelecionado() }}</p>
-              <p class="mt-1 text-lg"><span class="font-semibold">Duração:</span> {{ duracao() }}</p>
-              <p class="mt-1 text-lg"><span class="font-semibold">Valor:</span> {{ valor() }}</p>
+          <div class="mt-6 grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div class="grid content-start gap-6">
+              <label class="flex flex-col gap-2">
+                <span class="text-lg font-medium">O que você quer tratar na mentoria? (opcional)</span>
+                <textarea
+                  name="mensagem"
+                  rows="3"
+                  maxlength="1000"
+                  [(ngModel)]="mensagem"
+                  placeholder="Ex.: queremos validar o preço do nosso MVP com o mercado pet."
+                  class="rounded-lg border border-gray-300 p-3 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+                ></textarea>
+              </label>
+
+              @if (!gratuita()) {
+                <div>
+                  <h3 class="text-lg font-medium">Forma de pagamento</h3>
+                  <div class="mt-3 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Forma de pagamento">
+                    <button
+                      type="button"
+                      role="radio"
+                      [attr.aria-checked]="metodoPagamento() === 'PIX'"
+                      (click)="metodoPagamento.set('PIX')"
+                      class="flex cursor-pointer flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition"
+                      [class]="metodoPagamento() === 'PIX' ? 'border-ponti-roxo bg-ponti-lilas/15' : 'border-gray-200 hover:border-gray-300'"
+                    >
+                      <span class="flex items-center gap-2 text-lg font-semibold">
+                        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#32BCAD" d="M12 2.2 8.1 6.1c.9 0 1.8.4 2.4 1l1.5 1.5 1.5-1.5c.6-.6 1.5-1 2.4-1L12 2.2Zm-6.1 6L2.2 12l3.7 3.8h1.6c.5 0 1-.2 1.4-.6l1.5-1.5c.7-.7 1.8-.7 2.5 0l1.6 1.6c.4.4.9.6 1.4.6h1.4l3.7-3.9-3.7-3.8h-1.4c-.5 0-1 .2-1.4.6l-1.6 1.6c-.7.7-1.8.7-2.5 0L9 8.8c-.4-.4-.9-.6-1.4-.6H5.9Zm2.2 9.7 3.9 3.9 3.9-3.9c-.9 0-1.8-.4-2.4-1L12 15.4l-1.5 1.5c-.6.6-1.5 1-2.4 1Z"/></svg>
+                        Pix
+                      </span>
+                      <span class="text-sm text-gray-600">Aprovação em segundos</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="radio"
+                      [attr.aria-checked]="metodoPagamento() === 'CARTAO'"
+                      (click)="metodoPagamento.set('CARTAO')"
+                      class="flex cursor-pointer flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition"
+                      [class]="metodoPagamento() === 'CARTAO' ? 'border-ponti-roxo bg-ponti-lilas/15' : 'border-gray-200 hover:border-gray-300'"
+                    >
+                      <span class="flex items-center gap-2 text-lg font-semibold">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                        Cartão de crédito
+                      </span>
+                      <span class="text-sm text-gray-600">Visa, Mastercard, Elo, Amex</span>
+                    </button>
+                  </div>
+                </div>
+
+                @if (metodoPagamento() === 'CARTAO') {
+                  <div class="grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-5">
+                    <label class="flex flex-col gap-1">
+                      <span class="text-sm font-medium text-gray-700">Número do cartão</span>
+                      <div class="relative">
+                        <input
+                          name="numeroCartao"
+                          inputmode="numeric"
+                          autocomplete="cc-number"
+                          placeholder="0000 0000 0000 0000"
+                          [ngModel]="cartaoNumero()"
+                          (ngModelChange)="digitarNumero($event)"
+                          class="w-full rounded-lg border bg-white p-3 pr-36 font-mono text-lg tracking-wider focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+                          [class]="numeroInvalido() ? 'border-red-400' : 'border-gray-300 focus:border-ponti-roxo'"
+                        />
+                        @if (bandeira()) {
+                          <span class="absolute right-3 top-1/2 -translate-y-1/2 rounded bg-ponti-marinho px-2 py-0.5 text-xs font-bold uppercase text-white">{{ bandeira() }}</span>
+                        }
+                      </div>
+                      @if (numeroInvalido()) {
+                        <span class="text-sm text-red-600">Número inválido. Confira os dígitos.</span>
+                      }
+                    </label>
+                    <label class="flex flex-col gap-1">
+                      <span class="text-sm font-medium text-gray-700">Nome impresso no cartão</span>
+                      <input
+                        name="nomeCartao"
+                        autocomplete="cc-name"
+                        placeholder="Como está no cartão"
+                        [ngModel]="cartaoNome()"
+                        (ngModelChange)="cartaoNome.set($event.toUpperCase())"
+                        class="rounded-lg border border-gray-300 bg-white p-3 uppercase focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+                      />
+                    </label>
+                    <div class="grid grid-cols-2 gap-4">
+                      <label class="flex flex-col gap-1">
+                        <span class="text-sm font-medium text-gray-700">Validade</span>
+                        <input
+                          name="validade"
+                          inputmode="numeric"
+                          autocomplete="cc-exp"
+                          placeholder="MM/AA"
+                          [ngModel]="cartaoValidade()"
+                          (ngModelChange)="digitarValidade($event)"
+                          class="rounded-lg border border-gray-300 bg-white p-3 font-mono focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+                        />
+                      </label>
+                      <label class="flex flex-col gap-1">
+                        <span class="text-sm font-medium text-gray-700">CVV</span>
+                        <input
+                          name="cvv"
+                          inputmode="numeric"
+                          autocomplete="cc-csc"
+                          placeholder="123"
+                          type="password"
+                          [ngModel]="cartaoCvv()"
+                          (ngModelChange)="digitarCvv($event)"
+                          class="rounded-lg border border-gray-300 bg-white p-3 font-mono focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
+                        />
+                      </label>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                      Ambiente de testes:
+                      <button type="button" (click)="preencherCartaoDeTeste()" class="cursor-pointer font-medium text-ponti-roxo underline">usar cartão aprovado</button>
+                      ou
+                      <button type="button" (click)="preencherCartaoDeTeste(true)" class="cursor-pointer font-medium text-ponti-roxo underline">cartão recusado</button>.
+                    </p>
+                  </div>
+                }
+              }
+
             </div>
 
-            <label class="flex flex-col gap-2">
-              <span class="text-lg font-medium">O que você quer tratar na mentoria? (opcional)</span>
-              <textarea
-                name="mensagem"
-                rows="3"
-                maxlength="1000"
-                [(ngModel)]="mensagem"
-                placeholder="Ex.: queremos validar o preço do nosso MVP com o mercado pet."
-                class="rounded-lg border border-gray-300 p-3 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
-              ></textarea>
-            </label>
-
-            @if (!gratuita()) {
-              <fieldset class="rounded-xl border border-gray-300 p-6">
-                <legend class="px-2 text-lg font-medium">Forma de pagamento</legend>
-                <div class="flex flex-col gap-3 sm:flex-row">
-                  <label class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4" [class]="metodoPagamento === 'PIX' ? 'border-ponti-roxo bg-ponti-lilas/15' : 'border-gray-300'">
-                    <input type="radio" name="metodo" value="PIX" [(ngModel)]="metodoPagamento" class="accent-ponti-roxo" />
-                    Pix
-                  </label>
-                  <label class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4" [class]="metodoPagamento === 'CARTAO' ? 'border-ponti-roxo bg-ponti-lilas/15' : 'border-gray-300'">
-                    <input type="radio" name="metodo" value="CARTAO" [(ngModel)]="metodoPagamento" class="accent-ponti-roxo" />
-                    Cartão de crédito
-                  </label>
-                </div>
-                <p class="mt-4 rounded-lg bg-ponti-amarelo/20 p-3 text-sm text-gray-800">
-                  <strong>Pagamento simulado:</strong> esta é uma versão de demonstração e nenhuma cobrança é feita.
-                  Se o mentor recusar ou alguém cancelar, o valor aparece como reembolsado.
-                </p>
-              </fieldset>
-            }
-
-            @if (erro()) {
-              <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
-            }
-
-            <button
-              type="button"
-              (click)="agendar()"
-              [disabled]="enviando()"
-              class="cursor-pointer rounded-lg bg-ponti-roxo py-4 text-xl font-medium text-white transition hover:bg-ponti-roxo/90 disabled:cursor-default disabled:opacity-60"
-            >
-              @if (enviando()) {
-                Enviando...
-              } @else if (gratuita()) {
-                Agendar mentoria gratuita
-              } @else {
-                Pagar {{ valor() }} e agendar
+            <!-- Resumo do pedido -->
+            <aside class="h-fit rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:sticky lg:top-6">
+              <h3 class="text-lg font-semibold">Resumo do pedido</h3>
+              <dl class="mt-4 grid gap-3 text-sm">
+                <div><dt class="text-gray-500">Mentoria com</dt><dd class="font-medium">{{ m.nome }}</dd></div>
+                <div><dt class="text-gray-500">Quando</dt><dd class="font-medium">{{ textoSelecionado() }}</dd></div>
+                <div><dt class="text-gray-500">Duração</dt><dd class="font-medium">{{ duracao() }} · Google Meet</dd></div>
+              </dl>
+              <div class="mt-5 flex items-baseline justify-between border-t border-gray-200 pt-4">
+                <span class="text-gray-600">Total</span>
+                <span class="text-2xl font-bold text-ponti-marinho">{{ valor() }}</span>
+              </div>
+              @if (erro()) {
+                <p class="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{{ erro() }}</p>
               }
-            </button>
+              <button
+                type="button"
+                (click)="agendar()"
+                [disabled]="enviando() || (!gratuita() && metodoPagamento() === 'CARTAO' && !cartaoCompleto())"
+                class="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-ponti-roxo py-4 text-lg font-medium text-white transition hover:bg-ponti-roxo/90 disabled:cursor-default disabled:opacity-50"
+              >
+                @if (enviando()) {
+                  <span class="size-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span>
+                  {{ metodoPagamento() === 'CARTAO' && !gratuita() ? 'Processando pagamento...' : 'Enviando...' }}
+                } @else if (gratuita()) {
+                  Agendar mentoria gratuita
+                } @else if (metodoPagamento() === 'PIX') {
+                  Gerar Pix de {{ valor() }}
+                } @else {
+                  Pagar {{ valor() }}
+                }
+              </button>
+              <p class="mt-4 flex items-start gap-2 text-xs text-gray-500">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-px shrink-0" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                Pagamento protegido. Se o mentor recusar ou a sessão for cancelada, o valor é reembolsado.
+                <span class="sr-only">Ambiente de demonstração: nenhuma cobrança real é feita.</span>
+              </p>
+              <p class="mt-2 rounded bg-ponti-amarelo/25 px-2 py-1 text-xs text-gray-700">Ambiente de demonstração: nenhuma cobrança real é feita.</p>
+            </aside>
           </div>
         }
 
-        <!-- Etapa 3: pedido enviado -->
+        <!-- Etapa 3: esperando o Pix -->
         @case (3) {
-          <div class="mt-10 max-w-3xl rounded-xl border border-green-200 bg-green-50 p-8">
-            <h2 class="text-3xl font-medium text-green-900">Pedido enviado!</h2>
-            <p class="mt-4 text-lg text-green-900">
-              Sua mentoria com {{ m.nome }} para {{ textoConfirmado() }} está aguardando a confirmação do mentor.
-            </p>
-            <p class="mt-2 text-green-900">
-              Quando ele confirmar, o link do Google Meet aparece na sua tela de Mentorias.
-              @if (!gratuita()) {
-                Pagamento simulado registrado.
-              }
-            </p>
-            <a
-              routerLink="/mentorias"
-              class="mt-6 inline-block rounded-lg bg-ponti-roxo px-8 py-3 text-lg font-medium text-white transition hover:bg-ponti-roxo/90"
-            >
-              Ver minhas mentorias
-            </a>
-          </div>
+          @if (agendamento(); as a) {
+            <div class="mt-10 grid max-w-4xl gap-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:grid-cols-[16rem_minmax(0,1fr)]">
+              <div class="mx-auto w-56 rounded-xl border border-gray-200 p-3 md:w-full">
+                @if (a.pagamento?.pixCopiaECola; as codigo) {
+                  <app-pix-qr [codigo]="codigo" />
+                }
+              </div>
+              <div class="flex min-w-0 flex-col">
+                <p class="flex items-center gap-2 text-sm font-medium text-amber-700">
+                  <span class="size-2.5 animate-pulse rounded-full bg-amber-500" aria-hidden="true"></span>
+                  Aguardando pagamento
+                </p>
+                <h2 class="mt-2 text-3xl font-semibold">Pague {{ valor() }} com Pix</h2>
+                <ol class="mt-4 list-decimal space-y-1 pl-5 text-gray-700">
+                  <li>Abra o app do seu banco e escolha <strong>Pix &gt; Ler QR Code</strong></li>
+                  <li>Ou copie o código abaixo e use <strong>Pix Copia e Cola</strong></li>
+                  <li>A confirmação aparece aqui automaticamente</li>
+                </ol>
+                <div class="mt-5 flex gap-2">
+                  <input
+                    readonly
+                    [value]="a.pagamento?.pixCopiaECola ?? ''"
+                    aria-label="Código Pix copia e cola"
+                    class="min-w-0 flex-1 truncate rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 font-mono text-sm text-gray-700"
+                  />
+                  <button
+                    type="button"
+                    (click)="copiarPix()"
+                    class="shrink-0 cursor-pointer rounded-lg px-4 py-2 font-medium text-white transition"
+                    [class]="copiado() ? 'bg-green-600' : 'bg-ponti-roxo hover:bg-ponti-roxo/90'"
+                  >
+                    {{ copiado() ? 'Copiado!' : 'Copiar' }}
+                  </button>
+                </div>
+                <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+                  <span>O código expira em <strong class="font-mono text-gray-900">{{ tempoRestante() }}</strong></span>
+                  <span>Transação <span class="font-mono">{{ a.pagamento?.codigoTransacao }}</span></span>
+                </div>
+                <p class="mt-5 flex items-center gap-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600" role="status">
+                  <span class="size-5 shrink-0 animate-spin rounded-full border-2 border-ponti-lilas border-t-ponti-roxo" aria-hidden="true"></span>
+                  Esperando a confirmação do banco... (demonstração: confirma sozinho em alguns segundos)
+                </p>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Etapa 4: pagamento aprovado + comprovante -->
+        @case (4) {
+          @if (agendamento(); as a) {
+            <div class="mt-10 max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div class="flex items-center gap-4 bg-green-50 p-6 sm:p-8">
+                <span class="flex size-14 shrink-0 items-center justify-center rounded-full bg-green-600 text-white" aria-hidden="true">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <div>
+                  <h2 class="text-2xl font-semibold text-green-900 sm:text-3xl">
+                    {{ a.statusPagamento === 'GRATUITA' ? 'Pedido enviado!' : 'Pagamento aprovado!' }}
+                  </h2>
+                  <p class="mt-1 text-green-900">Agora é só aguardar {{ m.nome }} confirmar. O link do Google Meet aparece em Mentorias.</p>
+                </div>
+              </div>
+              <dl class="grid gap-x-8 gap-y-4 p-6 text-sm sm:grid-cols-2 sm:p-8">
+                <div><dt class="text-gray-500">Mentoria</dt><dd class="text-base font-medium">{{ m.nome }}</dd></div>
+                <div><dt class="text-gray-500">Quando</dt><dd class="text-base font-medium">{{ textoConfirmado() }}</dd></div>
+                <div><dt class="text-gray-500">Valor</dt><dd class="text-base font-medium">{{ valor() }}</dd></div>
+                <div><dt class="text-gray-500">Forma de pagamento</dt><dd class="text-base font-medium">{{ pagamentoTexto() }}</dd></div>
+                @if (a.pagamento; as p) {
+                  <div><dt class="text-gray-500">Código da transação</dt><dd class="font-mono text-base">{{ p.codigoTransacao }}</dd></div>
+                  <div><dt class="text-gray-500">Pago em</dt><dd class="text-base font-medium">{{ pagoEmTexto() }}</dd></div>
+                }
+                <div class="sm:col-span-2">
+                  <dt class="text-gray-500">Situação</dt>
+                  <dd class="mt-1 inline-block rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">Aguardando confirmação do mentor</dd>
+                </div>
+              </dl>
+              <div class="flex flex-wrap gap-3 border-t border-gray-200 p-6 sm:px-8">
+                <a routerLink="/mentorias" class="rounded-lg bg-ponti-roxo px-6 py-3 font-medium text-white transition hover:bg-ponti-roxo/90">Ver minhas mentorias</a>
+                <a routerLink="/encontrar-mentores" class="rounded-lg border border-gray-300 px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50">Encontrar outros mentores</a>
+              </div>
+            </div>
+          }
         }
       }
     }

@@ -29,6 +29,15 @@
 
       <div class="flex min-w-0 flex-col">
         <h1 class="text-3xl font-bold">{{ m.nome }}</h1>
+        @if (m.notaMedia; as nota) {
+          <p class="mt-1 flex flex-wrap items-center gap-2 text-gray-700">
+            <app-estrelas [nota]="nota" />
+            <span class="font-semibold">{{ nota.toLocaleString('pt-BR', { minimumFractionDigits: 1 }) }}</span>
+            <span class="text-gray-500">({{ m.totalAvaliacoes }} {{ m.totalAvaliacoes === 1 ? 'avaliação' : 'avaliações' }}) · {{ m.totalMentorias }} {{ m.totalMentorias === 1 ? 'mentoria' : 'mentorias' }}</span>
+          </p>
+        } @else {
+          <p class="mt-1 text-sm font-medium text-ponti-roxo">Novo na Ponti</p>
+        }
         @if (m.areasAtuacao) {
           <p class="mt-2 flex items-center gap-2 text-gray-600">
             <app-icone nome="maleta" [tamanho]="20" />
@@ -102,6 +111,35 @@
                 <p class="mt-1 max-w-prose text-gray-700">{{ c.descricao }}</p>
               }
             </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Avaliações -->
+    @if (avaliacoes().length) {
+      <h2 class="mt-10 flex items-center gap-3 text-2xl font-medium">
+        Avaliações das startups
+        <span class="text-base font-normal text-gray-500">{{ avaliacoes().length }}</span>
+      </h2>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2">
+        @for (av of avaliacoes(); track av.id) {
+          <li class="rounded-xl border border-gray-200 bg-white p-5">
+            <div class="flex items-center gap-3">
+              @if (av.startupFotoUrl) {
+                <img [src]="av.startupFotoUrl" alt="" class="size-10 rounded-lg border border-gray-200 object-cover" />
+              } @else {
+                <span class="flex size-10 items-center justify-center rounded-lg bg-ponti-lilas/40 text-sm font-semibold text-ponti-marinho" aria-hidden="true">{{ iniciaisDe(av.startupNome) }}</span>
+              }
+              <div>
+                <p class="font-semibold">{{ av.startupNome }}</p>
+                <p class="text-xs text-gray-500">{{ dataAvaliacao(av.criadoEm) }}</p>
+              </div>
+              <app-estrelas class="ml-auto" [nota]="av.nota" [tamanho]="16" />
+            </div>
+            @if (av.comentario) {
+              <p class="mt-3 text-gray-700">"{{ av.comentario }}"</p>
+            }
           </li>
         }
       </ul>

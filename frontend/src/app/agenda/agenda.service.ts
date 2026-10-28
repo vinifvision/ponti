@@ -31,6 +31,14 @@ export class AgendaService {
     return this.http.get<Agendamento[]>(`${API_URL}/agendamentos`, { params: { mentorId } });
   }
 
+  buscar(id: number): Observable<Agendamento> {
+    return this.http.get<Agendamento>(`${API_URL}/agendamentos/${id}`);
+  }
+
+  avaliar(id: number, nota: number, comentario: string): Observable<Agendamento> {
+    return this.http.post<Agendamento>(`${API_URL}/agendamentos/${id}/avaliacao`, { nota, comentario });
+  }
+
   agendar(pedido: NovoAgendamento): Observable<Agendamento> {
     return this.http.post<Agendamento>(`${API_URL}/agendamentos`, pedido);
   }

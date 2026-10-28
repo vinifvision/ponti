@@ -2,13 +2,14 @@ import { Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Mentor } from '../../models';
 import { IconeComponent } from '../../shared/icone/icone.component';
+import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { formatarDuracao, formatarValorSessao } from '../../shared/mentoria.utils';
 import { iniciais } from '../../shared/texto.utils';
 
 @Component({
   selector: 'app-mentor-card',
   standalone: true,
-  imports: [IconeComponent, RouterLink],
+  imports: [IconeComponent, RouterLink, EstrelasComponent],
   templateUrl: './mentor-card.component.html',
 })
 export class MentorCardComponent {

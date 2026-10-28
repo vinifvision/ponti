@@ -28,6 +28,15 @@
         {{ mentor().nome }}
       </button>
     </h2>
+    @if (mentor().notaMedia; as nota) {
+          <p class="mt-1 flex flex-wrap items-center gap-2 text-gray-700">
+            <app-estrelas [nota]="nota" />
+            <span class="font-semibold">{{ nota.toLocaleString('pt-BR', { minimumFractionDigits: 1 }) }}</span>
+            <span class="text-gray-500">({{ mentor().totalAvaliacoes }} {{ mentor().totalAvaliacoes === 1 ? 'avaliação' : 'avaliações' }}) · {{ mentor().totalMentorias }} {{ mentor().totalMentorias === 1 ? 'mentoria' : 'mentorias' }}</span>
+          </p>
+        } @else {
+          <p class="mt-1 text-sm font-medium text-ponti-roxo">Novo na Ponti</p>
+        }
 
     @if (mentor().areasAtuacao) {
       <p class="mt-2 flex items-center gap-2 text-gray-600">

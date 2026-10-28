@@ -1,0 +1,169 @@
+<section class="max-w-4xl pb-12 pt-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-medium sm:text-4xl">Meu perfil</h1>
+      <p class="mt-2 text-gray-500">
+        {{ ehMentor() ? 'É assim que as startups conhecem você. Um perfil completo recebe mais pedidos.' : 'É assim que os mentores conhecem a sua startup.' }}
+      </p>
+    </div>
+    <a [routerLink]="linkPublico()" class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50">
+      Ver perfil público
+    </a>
+  </div>
+
+  @if (carregando()) {
+    <p class="mt-8 text-gray-500" role="status">Carregando...</p>
+  } @else {
+    <form (ngSubmit)="salvar()" class="mt-8 grid gap-8">
+      <!-- Foto e nome -->
+      <div class="flex flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
+        @if (foto()) {
+          <img [src]="foto()" alt="Pré-visualização da foto" class="size-28 shrink-0 rounded-xl border border-gray-200 object-cover" />
+        } @else {
+          <span class="flex size-28 shrink-0 items-center justify-center rounded-xl bg-ponti-lilas/40 text-3xl font-semibold text-ponti-marinho" aria-hidden="true">{{ iniciais() }}</span>
+        }
+        <div class="grid flex-1 gap-4">
+          @if (ehMentor()) {
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Nome</span>
+              <input name="nome" required maxlength="120" [(ngModel)]="mentor.nome" class="campo" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Link da foto</span>
+              <input name="foto" maxlength="500" [(ngModel)]="mentor.fotoUrl" placeholder="https://..." class="campo" />
+            </label>
+          } @else {
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Nome da startup</span>
+              <input name="nome" required maxlength="120" [(ngModel)]="startup.nome" class="campo" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Link do logo</span>
+              <input name="foto" maxlength="500" [(ngModel)]="startup.fotoUrl" placeholder="https://..." class="campo" />
+            </label>
+          }
+        </div>
+      </div>
+
+      @if (ehMentor()) {
+        <!-- Mentor: sobre e experiência -->
+        <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
+          <legend class="px-1 text-lg font-semibold">Sobre você</legend>
+          <label class="grid gap-1">
+            <span class="text-sm font-medium text-gray-700">Bio</span>
+            <textarea name="bio" rows="4" maxlength="2000" [(ngModel)]="mentor.bio" class="campo" placeholder="Sua trajetória e como você ajuda startups"></textarea>
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Áreas de atuação</span>
+              <input name="areas" maxlength="255" [(ngModel)]="mentor.areasAtuacao" class="campo" placeholder="Ex.: Produto, UX Research" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Setores em que mentora</span>
+              <input name="ecossistemas" maxlength="255" [(ngModel)]="mentor.ecossistemas" class="campo" placeholder="Ex.: Fintechs, SaaS" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Anos de experiência</span>
+              <input name="anos" type="number" min="0" max="70" [(ngModel)]="mentor.anosExperiencia" class="campo" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">LinkedIn</span>
+              <input name="linkedin" maxlength="500" [(ngModel)]="mentor.linkedinUrl" class="campo" placeholder="https://www.linkedin.com/in/..." />
+            </label>
+          </div>
+          <label class="grid gap-1">
+            <span class="text-sm font-medium text-gray-700">Vídeo de apresentação (YouTube)</span>
+            <input name="video" maxlength="500" [(ngModel)]="mentor.videoUrl" class="campo" placeholder="https://www.youtube.com/watch?v=..." />
+          </label>
+        </fieldset>
+
+        <!-- Mentor: sessões -->
+        <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
+          <legend class="px-1 text-lg font-semibold">Suas sessões</legend>
+          <label class="flex items-center gap-3">
+            <input type="checkbox" name="gratuita" [(ngModel)]="gratuita" class="size-5 accent-ponti-roxo" />
+            <span>Ofereço mentoria gratuita</span>
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            @if (!gratuita) {
+              <label class="grid gap-1">
+                <span class="text-sm font-medium text-gray-700">Valor por sessão (R$)</span>
+                <input name="valor" type="number" min="1" max="10000" step="5" [(ngModel)]="mentor.valorSessao" class="campo" />
+              </label>
+            }
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Duração da sessão</span>
+              <select name="duracao" [(ngModel)]="mentor.duracaoSessaoMinutos" class="campo">
+                @for (d of duracoes; track d) {
+                  <option [ngValue]="d">{{ d }} minutos</option>
+                }
+              </select>
+            </label>
+          </div>
+          <p class="text-sm text-gray-500">
+            Os horários em que você atende ficam em <a routerLink="/agenda" class="font-medium text-ponti-roxo hover:underline">Minha agenda</a>.
+          </p>
+        </fieldset>
+      } @else {
+        <!-- Startup -->
+        <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
+          <legend class="px-1 text-lg font-semibold">Sobre a startup</legend>
+          <label class="grid gap-1">
+            <span class="text-sm font-medium text-gray-700">Descrição</span>
+            <textarea name="descricao" rows="4" maxlength="2000" [(ngModel)]="startup.descricao" class="campo" placeholder="Que problema vocês resolvem e para quem"></textarea>
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Segmento</span>
+              <input name="segmento" maxlength="255" [(ngModel)]="startup.segmento" class="campo" placeholder="Ex.: Agritech" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Estágio de maturidade</span>
+              <select name="estagio" [(ngModel)]="startup.estagioMaturidade" class="campo">
+                @for (n of niveis; track n.nivel) {
+                  <option [ngValue]="n.nivel">Nível {{ n.nivel }} · {{ n.nome }}</option>
+                }
+              </select>
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Cidade</span>
+              <input name="cidade" maxlength="120" [(ngModel)]="startup.cidade" class="campo" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Estado (UF)</span>
+              <input name="estado" maxlength="2" [(ngModel)]="startup.estado" class="campo uppercase" placeholder="PE" />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Site</span>
+              <input name="site" maxlength="500" [(ngModel)]="startup.site" class="campo" placeholder="https://..." />
+            </label>
+            <label class="grid gap-1">
+              <span class="text-sm font-medium text-gray-700">Vídeo pitch (YouTube)</span>
+              <input name="pitch" maxlength="500" [(ngModel)]="startup.videoPitchUrl" class="campo" placeholder="https://www.youtube.com/watch?v=..." />
+            </label>
+          </div>
+        </fieldset>
+      }
+
+      @if (erro()) {
+        <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+      }
+
+      <div class="flex items-center gap-4">
+        <button
+          type="submit"
+          [disabled]="salvando()"
+          class="cursor-pointer rounded-lg bg-ponti-roxo px-8 py-3 text-lg font-medium text-white transition hover:bg-ponti-roxo/90 disabled:opacity-60"
+        >
+          {{ salvando() ? 'Salvando...' : 'Salvar alterações' }}
+        </button>
+        @if (sucesso()) {
+          <span class="flex items-center gap-2 font-medium text-green-700" role="status">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            Perfil atualizado
+          </span>
+        }
+      </div>
+    </form>
+  }
+</section>

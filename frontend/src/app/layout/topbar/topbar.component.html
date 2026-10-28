@@ -33,7 +33,11 @@
       aria-haspopup="menu"
       [attr.aria-expanded]="menuAberto()"
     >
-      <span class="size-12 rounded-full bg-gray-200" aria-hidden="true"></span>
+      @if (usuario().foto) {
+        <img [src]="usuario().foto" alt="" class="size-12 rounded-full border border-gray-200 object-cover" />
+      } @else {
+        <span class="size-12 rounded-full bg-gray-200" aria-hidden="true"></span>
+      }
       <span class="hidden flex-col items-start leading-tight sm:flex">
         <span class="flex items-center gap-1 font-semibold">
           {{ usuario().nome }}

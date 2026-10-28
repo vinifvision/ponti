@@ -76,3 +76,10 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 }
 
+
+/* Campo de formulário padrão (telas Meu perfil e Configurações) */
+@layer components {
+  .campo {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30;
+  }
+}
