@@ -65,6 +65,20 @@ export interface Mentor {
   fotoUrl?: string | null;
   videoUrl?: string | null;
   linkedinUrl?: string | null;
+  // Reputação calculada pelo backend
+  notaMedia?: number | null;
+  totalAvaliacoes?: number;
+  totalMentorias?: number;
+}
+
+// Avaliação que aparece no perfil do mentor
+export interface AvaliacaoPublica {
+  id: number;
+  nota: number;
+  comentario?: string | null;
+  startupNome: string;
+  startupFotoUrl?: string | null;
+  criadoEm: string;
 }
 
 // Certificação ou experiência que aparece no perfil
@@ -89,7 +103,7 @@ export interface FaixaDisponibilidade {
 }
 
 export type StatusAgendamento = 'PENDENTE' | 'CONFIRMADO' | 'RECUSADO' | 'CANCELADO';
-export type StatusPagamento = 'GRATUITA' | 'PAGO' | 'REEMBOLSADO';
+export type StatusPagamento = 'GRATUITA' | 'AGUARDANDO' | 'PAGO' | 'REEMBOLSADO' | 'EXPIRADO';
 export type MetodoPagamento = 'PIX' | 'CARTAO';
 
 export interface NovoAgendamento {
@@ -97,7 +111,25 @@ export interface NovoAgendamento {
   mentorId: number;
   inicio: string; // "2026-11-03T09:00:00", horário de Recife
   metodoPagamento?: MetodoPagamento;
+  cartao?: DadosCartao;
   mensagem?: string;
+}
+
+// Vai só para o gateway simulado; o backend guarda apenas a bandeira e os 4 últimos dígitos
+export interface DadosCartao {
+  numero: string;
+  nomeImpresso: string;
+  validade: string; // "MM/AA"
+  cvv: string;
+}
+
+export interface PagamentoAgendamento {
+  codigoTransacao: string;
+  pixCopiaECola?: string | null; // só enquanto o Pix está AGUARDANDO
+  expiraEm?: string | null;
+  pagoEm?: string | null;
+  cartaoFinal?: string | null;
+  cartaoBandeira?: string | null;
 }
 
 export interface ParteAgendamento {
@@ -119,4 +151,7 @@ export interface Agendamento {
   mensagem?: string | null;
   startup: ParteAgendamento | null;
   mentor: ParteAgendamento | null;
+  realizada?: boolean; // confirmada e já aconteceu
+  pagamento?: PagamentoAgendamento | null;
+  avaliacao?: { nota: number; comentario?: string | null } | null;
 }

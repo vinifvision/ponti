@@ -4,6 +4,8 @@ import com.ponti.api.dto.AgendamentoDetalhe;
 import com.ponti.api.dto.FaixaDisponibilidade;
 import com.ponti.api.dto.NovoAgendamento;
 import com.ponti.api.model.Agendamento;
+import com.ponti.api.model.Avaliacao;
+import com.ponti.api.model.MetodoPagamento;
 import com.ponti.api.model.Disponibilidade;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.StatusAgendamento;
@@ -11,7 +13,9 @@ import com.ponti.api.model.StatusConvite;
 import com.ponti.api.model.StatusPagamento;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
+import com.ponti.api.pagamento.GatewayPagamentoSimulado;
 import com.ponti.api.repository.AgendamentoRepository;
+import com.ponti.api.repository.AvaliacaoRepository;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.DisponibilidadeRepository;
 import com.ponti.api.repository.MentorRepository;
@@ -24,6 +28,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +52,8 @@ public class AgendaService {
     private final MentorRepository mentorRepository;
     private final StartupRepository startupRepository;
     private final ConviteRepository conviteRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
+    private final GatewayPagamentoSimulado gateway;
     private final Clock relogio;
 
     public AgendaService(DisponibilidadeRepository disponibilidadeRepository,
@@ -52,12 +61,16 @@ public class AgendaService {
                          MentorRepository mentorRepository,
                          StartupRepository startupRepository,
                          ConviteRepository conviteRepository,
+                         AvaliacaoRepository avaliacaoRepository,
+                         GatewayPagamentoSimulado gateway,
                          Clock relogio) {
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.agendamentoRepository = agendamentoRepository;
         this.mentorRepository = mentorRepository;
         this.startupRepository = startupRepository;
         this.conviteRepository = conviteRepository;
+        this.avaliacaoRepository = avaliacaoRepository;
+        this.gateway = gateway;
         this.relogio = relogio;
     }
 
@@ -154,7 +167,10 @@ public class AgendaService {
 
     // ---------------------------------------------------------------- agendamentos
 
-    // A startup marca um horário livre. Pagamento simulado: se a mentoria é paga, basta escolher o método.
+    // A startup marca um horário livre e paga pelo gateway simulado:
+    //   gratuita → já fica pronta para o mentor responder;
+    //   Pix      → fica AGUARDANDO até "o banco confirmar" (alguns segundos);
+    //   cartão   → aprovado ou recusado na hora (recusado não cria o agendamento).
     @Transactional
     public Agendamento agendar(NovoAgendamento pedido) {
         Startup startup = startupRepository.findById(pedido.startupId()).orElseThrow(() ->
@@ -181,9 +197,17 @@ public class AgendaService {
         agendamento.setFim(inicio.plusMinutes(duracao(mentor)));
         agendamento.setValor(valor);
         agendamento.setStatus(StatusAgendamento.PENDENTE);
-        agendamento.setStatusPagamento(gratuita ? StatusPagamento.GRATUITA : StatusPagamento.PAGO);
-        agendamento.setMetodoPagamento(gratuita ? null : pedido.metodoPagamento());
         agendamento.setMensagem(pedido.mensagem());
+        if (gratuita) {
+            agendamento.setStatusPagamento(StatusPagamento.GRATUITA);
+        } else {
+            agendamento.setMetodoPagamento(pedido.metodoPagamento());
+            if (pedido.metodoPagamento() == MetodoPagamento.PIX) {
+                gateway.iniciarPix(agendamento);
+            } else {
+                gateway.cobrarCartao(agendamento, pedido.cartao());
+            }
+        }
         Agendamento salvo = agendamentoRepository.save(agendamento);
 
         aceitarSugestaoDoMentor(startup.getId(), mentor.getId());
@@ -206,6 +230,9 @@ public class AgendaService {
     public Agendamento confirmar(Long id, String linkReuniao) {
         Agendamento agendamento = buscar(id);
         exigirStatus(agendamento, StatusAgendamento.PENDENTE, "Só pedidos pendentes podem ser confirmados");
+        if (agendamento.getStatusPagamento() == StatusPagamento.AGUARDANDO) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "O pagamento desse pedido ainda não foi confirmado");
+        }
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
         agendamento.setLinkReuniao(linkReuniao.trim());
         return agendamentoRepository.save(agendamento);
@@ -239,16 +266,32 @@ public class AgendaService {
     public List<AgendamentoDetalhe> listar(Long startupId, Long mentorId) {
         List<Agendamento> lista;
         if (mentorId != null) {
-            lista = agendamentoRepository.findByMentorIdOrderByInicioAsc(mentorId);
+            // O mentor só vê pedidos com pagamento resolvido (Pix aguardando ou expirado não chegam até ele)
+            lista = agendamentoRepository.findByMentorIdOrderByInicioAsc(mentorId).stream()
+                    .filter(a -> a.getStatusPagamento() != StatusPagamento.AGUARDANDO
+                            && a.getStatusPagamento() != StatusPagamento.EXPIRADO)
+                    .toList();
         } else if (startupId != null) {
             lista = agendamentoRepository.findByStartupIdOrderByInicioAsc(startupId);
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe startupId ou mentorId");
         }
-        return lista.stream().map(this::detalhar).toList();
+        Map<Long, Avaliacao> avaliacoes = avaliacaoRepository
+                .findByAgendamentoIdIn(lista.stream().map(Agendamento::getId).toList()).stream()
+                .collect(Collectors.toMap(Avaliacao::getAgendamentoId, Function.identity()));
+        return lista.stream().map(a -> detalhar(a, avaliacoes.get(a.getId()))).toList();
     }
 
     public AgendamentoDetalhe detalhar(Agendamento a) {
+        return detalhar(a, avaliacaoRepository.findByAgendamentoId(a.getId()).orElse(null));
+    }
+
+    // Confirmada e com o horário já encerrado
+    public boolean realizada(Agendamento a) {
+        return a.getStatus() == StatusAgendamento.CONFIRMADO && a.getFim().isBefore(LocalDateTime.now(relogio));
+    }
+
+    private AgendamentoDetalhe detalhar(Agendamento a, Avaliacao avaliacao) {
         Startup s = startupRepository.findById(a.getStartupId()).orElse(null);
         Mentor m = mentorRepository.findById(a.getMentorId()).orElse(null);
         return new AgendamentoDetalhe(
@@ -257,7 +300,13 @@ public class AgendaService {
                 a.getStatus() == StatusAgendamento.CONFIRMADO ? a.getLinkReuniao() : null,
                 a.getMensagem(),
                 s == null ? null : new AgendamentoDetalhe.Parte(s.getId(), s.getNome(), s.getFotoUrl(), s.getSegmento()),
-                m == null ? null : new AgendamentoDetalhe.Parte(m.getId(), m.getNome(), m.getFotoUrl(), m.getAreasAtuacao()));
+                m == null ? null : new AgendamentoDetalhe.Parte(m.getId(), m.getNome(), m.getFotoUrl(), m.getAreasAtuacao()),
+                realizada(a),
+                a.getCodigoTransacao() == null ? null : new AgendamentoDetalhe.Pagamento(
+                        a.getCodigoTransacao(),
+                        a.getStatusPagamento() == StatusPagamento.AGUARDANDO ? a.getPixCopiaECola() : null,
+                        a.getPagamentoExpiraEm(), a.getPagoEm(), a.getCartaoFinal(), a.getCartaoBandeira()),
+                avaliacao == null ? null : new AgendamentoDetalhe.AvaliacaoDada(avaliacao.getNota(), avaliacao.getComentario()));
     }
 
     // ---------------------------------------------------------------- apoio
@@ -265,6 +314,10 @@ public class AgendaService {
     private void reembolsarSePago(Agendamento agendamento) {
         if (agendamento.getStatusPagamento() == StatusPagamento.PAGO) {
             agendamento.setStatusPagamento(StatusPagamento.REEMBOLSADO);
+        } else if (agendamento.getStatusPagamento() == StatusPagamento.AGUARDANDO) {
+            // Cancelou antes de pagar o Pix: a cobrança é encerrada
+            agendamento.setStatusPagamento(StatusPagamento.EXPIRADO);
+            agendamento.setPixCopiaECola(null);
         }
     }
 
@@ -274,7 +327,7 @@ public class AgendaService {
         }
     }
 
-    private Agendamento buscar(Long id) {
+    public Agendamento buscar(Long id) {
         return agendamentoRepository.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Agendamento não encontrado"));
     }

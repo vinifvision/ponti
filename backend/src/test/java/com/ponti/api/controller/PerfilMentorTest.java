@@ -15,6 +15,7 @@ import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.UsuarioRepository;
+import com.ponti.api.support.Login;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -128,7 +129,7 @@ class PerfilMentorTest {
         void perfilPublicoMostraPrecoDuracaoELinkedin() throws Exception {
             Mentor mentor = cadastrar(mentorCompleto());
 
-            mockMvc.perform(get("/mentores/" + mentor.getId()))
+            mockMvc.perform(get("/mentores/" + mentor.getId()).with(Login.comoStartup(1L)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.valorSessao").value(150))
                     .andExpect(jsonPath("$.duracaoSessaoMinutos").value(60))
@@ -145,19 +146,19 @@ class PerfilMentorTest {
             Mentor mentor = cadastrar(AuthControllerTest.mentorValido());
             String base = "/mentores/" + mentor.getId() + "/certificacoes";
 
-            String json = enviarJson(post(base), Map.of("titulo", "Certificação Scrum", "anoInicio", 2023))
+            String json = enviarJson(post(base).with(Login.comoMentor(mentor.getId())), Map.of("titulo", "Certificação Scrum", "anoInicio", 2023))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.mentorId").value(mentor.getId()))
                     .andReturn().getResponse().getContentAsString();
             long certificacaoId = objectMapper.readTree(json).get("id").asLong();
 
-            mockMvc.perform(get(base))
+            mockMvc.perform(get(base).with(Login.comoMentor(mentor.getId())))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].titulo").value("Certificação Scrum"));
 
-            mockMvc.perform(delete(base + "/" + certificacaoId)).andExpect(status().isNoContent());
-            mockMvc.perform(get(base)).andExpect(jsonPath("$.length()").value(0));
+            mockMvc.perform(delete(base + "/" + certificacaoId).with(Login.comoMentor(mentor.getId()))).andExpect(status().isNoContent());
+            mockMvc.perform(get(base).with(Login.comoMentor(mentor.getId()))).andExpect(jsonPath("$.length()").value(0));
         }
 
         @Test
@@ -167,18 +168,18 @@ class PerfilMentorTest {
             outroBody.put("email", "outro@email.com");
             Mentor outro = cadastrar(outroBody);
 
-            String json = enviarJson(post("/mentores/" + dono.getId() + "/certificacoes"), Map.of("titulo", "Curso"))
+            String json = enviarJson(post("/mentores/" + dono.getId() + "/certificacoes").with(Login.comoMentor(dono.getId())), Map.of("titulo", "Curso"))
                     .andReturn().getResponse().getContentAsString();
             long certificacaoId = objectMapper.readTree(json).get("id").asLong();
 
-            mockMvc.perform(delete("/mentores/" + outro.getId() + "/certificacoes/" + certificacaoId))
+            mockMvc.perform(delete("/mentores/" + outro.getId() + "/certificacoes/" + certificacaoId).with(Login.comoMentor(outro.getId())))
                     .andExpect(status().isNotFound());
             assertThat(certificacaoRepository.existsById(certificacaoId)).isTrue();
         }
 
         @Test
         void mentorInexistenteDa404() throws Exception {
-            mockMvc.perform(get("/mentores/999999/certificacoes")).andExpect(status().isNotFound());
+            mockMvc.perform(get("/mentores/999999/certificacoes").with(Login.comoStartup(1L))).andExpect(status().isNotFound());
         }
     }
 }

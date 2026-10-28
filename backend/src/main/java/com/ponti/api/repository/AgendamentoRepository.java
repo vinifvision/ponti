@@ -25,4 +25,19 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
                                       @Param("status") Collection<StatusAgendamento> status,
                                       @Param("de") LocalDateTime de,
                                       @Param("ate") LocalDateTime ate);
+
+    // Pix que ainda esperam a "confirmação do banco" (ver GatewayPagamentoSimulado)
+    List<Agendamento> findByStatusPagamento(com.ponti.api.model.StatusPagamento statusPagamento);
+
+    // Mentorias já realizadas de cada mentor: [mentorId, quantidade]
+    @Query("""
+            select a.mentorId, count(a) from Agendamento a
+            where a.status = com.ponti.api.model.StatusAgendamento.CONFIRMADO and a.fim < :agora
+            group by a.mentorId
+            """)
+    List<Object[]> realizadasPorMentor(@Param("agora") LocalDateTime agora);
+
+    // Usado ao excluir a conta (ver ContaService)
+    void deleteByStartupId(Long startupId);
+    void deleteByMentorId(Long mentorId);
 }

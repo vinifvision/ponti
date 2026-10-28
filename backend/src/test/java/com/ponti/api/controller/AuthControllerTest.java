@@ -250,7 +250,7 @@ class AuthControllerTest {
             // rota /error do Spring Boot que monta esse JSON, então aqui ela fica no "reason" da resposta.
             enviar("/auth/cadastro/mentor", mentor)
                     .andExpect(status().isConflict())
-                    .andExpect(status().reason("Este e-mail já está cadastrado"));
+                    .andExpect(jsonPath("$.message").value("Este e-mail já está cadastrado"));
 
             // O @Transactional do service garante que não sobrou um mentor "órfão" (sem usuário)
             assertThat(mentorRepository.count()).isEqualTo(mentoresAntes);

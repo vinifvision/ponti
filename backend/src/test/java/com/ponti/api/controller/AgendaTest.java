@@ -15,9 +15,12 @@ import com.ponti.api.model.Mentor;
 import com.ponti.api.model.StatusConvite;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
+import com.ponti.api.pagamento.GatewayPagamentoSimulado;
+import com.ponti.api.repository.AgendamentoRepository;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
+import com.ponti.api.support.Login;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -51,6 +54,8 @@ class AgendaTest {
     @Autowired MentorRepository mentorRepository;
     @Autowired StartupRepository startupRepository;
     @Autowired ConviteRepository conviteRepository;
+    @Autowired AgendamentoRepository agendamentoRepository;
+    @Autowired GatewayPagamentoSimulado gateway;
 
     Long mentorId;
     Long startupId;
@@ -89,11 +94,11 @@ class AgendaTest {
     }
 
     ResultActions definirDisponibilidade(Long mentor, List<Map<String, Object>> faixas) throws Exception {
-        return enviarJson(put("/mentores/" + mentor + "/disponibilidade"), faixas);
+        return enviarJson(put("/mentores/" + mentor + "/disponibilidade").with(Login.comoMentor(mentor)), faixas);
     }
 
     List<String> horarios(Long mentor, LocalDate de, LocalDate ate) throws Exception {
-        String json = mockMvc.perform(get("/mentores/" + mentor + "/horarios")
+        String json = mockMvc.perform(get("/mentores/" + mentor + "/horarios").with(Login.comoStartup(startupId))
                         .param("de", de.toString()).param("ate", ate.toString()))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
@@ -110,15 +115,22 @@ class AgendaTest {
         if (metodo != null) {
             body.put("metodoPagamento", metodo);
         }
+        if ("CARTAO".equals(metodo)) {
+            body.put("cartao", Map.of("numero", "4242 4242 4242 4242", "nomeImpresso", "FULANO DA SILVA",
+                    "validade", "12/35", "cvv", "123"));
+        }
         body.put("mensagem", "Queremos validar o MVP");
         return body;
     }
 
+    // Agenda com Pix e já simula a confirmação do banco (pedido pago, pronto para o mentor responder)
     Long agendar(LocalDateTime inicio) throws Exception {
-        String json = enviarJson(post("/agendamentos"), pedido(inicio, "PIX"))
+        String json = enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(inicio, "PIX"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(json).get("id").asLong();
+        Long id = objectMapper.readTree(json).get("id").asLong();
+        gateway.confirmarPix(agendamentoRepository.findById(id).orElseThrow());
+        return id;
     }
 
     // ---------------------------------------------------------------- testes
@@ -133,7 +145,7 @@ class AgendaTest {
                     faixa("TUESDAY", "09:00", "12:00")))
                     .andExpect(status().isOk());
 
-            mockMvc.perform(get("/mentores/" + mentorId + "/disponibilidade"))
+            mockMvc.perform(get("/mentores/" + mentorId + "/disponibilidade").with(Login.comoMentor(mentorId)))
                     .andExpect(jsonPath("$.length()").value(2))
                     .andExpect(jsonPath("$[0].diaSemana").value("TUESDAY"))
                     .andExpect(jsonPath("$[0].horaInicio").value("09:00:00"))
@@ -197,7 +209,7 @@ class AgendaTest {
         @Test
         void horarioRecusadoVoltaParaALista() throws Exception {
             Long id = agendar(terca.atTime(10, 0));
-            mockMvc.perform(post("/agendamentos/" + id + "/recusar")).andExpect(status().isOk());
+            mockMvc.perform(post("/agendamentos/" + id + "/recusar").with(Login.comoMentor(mentorId))).andExpect(status().isOk());
 
             assertThat(horarios(mentorId, terca, terca)).contains(terca + "T10:00:00");
         }
@@ -210,10 +222,10 @@ class AgendaTest {
 
         @Test
         void recusaPeriodoInvertidoOuLongoDemais() throws Exception {
-            mockMvc.perform(get("/mentores/" + mentorId + "/horarios")
+            mockMvc.perform(get("/mentores/" + mentorId + "/horarios").with(Login.comoStartup(startupId))
                             .param("de", terca.toString()).param("ate", terca.minusDays(1).toString()))
                     .andExpect(status().isBadRequest());
-            mockMvc.perform(get("/mentores/" + mentorId + "/horarios")
+            mockMvc.perform(get("/mentores/" + mentorId + "/horarios").with(Login.comoStartup(startupId))
                             .param("de", terca.toString()).param("ate", terca.plusDays(90).toString()))
                     .andExpect(status().isBadRequest());
         }
@@ -224,7 +236,7 @@ class AgendaTest {
 
         @Test
         void mentoriaPagaFicaPendenteEPaga() throws Exception {
-            enviarJson(post("/agendamentos"), pedido(terca.atTime(9, 0), "CARTAO"))
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(terca.atTime(9, 0), "CARTAO"))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.status").value("PENDENTE"))
                     .andExpect(jsonPath("$.statusPagamento").value("PAGO"))
@@ -238,7 +250,7 @@ class AgendaTest {
 
         @Test
         void mentoriaPagaSemFormaDePagamentoDa400() throws Exception {
-            enviarJson(post("/agendamentos"), pedido(terca.atTime(9, 0), null))
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(terca.atTime(9, 0), null))
                     .andExpect(status().isBadRequest());
         }
 
@@ -249,7 +261,7 @@ class AgendaTest {
             Map<String, Object> body = pedido(terca.atTime(9, 0), null);
             body.put("mentorId", gratuito);
 
-            enviarJson(post("/agendamentos"), body)
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), body)
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.statusPagamento").value("GRATUITA"))
                     .andExpect(jsonPath("$.metodoPagamento").doesNotExist());
@@ -259,22 +271,22 @@ class AgendaTest {
         void naoAgendaOMesmoHorarioDuasVezes() throws Exception {
             agendar(terca.atTime(9, 0));
 
-            enviarJson(post("/agendamentos"), pedido(terca.atTime(9, 0), "PIX"))
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(terca.atTime(9, 0), "PIX"))
                     .andExpect(status().isConflict());
         }
 
         @Test
         void naoAgendaForaDaDisponibilidade() throws Exception {
-            enviarJson(post("/agendamentos"), pedido(terca.atTime(15, 0), "PIX"))
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(terca.atTime(15, 0), "PIX"))
                     .andExpect(status().isConflict());
-            enviarJson(post("/agendamentos"), pedido(terca.atTime(9, 30), "PIX"))
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(terca.atTime(9, 30), "PIX"))
                     .andExpect(status().isConflict());
         }
 
         @Test
         void naoAgendaNoPassado() throws Exception {
             LocalDate tercaPassada = LocalDate.now(RelogioConfig.FUSO).with(TemporalAdjusters.previous(DayOfWeek.TUESDAY));
-            enviarJson(post("/agendamentos"), pedido(tercaPassada.atTime(9, 0), "PIX"))
+            enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(tercaPassada.atTime(9, 0), "PIX"))
                     .andExpect(status().isConflict());
         }
 
@@ -299,12 +311,12 @@ class AgendaTest {
         void confirmarGuardaOLinkDaReuniao() throws Exception {
             Long id = agendar(terca.atTime(9, 0));
 
-            enviarJson(post("/agendamentos/" + id + "/confirmar"), Map.of("linkReuniao", "https://meet.google.com/abc-defg-hij"))
+            enviarJson(post("/agendamentos/" + id + "/confirmar").with(Login.comoMentor(mentorId)), Map.of("linkReuniao", "https://meet.google.com/abc-defg-hij"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CONFIRMADO"))
                     .andExpect(jsonPath("$.linkReuniao").value("https://meet.google.com/abc-defg-hij"));
 
-            JsonNode lista = objectMapper.readTree(mockMvc.perform(get("/agendamentos").param("startupId", startupId.toString()))
+            JsonNode lista = objectMapper.readTree(mockMvc.perform(get("/agendamentos").param("startupId", startupId.toString()).with(Login.comoStartup(startupId)))
                     .andReturn().getResponse().getContentAsString());
             assertThat(lista.get(0).get("linkReuniao").asText()).isEqualTo("https://meet.google.com/abc-defg-hij");
         }
@@ -313,9 +325,9 @@ class AgendaTest {
         void confirmarExigeLinkHttps() throws Exception {
             Long id = agendar(terca.atTime(9, 0));
 
-            enviarJson(post("/agendamentos/" + id + "/confirmar"), Map.of("linkReuniao", "meet.google.com/abc"))
+            enviarJson(post("/agendamentos/" + id + "/confirmar").with(Login.comoMentor(mentorId)), Map.of("linkReuniao", "meet.google.com/abc"))
                     .andExpect(status().isBadRequest());
-            enviarJson(post("/agendamentos/" + id + "/confirmar"), Map.of("linkReuniao", "javascript:alert(1)"))
+            enviarJson(post("/agendamentos/" + id + "/confirmar").with(Login.comoMentor(mentorId)), Map.of("linkReuniao", "javascript:alert(1)"))
                     .andExpect(status().isBadRequest());
         }
 
@@ -323,17 +335,17 @@ class AgendaTest {
         void naoConfirmaDuasVezes() throws Exception {
             Long id = agendar(terca.atTime(9, 0));
             Map<String, String> link = Map.of("linkReuniao", "https://meet.google.com/abc-defg-hij");
-            enviarJson(post("/agendamentos/" + id + "/confirmar"), link).andExpect(status().isOk());
+            enviarJson(post("/agendamentos/" + id + "/confirmar").with(Login.comoMentor(mentorId)), link).andExpect(status().isOk());
 
-            enviarJson(post("/agendamentos/" + id + "/confirmar"), link).andExpect(status().isConflict());
-            mockMvc.perform(post("/agendamentos/" + id + "/recusar")).andExpect(status().isConflict());
+            enviarJson(post("/agendamentos/" + id + "/confirmar").with(Login.comoMentor(mentorId)), link).andExpect(status().isConflict());
+            mockMvc.perform(post("/agendamentos/" + id + "/recusar").with(Login.comoMentor(mentorId))).andExpect(status().isConflict());
         }
 
         @Test
         void recusarReembolsaOPagamento() throws Exception {
             Long id = agendar(terca.atTime(9, 0));
 
-            mockMvc.perform(post("/agendamentos/" + id + "/recusar"))
+            mockMvc.perform(post("/agendamentos/" + id + "/recusar").with(Login.comoMentor(mentorId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("RECUSADO"))
                     .andExpect(jsonPath("$.statusPagamento").value("REEMBOLSADO"));
@@ -342,22 +354,22 @@ class AgendaTest {
         @Test
         void cancelarSessaoConfirmadaReembolsaELiberaOHorario() throws Exception {
             Long id = agendar(terca.atTime(9, 0));
-            enviarJson(post("/agendamentos/" + id + "/confirmar"), Map.of("linkReuniao", "https://meet.google.com/x"))
+            enviarJson(post("/agendamentos/" + id + "/confirmar").with(Login.comoMentor(mentorId)), Map.of("linkReuniao", "https://meet.google.com/x"))
                     .andExpect(status().isOk());
 
-            mockMvc.perform(post("/agendamentos/" + id + "/cancelar"))
+            mockMvc.perform(post("/agendamentos/" + id + "/cancelar").with(Login.comoStartup(startupId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CANCELADO"))
                     .andExpect(jsonPath("$.statusPagamento").value("REEMBOLSADO"))
                     .andExpect(jsonPath("$.linkReuniao").doesNotExist());
 
             assertThat(horarios(mentorId, terca, terca)).contains(terca + "T09:00:00");
-            mockMvc.perform(post("/agendamentos/" + id + "/cancelar")).andExpect(status().isConflict());
+            mockMvc.perform(post("/agendamentos/" + id + "/cancelar").with(Login.comoStartup(startupId))).andExpect(status().isConflict());
         }
 
         @Test
         void agendamentoInexistenteDa404() throws Exception {
-            mockMvc.perform(post("/agendamentos/999999/recusar")).andExpect(status().isNotFound());
+            mockMvc.perform(post("/agendamentos/999999/recusar").with(Login.comoMentor(mentorId))).andExpect(status().isNotFound());
         }
     }
 
@@ -369,24 +381,32 @@ class AgendaTest {
             agendar(terca.atTime(11, 0));
             agendar(terca.atTime(9, 0));
 
-            mockMvc.perform(get("/agendamentos").param("mentorId", mentorId.toString()))
+            mockMvc.perform(get("/agendamentos").param("mentorId", mentorId.toString()).with(Login.comoMentor(mentorId)))
                     .andExpect(jsonPath("$.length()").value(2))
                     .andExpect(jsonPath("$[0].inicio").value(terca + "T09:00:00"))
                     .andExpect(jsonPath("$[1].inicio").value(terca + "T11:00:00"));
-            mockMvc.perform(get("/agendamentos").param("startupId", startupId.toString()))
+            mockMvc.perform(get("/agendamentos").param("startupId", startupId.toString()).with(Login.comoStartup(startupId)))
                     .andExpect(jsonPath("$.length()").value(2));
         }
 
         @Test
-        void exigeStartupOuMentor() throws Exception {
-            mockMvc.perform(get("/agendamentos")).andExpect(status().isBadRequest());
+        void semLoginDa401() throws Exception {
+            mockMvc.perform(get("/agendamentos")).andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void semParametrosListaAsDeQuemEstaLogado() throws Exception {
+            agendar(terca.atTime(9, 0));
+
+            mockMvc.perform(get("/agendamentos").with(Login.comoMentor(mentorId)))
+                    .andExpect(jsonPath("$.length()").value(1));
         }
 
         @Test
         void linkSoApareceQuandoConfirmado() throws Exception {
             agendar(terca.atTime(9, 0));
 
-            mockMvc.perform(get("/agendamentos").param("mentorId", mentorId.toString()))
+            mockMvc.perform(get("/agendamentos").param("mentorId", mentorId.toString()).with(Login.comoMentor(mentorId)))
                     .andExpect(jsonPath("$[0].linkReuniao").doesNotExist());
         }
     }

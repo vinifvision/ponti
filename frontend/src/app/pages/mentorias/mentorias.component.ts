@@ -10,6 +10,8 @@ import { Agendamento, ConviteDetalhe, StatusAgendamento } from '../../models';
 import { dataHoraCompleta, hora, jaPassou } from '../../shared/data.utils';
 import { descreverMaturidade } from '../../shared/maturidade.utils';
 import { formatarDuracao, formatarValorSessao, linkSeguro } from '../../shared/mentoria.utils';
+import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
+import { iniciais } from '../../shared/texto.utils';
 
 type Situacao = 'AGUARDANDO' | 'CONFIRMADA' | 'REALIZADA' | 'RECUSADA' | 'CANCELADA';
 
@@ -19,7 +21,7 @@ type Situacao = 'AGUARDANDO' | 'CONFIRMADA' | 'REALIZADA' | 'RECUSADA' | 'CANCEL
 @Component({
   selector: 'app-mentorias',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, EstrelasComponent],
   templateUrl: './mentorias.component.html',
 })
 export class MentoriasComponent implements OnInit {
@@ -49,6 +51,25 @@ export class MentoriasComponent implements OnInit {
     return this.agendamentos().filter((a) => !ativos.has(a.id)).reverse();
   });
   sugestoesPendentes = computed(() => this.sugestoes().filter((c) => c.status === 'PENDENTE'));
+
+  // Números do topo da página
+  realizadas = computed(() => this.agendamentos().filter((a) => a.realizada));
+  notaMedia = computed(() => {
+    const notas = this.realizadas().map((a) => a.avaliacao?.nota).filter((n): n is number => !!n);
+    return notas.length ? notas.reduce((t, n) => t + n, 0) / notas.length : null;
+  });
+  totalPago = computed(() =>
+    this.agendamentos()
+      .filter((a) => a.statusPagamento === 'PAGO')
+      .reduce((t, a) => t + Number(a.valor), 0),
+  );
+  totalPagoTexto = computed(() => formatarValorSessao(this.totalPago()).replace('Gratuita', 'R$ 0,00'));
+  notaMediaTexto = computed(() => this.notaMedia()?.toLocaleString('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) ?? '–');
+
+  // Avaliação sendo escrita (startup), por mentoria
+  notas: Record<number, number> = {};
+  comentarios: Record<number, string> = {};
+  notaHover = signal<{ id: number; nota: number } | null>(null);
 
   ngOnInit() {
     this.carregar();
@@ -121,6 +142,28 @@ export class MentoriasComponent implements OnInit {
     });
   }
 
+  avaliar(a: Agendamento) {
+    const nota = this.notas[a.id];
+    if (!nota) {
+      this.erro.set('Escolha de 1 a 5 estrelas para avaliar.');
+      return;
+    }
+    this.agir(a.id, this.agendaService.avaliar(a.id, nota, (this.comentarios[a.id] ?? '').trim()));
+  }
+
+  notaExibida(a: Agendamento): number {
+    const h = this.notaHover();
+    return h && h.id === a.id ? h.nota : (this.notas[a.id] ?? 0);
+  }
+
+  podeAvaliar(a: Agendamento): boolean {
+    return !this.ehMentor() && !!a.realizada && !a.avaliacao;
+  }
+
+  iniciaisDe(nome?: string | null): string {
+    return iniciais(nome ?? '');
+  }
+
   private agir(id: number, requisicao: ReturnType<AgendaService['recusar']>) {
     if (this.agindoId() !== null) return;
     this.agindoId.set(id);
@@ -160,11 +203,11 @@ export class MentoriasComponent implements OnInit {
 
   rotulo(a: Agendamento): string {
     const textos: Record<Situacao, string> = {
-      AGUARDANDO: 'Aguardando confirmação',
+      AGUARDANDO: a.statusPagamento === 'AGUARDANDO' ? 'Aguardando pagamento' : 'Aguardando confirmação',
       CONFIRMADA: 'Confirmada',
       REALIZADA: 'Realizada',
       RECUSADA: a.status === 'PENDENTE' ? 'Expirada' : 'Recusada',
-      CANCELADA: 'Cancelada',
+      CANCELADA: a.statusPagamento === 'EXPIRADO' ? 'Pix expirado' : 'Cancelada',
     };
     return textos[this.situacao(a)];
   }
@@ -182,14 +225,23 @@ export class MentoriasComponent implements OnInit {
 
   pagamento(a: Agendamento): string {
     const valor = formatarValorSessao(a.valor);
-    const metodo = a.metodoPagamento === 'CARTAO' ? 'cartão' : 'Pix';
+    const metodo =
+      a.metodoPagamento === 'CARTAO'
+        ? `${a.pagamento?.cartaoBandeira ?? 'cartão'}${a.pagamento?.cartaoFinal ? ' •••• ' + a.pagamento.cartaoFinal : ''}`
+        : 'Pix';
     switch (a.statusPagamento) {
       case 'GRATUITA':
         return 'Mentoria gratuita';
+      case 'AGUARDANDO':
+        return `${valor} · aguardando pagamento do Pix`;
       case 'PAGO':
-        return `${valor} pago via ${metodo} (simulado)`;
+        return this.ehMentor() ? `${valor} · pago via ${metodo}` : `${valor} pago via ${metodo}`;
       case 'REEMBOLSADO':
-        return `${valor} reembolsado (simulado)`;
+        return `${valor} reembolsado`;
+      case 'EXPIRADO':
+        return 'Pix não pago no prazo';
+      default:
+        return valor;
     }
   }
 

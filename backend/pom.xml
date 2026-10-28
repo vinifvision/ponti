@@ -35,8 +35,8 @@
     </dependency>
     <!-- Só o BCrypt, para guardar o hash da senha. Não liga o Spring Security (as rotas continuam abertas). -->
     <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-crypto</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
     <!-- JWT: gera e valida o token devolvido no login -->
     <dependency>
@@ -77,10 +77,27 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <!-- Nos testes: sem os dados de demonstração e com o Pix sem aprovação automática,
+           para cada teste controlar exatamente os dados que usa -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <ponti.demo.completo>false</ponti.demo.completo>
+            <ponti.pagamento.pix-aprovacao-segundos>3600</ponti.pagamento.pix-aprovacao-segundos>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

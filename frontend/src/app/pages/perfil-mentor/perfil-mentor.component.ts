@@ -6,7 +6,8 @@ import { Location } from '@angular/common';
 import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { MentorService } from '../../mentores/mentor.service';
-import { Certificacao, Mentor } from '../../models';
+import { AvaliacaoPublica, Certificacao, Mentor } from '../../models';
+import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import {
   formatarDuracao,
@@ -22,7 +23,7 @@ import { iniciais } from '../../shared/texto.utils';
 @Component({
   selector: 'app-perfil-mentor',
   standalone: true,
-  imports: [IconeComponent, RouterLink],
+  imports: [IconeComponent, RouterLink, EstrelasComponent],
   templateUrl: './perfil-mentor.component.html',
 })
 export class PerfilMentorComponent implements OnInit {
@@ -36,6 +37,7 @@ export class PerfilMentorComponent implements OnInit {
 
   mentor = signal<Mentor | null>(null);
   certificacoes = signal<Certificacao[]>([]);
+  avaliacoes = signal<AvaliacaoPublica[]>([]);
   carregando = signal(true);
   erro = signal('');
 
@@ -71,10 +73,23 @@ export class PerfilMentorComponent implements OnInit {
       },
     });
 
+    this.mentorService.avaliacoes(mentorId).subscribe({
+      next: (lista) => this.avaliacoes.set(lista),
+      error: () => {},
+    });
+
     this.mentorService.certificacoes(mentorId).subscribe({
       next: (lista) => this.certificacoes.set(lista),
       error: () => {}, // sem certificações, a seção só não aparece
     });
+  }
+
+  iniciaisDe(nome: string): string {
+    return iniciais(nome);
+  }
+
+  dataAvaliacao(instante: string): string {
+    return new Date(instante).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   voltar() {

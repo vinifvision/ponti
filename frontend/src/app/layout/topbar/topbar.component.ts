@@ -1,3 +1,4 @@
+import { PerfilLogadoService } from '../../auth/perfil-logado.service';
 import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -19,6 +20,7 @@ export class TopbarComponent {
   private elemento = inject(ElementRef<HTMLElement>);
   private router = inject(Router);
   private sessao = inject(SessaoService);
+  private perfilLogado = inject(PerfilLogadoService);
   private agendaService = inject(AgendaService);
   private conviteService = inject(ConviteService);
   readonly busca = inject(BuscaService);
@@ -30,6 +32,7 @@ export class TopbarComponent {
   rotuloNotificacao = computed(() => descreverPendencias(this.pendencias()));
 
   constructor() {
+    this.perfilLogado.carregar();
     // A cada tela aberta, confere de novo: assim o sino acompanha o que a pessoa acabou de fazer.
     this.router.events
       .pipe(
@@ -44,7 +47,8 @@ export class TopbarComponent {
 
   // Nome e tipo de quem está logado
   usuario = computed(() => ({
-    nome: this.sessao.nome() ?? 'Visitante',
+    nome: this.perfilLogado.nome() ?? this.sessao.nome() ?? 'Visitante',
+    foto: this.perfilLogado.foto(),
     papel: this.sessao.tipo() === 'MENTOR' ? 'Mentor' : 'Startup',
   }));
 

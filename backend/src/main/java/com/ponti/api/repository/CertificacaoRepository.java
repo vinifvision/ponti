@@ -10,4 +10,8 @@ public interface CertificacaoRepository extends JpaRepository<Certificacao, Long
     List<Certificacao> findByMentorIdOrderByAnoInicioDescIdDesc(Long mentorId);
 
     List<Certificacao> findByStartupIdOrderByAnoInicioDescIdDesc(Long startupId);
+
+    // Usado ao excluir a conta (ver ContaService)
+    void deleteByStartupId(Long startupId);
+    void deleteByMentorId(Long mentorId);
 }

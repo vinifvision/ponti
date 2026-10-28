@@ -4,6 +4,8 @@
 
 **Plataforma de Matchmaking entre Startups e Mentores**
 
+[![Backend CI](https://github.com/vinifvision/ponti/actions/workflows/backend.yml/badge.svg)](https://github.com/vinifvision/ponti/actions/workflows/backend.yml)
+[![Frontend CI](https://github.com/vinifvision/ponti/actions/workflows/frontend.yml/badge.svg)](https://github.com/vinifvision/ponti/actions/workflows/frontend.yml)
 [![Status do Projeto](https://img.shields.io/badge/Status-Em_Desenvolvimento-yellow.svg)](#)
 [![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](#)
 [![Faculdade SENAC PE](https://img.shields.io/badge/Faculdade-SENAC_PE-004582.svg)](https://www.pe.senac.br/)
@@ -103,20 +105,62 @@ A aplicação fica em `http://localhost:4200`. O backend precisa estar rodando.
 gh codespace ports visibility 8080:public -c $CODESPACE_NAME
 ```
 
-## Endpoints (CRUD base)
+## Endpoints
+
+Todas as rotas, menos login e cadastro, exigem o cabeçalho `Authorization: Bearer <token>`.
 
 | Recurso | Rota | Operações |
 |---|---|---|
-| Startups | `/startups` | listar, buscar por id, criar, atualizar, excluir |
-| Mentores | `/mentores` | listar, buscar por id, criar, atualizar, excluir |
+| Startups | `/startups` | listar, buscar por id, `PATCH` (edição parcial do próprio perfil) e excluir a própria conta (a criação é pelo cadastro) |
+| Mentores | `/mentores` | listar e buscar já com a reputação (nota média, avaliações e mentorias realizadas), `PATCH` do próprio perfil e excluir a própria conta |
+| Avaliações | `POST /agendamentos/{id}/avaliacao`, `GET /mentores/{id}/avaliacoes` | a startup dá nota de 1 a 5 depois da mentoria |
 | Disponibilidade do mentor | `GET` e `PUT /mentores/{id}/disponibilidade` | horários em que o mentor atende na semana |
 | Horários livres | `GET /mentores/{id}/horarios?de=2026-11-01&ate=2026-11-30` | blocos livres para agendar |
-| Agendamentos | `GET /agendamentos?startupId=1` ou `?mentorId=1`, `POST /agendamentos` | lista e cria mentorias (pagamento simulado) |
+| Agendamentos | `GET /agendamentos` (as mentorias de quem está logado), `GET /agendamentos/{id}`, `POST /agendamentos` | lista, acompanha e cria mentorias com pagamento (simulado) |
 | Responder agendamento | `POST /agendamentos/{id}/confirmar` (com o link do Meet), `/recusar`, `/cancelar` | ciclo de vida da mentoria |
-| Sugestões de mentoria | `/convites` e `GET /convites/detalhados?startupId=1` | o mentor sugere uma mentoria a uma startup |
+| Sugestões de mentoria | `POST /convites`, `GET /convites/detalhados`, `/convites/{id}/aceitar` e `/recusar` | o mentor sugere uma mentoria a uma startup |
 | Cadastro | `POST /auth/cadastro/startup`, `POST /auth/cadastro/mentor` | cria a conta (e-mail + senha com BCrypt) e o perfil juntos |
 | Login | `POST /auth/login` | confere e-mail e senha e devolve um token JWT (válido por 8h) |
 | Quem está logado | `GET /auth/me` com `Authorization: Bearer <token>` | devolve o usuário dono do token |
+
+## Pagamento (simulado)
+
+Nenhuma cobrança real é feita, mas o fluxo imita um gateway de verdade (classe `GatewayPagamentoSimulado`):
+
+- **Pix:** a API gera o código "copia e cola" no padrão **BR Code do Banco Central** (com CRC16), o front mostra o QR Code e, alguns segundos depois, o "banco" confirma sozinho (uma tarefa agendada faz o papel do webhook). Pix não pago em 15 minutos expira e libera o horário.
+- **Cartão:** valida número (algoritmo de Luhn), validade e CVV, descobre a bandeira e aprova na hora. Para testar a recusa, use um cartão terminado em **0002** (ex.: `4000 0000 0000 0002`). Do cartão, a API guarda só a bandeira e os 4 últimos dígitos.
+- O mentor só recebe o pedido depois que o pagamento é aprovado. Se ele recusar ou alguém cancelar, o valor aparece como reembolsado.
+- Cada pagamento tem um código de transação (ex.: `PNT-7K2M9QX4`), mostrado no comprovante.
+
+Para trocar por um gateway real (Mercado Pago, Stripe...), basta reimplementar essa classe.
+
+## Segurança
+
+- **Login com JWT:** `POST /auth/login` devolve um token assinado (válido por 8h). O filtro `JwtAutenticacaoFilter` lê o token em cada requisição e identifica o usuário. Senhas são guardadas com BCrypt.
+- **Cada um só mexe no que é seu:** a classe `Acesso` confere o dono antes de cada alteração. Uma startup não agenda em nome de outra, só o mentor do pedido confirma ou recusa, só quem participa cancela, e ninguém edita ou exclui o perfil de outra pessoa.
+- **Respostas:** sem token (ou token inválido) → **401**; com token, mas sem permissão → **403**.
+- **Excluir a conta** apaga junto o login, a agenda, os convites e os agendamentos (nada fica órfão).
+- **CORS** liberado só para as origens de `ponti.cors.origens` (por padrão o front local e o Codespaces).
+
+## Formato dos erros
+
+Todos os erros seguem o padrão **Problem Details** (RFC 9457), sempre em português:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Dados inválidos",
+  "status": 400,
+  "detail": "email: deve ser um endereço de e-mail bem formado",
+  "instance": "/auth/cadastro/mentor",
+  "message": "email: deve ser um endereço de e-mail bem formado",
+  "campos": [
+    { "campo": "email", "mensagem": "deve ser um endereço de e-mail bem formado" }
+  ]
+}
+```
+
+O campo `message` é o texto pronto para mostrar na tela. `campos` só aparece em erros de validação.
 
 ## Contas de exemplo
 
@@ -131,6 +175,8 @@ Ao subir o backend com o banco vazio, ficam disponíveis estas contas (senha **p
 
 Os mentores de exemplo já têm horários cadastrados: a Juliana atende às terças e quintas de manhã (e quinta à tarde), e o Roberto às segundas e quartas à tarde e sexta de manhã.
 
+Além dessas, o backend carrega **dados de demonstração** (`DadosDemonstracao`): 12 mentores de áreas diferentes, 6 startups e cerca de 30 mentorias (realizadas e avaliadas, confirmadas e esperando resposta). Assim a plataforma já abre "em uso". Os logins extras seguem o padrão `nome@exemplo.com` (ex.: `camila@`, `rafael@`, `thiago@`, `finfacil@`, `agrosense@`), todos com a senha **ponti1234**. Para começar com poucos dados, rode com `PONTI_DEMO=false`.
+
 ## Testes
 
 ```bash
@@ -138,11 +184,14 @@ cd backend
 mvn test
 ```
 
+São quase 150 testes automatizados (controllers, regras de agenda, pagamento Pix e cartão, avaliações, convites, cadastro, login e segurança com token JWT real). Eles rodam sozinhos no **GitHub Actions** a cada push e pull request que mexe no backend (`.github/workflows/backend.yml`).
+
 ## Tecnologias
 
-- **Backend:** Java, Spring Boot, Spring Data JPA, springdoc-openapi, H2 / PostgreSQL
+- **Backend:** Java 17, Spring Boot 3, Spring Security (JWT), Spring Data JPA, Bean Validation, springdoc-openapi, H2 / PostgreSQL
 - **Frontend:** Angular, TypeScript
-- **Documentação da API:** OpenAPI 3.0
+- **Documentação da API:** OpenAPI 3.0 (Swagger em `/swagger-ui.html`)
+- **Integração contínua:** GitHub Actions
 
 ---
 

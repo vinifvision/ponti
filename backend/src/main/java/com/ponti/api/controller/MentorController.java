@@ -1,10 +1,17 @@
 package com.ponti.api.controller;
 
+import com.ponti.api.dto.AtualizacaoMentor;
+import com.ponti.api.dto.AvaliacaoPublica;
+import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.NovaCertificacao;
 import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
+import com.ponti.api.seguranca.Acesso;
+import com.ponti.api.service.AvaliacaoService;
+import com.ponti.api.service.ContaService;
+import com.ponti.api.service.MentorService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -17,10 +24,26 @@ public class MentorController {
 
     private final MentorRepository repository;
     private final CertificacaoRepository certificacaoRepository;
+    private final ContaService contaService;
+    private final Acesso acesso;
+    private final MentorService mentorService;
+    private final AvaliacaoService avaliacaoService;
 
-    public MentorController(MentorRepository repository, CertificacaoRepository certificacaoRepository) {
+    public MentorController(MentorRepository repository, CertificacaoRepository certificacaoRepository,
+                            ContaService contaService, Acesso acesso,
+                            MentorService mentorService, AvaliacaoService avaliacaoService) {
         this.repository = repository;
         this.certificacaoRepository = certificacaoRepository;
+        this.contaService = contaService;
+        this.acesso = acesso;
+        this.mentorService = mentorService;
+        this.avaliacaoService = avaliacaoService;
+    }
+
+    // Avaliações que o mentor recebeu, mais recentes primeiro
+    @GetMapping("/{id}/avaliacoes")
+    public List<AvaliacaoPublica> avaliacoes(@PathVariable Long id) {
+        return avaliacaoService.doMentor(id);
     }
 
     // Certificações e experiências do mentor, mais recentes primeiro (seção "Experiência" do perfil)
@@ -31,10 +54,11 @@ public class MentorController {
     }
 
     // Adiciona uma certificação ao perfil do mentor
-    // TODO (PR de segurança): só o próprio mentor, identificado pelo token, poderá fazer isso
+    // Só o próprio mentor adiciona certificações ao perfil dele
     @PostMapping("/{id}/certificacoes")
     @ResponseStatus(HttpStatus.CREATED)
     public Certificacao adicionarCertificacao(@PathVariable Long id, @Valid @RequestBody NovaCertificacao body) {
+        acesso.exigirMentor(id);
         garantirQueExiste(id);
         Certificacao certificacao = body.paraEntidade();
         certificacao.setMentorId(id);
@@ -42,10 +66,11 @@ public class MentorController {
     }
 
     // Remove uma certificação do perfil do mentor
-    // TODO (PR de segurança): só o próprio mentor, identificado pelo token, poderá fazer isso
+    // Só o próprio mentor remove certificações do perfil dele
     @DeleteMapping("/{id}/certificacoes/{certificacaoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removerCertificacao(@PathVariable Long id, @PathVariable Long certificacaoId) {
+        acesso.exigirMentor(id);
         Certificacao certificacao = certificacaoRepository.findById(certificacaoId)
                 .filter(c -> id.equals(c.getMentorId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Certificação não encontrada"));
@@ -58,44 +83,41 @@ public class MentorController {
         }
     }
 
-    // READ (todos)
+    // READ (todos), já com a reputação de cada mentor (nota média e mentorias realizadas)
     @GetMapping
-    public List<Mentor> listar() {
-        return repository.findAll();
+    public List<MentorResposta> listar() {
+        return mentorService.listar();
     }
 
     // READ (um)
     @GetMapping("/{id}")
-    public Mentor buscar(@PathVariable Long id) {
-        return repository.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)"));
+    public MentorResposta buscar(@PathVariable Long id) {
+        return mentorService.buscar(id);
     }
 
-    // CREATE
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mentor criar(@Valid @RequestBody Mentor body) {
-        body.setId(null);
-        return repository.save(body);
-    }
+    // Mentores são criados pelo cadastro (POST /auth/cadastro/mentor), que cria também o login.
 
-    // UPDATE
+    // UPDATE: só o próprio mentor edita o perfil dele
     @PutMapping("/{id}")
     public Mentor atualizar(@PathVariable Long id, @Valid @RequestBody Mentor body) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)");
-        }
+        acesso.exigirMentor(id);
+        garantirQueExiste(id);
         body.setId(id);
         return repository.save(body);
     }
 
-    // DELETE
+    // UPDATE parcial: só os campos enviados mudam (usado pela tela "Meu perfil")
+    @PatchMapping("/{id}")
+    public MentorResposta atualizarParcial(@PathVariable Long id, @Valid @RequestBody AtualizacaoMentor dados) {
+        acesso.exigirMentor(id);
+        return mentorService.atualizar(id, dados);
+    }
+
+    // DELETE: só o próprio mentor exclui a conta; leva junto o login, a agenda e tudo que depende dele
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletar(@PathVariable Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)");
-        }
-        repository.deleteById(id);
+        acesso.exigirMentor(id);
+        contaService.excluirMentor(id);
     }
 }

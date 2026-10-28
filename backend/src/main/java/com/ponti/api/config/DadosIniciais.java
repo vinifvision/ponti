@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 //   juliana@exemplo.com, roberto@exemplo.com (mentores)
 //   petcare@exemplo.com, saudeagora@exemplo.com (startups)
 @Component
+@org.springframework.core.annotation.Order(1)
 public class DadosIniciais implements CommandLineRunner {
 
     public static final String SENHA_EXEMPLO = "ponti1234";
@@ -61,6 +62,7 @@ public class DadosIniciais implements CommandLineRunner {
                     "Health-techs, PetTech",
                     8, new BigDecimal("120.00"), 60));
             juliana.setLinkedinUrl("https://www.linkedin.com/in/exemplo-juliana");
+            juliana.setFotoUrl("/demo/mentores/juliana.svg");
             juliana = mentorRepository.save(juliana);
             certificacaoRepository.save(certificacao(juliana, "Mentoria programa Porto Digital", "Porto Digital",
                     2026, 2026, "Mentoria de validação de produto para startups do programa de aceleração."));
@@ -72,6 +74,8 @@ public class DadosIniciais implements CommandLineRunner {
                     "Veterinário",
                     "Health-techs, PetTech",
                     5, BigDecimal.ZERO, 45));
+            roberto.setFotoUrl("/demo/mentores/roberto.svg");
+            roberto = mentorRepository.save(roberto);
             // Horários em que cada mentor atende, para a agenda já aparecer com opções
             disponivel(juliana, DayOfWeek.TUESDAY, "09:00", "12:00");
             disponivel(juliana, DayOfWeek.THURSDAY, "09:00", "12:00");
@@ -88,10 +92,14 @@ public class DadosIniciais implements CommandLineRunner {
                     "PetCare Digital",
                     "Aplicativo que conecta tutores a veterinários para consultas rápidas e acompanhamento da saúde do pet.",
                     "PetTech", "Recife", "PE", 2));
+            petCare.setFotoUrl("/demo/startups/petcare.svg");
+            petCare = startupRepository.save(petCare);
             Startup saudeAgora = startupRepository.save(startup(
                     "SaúdeAgora",
                     "Plataforma de triagem online que organiza o atendimento inicial em clínicas pequenas.",
                     "Health-tech", "Olinda", "PE", 1));
+            saudeAgora.setFotoUrl("/demo/startups/saudeagora.svg");
+            saudeAgora = startupRepository.save(saudeAgora);
             usuarioRepository.save(usuarioDaStartup("petcare@exemplo.com", petCare));
             usuarioRepository.save(usuarioDaStartup("saudeagora@exemplo.com", saudeAgora));
         }
