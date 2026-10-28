@@ -1,5 +1,6 @@
 package com.ponti.api.controller;
 
+import com.ponti.api.dto.AtualizacaoStartup;
 import com.ponti.api.dto.NovaCertificacao;
 import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Startup;
@@ -87,6 +88,28 @@ public class StartupController {
         garantirQueExiste(id);
         body.setId(id);
         return repository.save(body);
+    }
+
+    // UPDATE parcial: só os campos enviados mudam (usado pela tela "Meu perfil")
+    @PatchMapping("/{id}")
+    public Startup atualizarParcial(@PathVariable Long id, @Valid @RequestBody AtualizacaoStartup dados) {
+        acesso.exigirStartup(id);
+        Startup s = buscar(id);
+        if (dados.nome() != null) s.setNome(dados.nome().trim());
+        if (dados.descricao() != null) s.setDescricao(texto(dados.descricao()));
+        if (dados.videoPitchUrl() != null) s.setVideoPitchUrl(texto(dados.videoPitchUrl()));
+        if (dados.fotoUrl() != null) s.setFotoUrl(texto(dados.fotoUrl()));
+        if (dados.atuacoes() != null) s.setAtuacoes(texto(dados.atuacoes()));
+        if (dados.segmento() != null) s.setSegmento(texto(dados.segmento()));
+        if (dados.cidade() != null) s.setCidade(texto(dados.cidade()));
+        if (dados.estado() != null) s.setEstado(texto(dados.estado().toUpperCase()));
+        if (dados.site() != null) s.setSite(texto(dados.site()));
+        if (dados.estagioMaturidade() != null) s.setEstagioMaturidade(dados.estagioMaturidade());
+        return repository.save(s);
+    }
+
+    private static String texto(String valor) {
+        return valor.isBlank() ? null : valor.trim();
     }
 
     // DELETE: só a própria startup exclui a conta; leva junto o login e tudo que depende dela

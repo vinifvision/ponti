@@ -30,6 +30,8 @@ public final class Problemas {
             case NOT_FOUND -> "Não encontrado";
             case CONFLICT -> "Conflito";
             case METHOD_NOT_ALLOWED -> "Operação não permitida";
+            case PAYMENT_REQUIRED -> "Pagamento recusado";
+            case UNPROCESSABLE_ENTITY -> "Não foi possível concluir";
             default -> status.is5xxServerError() ? "Erro interno" : status.getReasonPhrase();
         };
     }

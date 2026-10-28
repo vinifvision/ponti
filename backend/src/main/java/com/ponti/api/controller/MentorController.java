@@ -1,12 +1,17 @@
 package com.ponti.api.controller;
 
+import com.ponti.api.dto.AtualizacaoMentor;
+import com.ponti.api.dto.AvaliacaoPublica;
+import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.NovaCertificacao;
 import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.seguranca.Acesso;
+import com.ponti.api.service.AvaliacaoService;
 import com.ponti.api.service.ContaService;
+import com.ponti.api.service.MentorService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -21,13 +26,24 @@ public class MentorController {
     private final CertificacaoRepository certificacaoRepository;
     private final ContaService contaService;
     private final Acesso acesso;
+    private final MentorService mentorService;
+    private final AvaliacaoService avaliacaoService;
 
     public MentorController(MentorRepository repository, CertificacaoRepository certificacaoRepository,
-                            ContaService contaService, Acesso acesso) {
+                            ContaService contaService, Acesso acesso,
+                            MentorService mentorService, AvaliacaoService avaliacaoService) {
         this.repository = repository;
         this.certificacaoRepository = certificacaoRepository;
         this.contaService = contaService;
         this.acesso = acesso;
+        this.mentorService = mentorService;
+        this.avaliacaoService = avaliacaoService;
+    }
+
+    // Avaliações que o mentor recebeu, mais recentes primeiro
+    @GetMapping("/{id}/avaliacoes")
+    public List<AvaliacaoPublica> avaliacoes(@PathVariable Long id) {
+        return avaliacaoService.doMentor(id);
     }
 
     // Certificações e experiências do mentor, mais recentes primeiro (seção "Experiência" do perfil)
@@ -67,17 +83,16 @@ public class MentorController {
         }
     }
 
-    // READ (todos)
+    // READ (todos), já com a reputação de cada mentor (nota média e mentorias realizadas)
     @GetMapping
-    public List<Mentor> listar() {
-        return repository.findAll();
+    public List<MentorResposta> listar() {
+        return mentorService.listar();
     }
 
     // READ (um)
     @GetMapping("/{id}")
-    public Mentor buscar(@PathVariable Long id) {
-        return repository.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)"));
+    public MentorResposta buscar(@PathVariable Long id) {
+        return mentorService.buscar(id);
     }
 
     // Mentores são criados pelo cadastro (POST /auth/cadastro/mentor), que cria também o login.
@@ -89,6 +104,13 @@ public class MentorController {
         garantirQueExiste(id);
         body.setId(id);
         return repository.save(body);
+    }
+
+    // UPDATE parcial: só os campos enviados mudam (usado pela tela "Meu perfil")
+    @PatchMapping("/{id}")
+    public MentorResposta atualizarParcial(@PathVariable Long id, @Valid @RequestBody AtualizacaoMentor dados) {
+        acesso.exigirMentor(id);
+        return mentorService.atualizar(id, dados);
     }
 
     // DELETE: só o próprio mentor exclui a conta; leva junto o login, a agenda e tudo que depende dele

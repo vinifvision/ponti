@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ponti.api.config.DadosIniciais;
+import com.ponti.api.pagamento.GatewayPagamentoSimulado;
 import com.ponti.api.repository.AgendamentoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
@@ -48,6 +49,7 @@ class SegurancaTest {
     @Autowired MentorRepository mentorRepository;
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired AgendamentoRepository agendamentoRepository;
+    @Autowired GatewayPagamentoSimulado gateway;
 
     String tokenPetcare;
     String tokenJuliana;
@@ -100,7 +102,9 @@ class SegurancaTest {
                 "inicio", horarios.get(0).asText(), "metodoPagamento", "PIX"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(json).get("id").asLong();
+        Long id = objectMapper.readTree(json).get("id").asLong();
+        gateway.confirmarPix(agendamentoRepository.findById(id).orElseThrow()); // "banco" confirma o Pix
+        return id;
     }
 
     // ---------------------------------------------------------------- testes
@@ -144,6 +148,15 @@ class SegurancaTest {
                             .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "PUT"))
                     .andExpect(status().isOk())
                     .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:4200"));
+        }
+
+        @Test
+        void corsLiberaOPatchDoMeuPerfil() throws Exception {
+            mockMvc.perform(options("/mentores/1")
+                            .header(HttpHeaders.ORIGIN, "http://localhost:4200")
+                            .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "PATCH"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, org.hamcrest.Matchers.containsString("PATCH")));
         }
     }
 

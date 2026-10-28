@@ -52,6 +52,28 @@ public class Agendamento {
     @Column(nullable = false)
     private Instant criadoEm = Instant.now();
 
+    // ---- Pagamento (simulado) ----
+
+    // Código da transação, mostrado no comprovante (ex.: PNT-7K2M9QX4)
+    @Column(length = 20)
+    private String codigoTransacao;
+
+    // Código Pix "copia e cola" (padrão BR Code), enquanto o pagamento está AGUARDANDO
+    @Column(length = 500)
+    private String pixCopiaECola;
+
+    // Até quando o Pix pode ser pago
+    private LocalDateTime pagamentoExpiraEm;
+
+    private LocalDateTime pagoEm;
+
+    // Do cartão guardamos só a bandeira e os 4 últimos dígitos (nunca o número inteiro nem o CVV)
+    @Column(length = 4)
+    private String cartaoFinal;
+
+    @Column(length = 20)
+    private String cartaoBandeira;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getStartupId() { return startupId; }
@@ -76,4 +98,16 @@ public class Agendamento {
     public void setMensagem(String mensagem) { this.mensagem = mensagem; }
     public Instant getCriadoEm() { return criadoEm; }
     public void setCriadoEm(Instant criadoEm) { this.criadoEm = criadoEm; }
+    public String getCodigoTransacao() { return codigoTransacao; }
+    public void setCodigoTransacao(String codigoTransacao) { this.codigoTransacao = codigoTransacao; }
+    public String getPixCopiaECola() { return pixCopiaECola; }
+    public void setPixCopiaECola(String pixCopiaECola) { this.pixCopiaECola = pixCopiaECola; }
+    public LocalDateTime getPagamentoExpiraEm() { return pagamentoExpiraEm; }
+    public void setPagamentoExpiraEm(LocalDateTime pagamentoExpiraEm) { this.pagamentoExpiraEm = pagamentoExpiraEm; }
+    public LocalDateTime getPagoEm() { return pagoEm; }
+    public void setPagoEm(LocalDateTime pagoEm) { this.pagoEm = pagoEm; }
+    public String getCartaoFinal() { return cartaoFinal; }
+    public void setCartaoFinal(String cartaoFinal) { this.cartaoFinal = cartaoFinal; }
+    public String getCartaoBandeira() { return cartaoBandeira; }
+    public void setCartaoBandeira(String cartaoBandeira) { this.cartaoBandeira = cartaoBandeira; }
 }

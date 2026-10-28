@@ -3,11 +3,13 @@ package com.ponti.api.controller;
 import com.ponti.api.dto.AgendamentoDetalhe;
 import com.ponti.api.dto.ConfirmacaoAgendamento;
 import com.ponti.api.dto.FaixaDisponibilidade;
+import com.ponti.api.dto.NovaAvaliacao;
 import com.ponti.api.dto.NovoAgendamento;
 import com.ponti.api.model.Agendamento;
 import com.ponti.api.seguranca.Acesso;
 import com.ponti.api.seguranca.UsuarioLogado;
 import com.ponti.api.service.AgendaService;
+import com.ponti.api.service.AvaliacaoService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
@@ -27,10 +29,12 @@ public class AgendaController {
 
     private final AgendaService agendaService;
     private final Acesso acesso;
+    private final AvaliacaoService avaliacaoService;
 
-    public AgendaController(AgendaService agendaService, Acesso acesso) {
+    public AgendaController(AgendaService agendaService, Acesso acesso, AvaliacaoService avaliacaoService) {
         this.agendaService = agendaService;
         this.acesso = acesso;
+        this.avaliacaoService = avaliacaoService;
     }
 
     @GetMapping("/mentores/{id}/disponibilidade")
@@ -75,6 +79,24 @@ public class AgendaController {
     public AgendamentoDetalhe agendar(@Valid @RequestBody NovoAgendamento body) {
         acesso.exigirStartup(body.startupId()); // a startup só agenda em nome dela
         return agendaService.detalhar(agendaService.agendar(body));
+    }
+
+    // Um agendamento (usado para acompanhar o Pix e mostrar o comprovante)
+    @GetMapping("/agendamentos/{id}")
+    public AgendamentoDetalhe buscar(@PathVariable Long id) {
+        Agendamento agendamento = agendaService.buscar(id);
+        acesso.exigirParticipante(agendamento.getStartupId(), agendamento.getMentorId());
+        return agendaService.detalhar(agendamento);
+    }
+
+    // A startup avalia a mentoria depois que ela acontece (nota de 1 a 5 e comentário)
+    @PostMapping("/agendamentos/{id}/avaliacao")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AgendamentoDetalhe avaliar(@PathVariable Long id, @Valid @RequestBody NovaAvaliacao body) {
+        Agendamento agendamento = agendaService.buscar(id);
+        acesso.exigirStartup(agendamento.getStartupId());
+        avaliacaoService.avaliar(agendamento, body);
+        return agendaService.detalhar(agendamento);
     }
 
     @PostMapping("/agendamentos/{id}/confirmar")

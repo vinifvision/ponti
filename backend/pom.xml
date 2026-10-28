@@ -86,6 +86,18 @@
 
   <build>
     <plugins>
+      <!-- Nos testes: sem os dados de demonstração e com o Pix sem aprovação automática,
+           para cada teste controlar exatamente os dados que usa -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <ponti.demo.completo>false</ponti.demo.completo>
+            <ponti.pagamento.pix-aprovacao-segundos>3600</ponti.pagamento.pix-aprovacao-segundos>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

@@ -15,6 +15,8 @@ import com.ponti.api.model.Mentor;
 import com.ponti.api.model.StatusConvite;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
+import com.ponti.api.pagamento.GatewayPagamentoSimulado;
+import com.ponti.api.repository.AgendamentoRepository;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
@@ -52,6 +54,8 @@ class AgendaTest {
     @Autowired MentorRepository mentorRepository;
     @Autowired StartupRepository startupRepository;
     @Autowired ConviteRepository conviteRepository;
+    @Autowired AgendamentoRepository agendamentoRepository;
+    @Autowired GatewayPagamentoSimulado gateway;
 
     Long mentorId;
     Long startupId;
@@ -111,15 +115,22 @@ class AgendaTest {
         if (metodo != null) {
             body.put("metodoPagamento", metodo);
         }
+        if ("CARTAO".equals(metodo)) {
+            body.put("cartao", Map.of("numero", "4242 4242 4242 4242", "nomeImpresso", "FULANO DA SILVA",
+                    "validade", "12/35", "cvv", "123"));
+        }
         body.put("mensagem", "Queremos validar o MVP");
         return body;
     }
 
+    // Agenda com Pix e já simula a confirmação do banco (pedido pago, pronto para o mentor responder)
     Long agendar(LocalDateTime inicio) throws Exception {
         String json = enviarJson(post("/agendamentos").with(Login.comoStartup(startupId)), pedido(inicio, "PIX"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(json).get("id").asLong();
+        Long id = objectMapper.readTree(json).get("id").asLong();
+        gateway.confirmarPix(agendamentoRepository.findById(id).orElseThrow());
+        return id;
     }
 
     // ---------------------------------------------------------------- testes

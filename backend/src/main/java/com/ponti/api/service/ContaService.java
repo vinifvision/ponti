@@ -1,6 +1,7 @@
 package com.ponti.api.service;
 
 import com.ponti.api.repository.AgendamentoRepository;
+import com.ponti.api.repository.AvaliacaoRepository;
 import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.DisponibilidadeRepository;
@@ -13,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 // Exclusão de conta: apaga o perfil e tudo que depende dele (login, agendamentos,
-// sugestões, certificações e agenda), numa transação só, para não sobrar dado solto.
+// sugestões, certificações, agenda e avaliações), numa transação só, para não sobrar dado solto.
 @Service
 public class ContaService {
 
@@ -24,6 +25,7 @@ public class ContaService {
     private final ConviteRepository conviteRepository;
     private final CertificacaoRepository certificacaoRepository;
     private final DisponibilidadeRepository disponibilidadeRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
 
     public ContaService(StartupRepository startupRepository,
                         MentorRepository mentorRepository,
@@ -31,7 +33,8 @@ public class ContaService {
                         AgendamentoRepository agendamentoRepository,
                         ConviteRepository conviteRepository,
                         CertificacaoRepository certificacaoRepository,
-                        DisponibilidadeRepository disponibilidadeRepository) {
+                        DisponibilidadeRepository disponibilidadeRepository,
+                        AvaliacaoRepository avaliacaoRepository) {
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.usuarioRepository = usuarioRepository;
@@ -39,6 +42,7 @@ public class ContaService {
         this.conviteRepository = conviteRepository;
         this.certificacaoRepository = certificacaoRepository;
         this.disponibilidadeRepository = disponibilidadeRepository;
+        this.avaliacaoRepository = avaliacaoRepository;
     }
 
     @Transactional
@@ -46,6 +50,7 @@ public class ContaService {
         if (!startupRepository.existsById(startupId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Startup não encontrada");
         }
+        avaliacaoRepository.deleteByStartupId(startupId);
         agendamentoRepository.deleteByStartupId(startupId);
         conviteRepository.deleteByStartupId(startupId);
         certificacaoRepository.deleteByStartupId(startupId);
@@ -58,6 +63,7 @@ public class ContaService {
         if (!mentorRepository.existsById(mentorId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)");
         }
+        avaliacaoRepository.deleteByMentorId(mentorId);
         agendamentoRepository.deleteByMentorId(mentorId);
         conviteRepository.deleteByMentorId(mentorId);
         certificacaoRepository.deleteByMentorId(mentorId);
