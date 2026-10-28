@@ -12,18 +12,18 @@
     <app-icone nome="busca" [tamanho]="20" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
   </div>
 
-  <button
-    type="button"
+  <a
+    routerLink="/mentorias"
     class="relative rounded-full p-2 text-ponti-marinho transition-colors hover:bg-ponti-lilas/30"
-    aria-label="Notificações"
+    [attr.aria-label]="rotuloNotificacao()"
   >
     <app-icone nome="sino" [tamanho]="26" />
     @if (temNotificacao()) {
       <span class="absolute right-2 top-2 size-2.5 rounded-full bg-ponti-amarelo ring-2 ring-white">
-        <span class="sr-only">Você tem novas notificações</span>
+        <span class="sr-only">{{ rotuloNotificacao() }}</span>
       </span>
     }
-  </button>
+  </a>
 
   <div class="relative shrink-0">
     <button

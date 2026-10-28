@@ -1,4 +1,4 @@
-import { NIVEL_MAXIMO, NOMES_NIVEIS } from '../pages/cadastro-startup/maturidade';
+import { NIVEL_MAXIMO, NOMES_NIVEIS } from './maturidade';
 
 // "Nível 4 de 9 · Prova de conceito pronta", ou '' se a startup ainda não respondeu o questionário
 export function descreverMaturidade(nivel: number | null | undefined): string {

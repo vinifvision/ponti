@@ -11,10 +11,10 @@ import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.
       <app-auth-cabecalho />
 
       <h1 class="mt-28 text-4xl font-medium text-auth-marinho">Bem-vindos(a)!</h1>
-      <!-- TEMPORÁRIO: texto de exemplo do Figma, trocar pelo texto final -->
       <p class="mt-5 text-justify text-lg leading-relaxed">
-        Turbine sua startup Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-        incididunt ut labore et dolore magna aliqua.
+        Turbine sua startup com a experiência de quem já percorreu o caminho. A Ponti conecta startups e mentores
+        pelo perfil, pelo estágio de maturidade e pelo ecossistema, para que boas ideias encontrem a mentoria
+        certa para escalar.
       </p>
 
       <div class="mx-auto mt-24 flex w-full max-w-xs flex-col gap-4">

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { autenticadoGuard } from './auth/auth.guard';
+import { autenticadoGuard, tipoGuard } from './auth/auth.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
 import { BoasVindasComponent } from './pages/boas-vindas/boas-vindas.component';
@@ -46,14 +46,19 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [autenticadoGuard],
     children: [
-      { path: 'encontrar-mentores', component: EncontrarMentoresComponent, title: 'Encontrar Mentores | Ponti' },
+      // Telas só de startup
+      { path: 'encontrar-mentores', component: EncontrarMentoresComponent, canActivate: [tipoGuard('STARTUP')], title: 'Encontrar Mentores | Ponti' },
+      { path: 'mentores/:id/agendar', component: AgendarMentoriaComponent, canActivate: [tipoGuard('STARTUP')], title: 'Agendar mentoria | Ponti' },
+
+      // Telas só de mentor
+      { path: 'encontrar-startups', component: EncontrarStartupsComponent, canActivate: [tipoGuard('MENTOR')], title: 'Encontrar Startups | Ponti' },
+      { path: 'agenda', component: MinhaAgendaComponent, canActivate: [tipoGuard('MENTOR')], title: 'Minha agenda | Ponti' },
+
+      // Telas dos dois tipos
       { path: 'mentorias', component: MentoriasComponent, title: 'Mentorias | Ponti' },
       { path: 'convites', pathMatch: 'full', redirectTo: 'mentorias' },
-      { path: 'mentores/:id/agendar', component: AgendarMentoriaComponent, title: 'Agendar mentoria | Ponti' },
       { path: 'mentores/:id/perfil', component: PerfilMentorComponent, title: 'Perfil do mentor | Ponti' },
-      { path: 'encontrar-startups', component: EncontrarStartupsComponent, title: 'Encontrar Startups | Ponti' },
       { path: 'startups/:id/perfil', component: PerfilStartupComponent, title: 'Perfil da startup | Ponti' },
-      { path: 'agenda', component: MinhaAgendaComponent, title: 'Minha agenda | Ponti' },
       { path: 'perfil', component: EmBreveComponent, data: { titulo: 'Perfil' }, title: 'Perfil | Ponti' },
       {
         path: 'configuracoes',

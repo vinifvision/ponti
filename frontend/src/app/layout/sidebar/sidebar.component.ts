@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { rotaInicialDe } from '../../auth/acesso';
 import { SessaoService } from '../../auth/sessao.service';
 import { IconeComponent, NomeIcone } from '../../shared/icone/icone.component';
 
@@ -22,7 +23,7 @@ export class SidebarComponent {
   private sessao = inject(SessaoService);
 
   // Tela inicial de cada tipo de conta (o logo leva para ela)
-  readonly inicio = computed(() => (this.sessao.tipo() === 'MENTOR' ? '/encontrar-startups' : '/encontrar-mentores'));
+  readonly inicio = computed(() => rotaInicialDe(this.sessao.tipo()));
 
   // Startup procura mentores e acompanha as sessões; mentor define a agenda, confirma pedidos e procura startups.
   readonly itens = computed<ItemNavegacao[]>(() =>
