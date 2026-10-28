@@ -1,11 +1,23 @@
 openapi: 3.0.3
 info:
   title: Ponti API
-  description: API do Ponti, plataforma que conecta startups em estágio inicial a mentores.
+  description: |
+    API do Ponti, plataforma que conecta startups em estágio inicial a mentores.
+
+    **Autenticação:** faça login em `POST /auth/login` e envie o token em todas as outras
+    rotas no cabeçalho `Authorization: Bearer <token>`. Só login e cadastro são públicos.
+
+    **Permissões:** cada usuário só altera o que é dele. Sem token → 401; com token mas
+    mexendo no perfil, agenda ou pedido de outra pessoa → 403.
+
+    **Erros:** todas as respostas de erro seguem o padrão Problem Details (RFC 9457),
+    em português, no schema `Erro`. Erros de validação trazem a lista `campos`.
   version: 1.0.0
 servers:
   - url: http://localhost:8080
     description: Servidor local
+security:
+  - bearerAuth: []
 tags:
   - name: Startups
   - name: Mentores
@@ -25,6 +37,8 @@ paths:
       tags: [Startups]
       summary: Lista startups
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Lista retornada com sucesso
           content:
@@ -33,24 +47,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Startup"
-    post:
-      tags: [Startups]
-      summary: Cria um(a) startup
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Startup"
-      responses:
-        "201":
-          description: Criado com sucesso
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Startup"
-        "400":
-          description: Dados inválidos
   /startups/{id}:
     parameters:
       - name: id
@@ -63,6 +59,8 @@ paths:
       tags: [Startups]
       summary: Busca por id
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Encontrado
           content:
@@ -73,7 +71,7 @@ paths:
           description: Não encontrado
     put:
       tags: [Startups]
-      summary: Atualiza por id
+      summary: Atualiza o perfil (só a própria startup)
       requestBody:
         required: true
         content:
@@ -81,6 +79,8 @@ paths:
             schema:
               $ref: "#/components/schemas/Startup"
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Atualizado com sucesso
           content:
@@ -93,8 +93,10 @@ paths:
           description: Não encontrado
     delete:
       tags: [Startups]
-      summary: Remove por id
+      summary: Exclui a conta (perfil, login, convites e agendamentos). Só a própria startup
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "204":
           description: Removido com sucesso
         "404":
@@ -104,6 +106,8 @@ paths:
       tags: [Mentores]
       summary: Lista mentores
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Lista retornada com sucesso
           content:
@@ -112,24 +116,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Mentor"
-    post:
-      tags: [Mentores]
-      summary: Cria um(a) mentore
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Mentor"
-      responses:
-        "201":
-          description: Criado com sucesso
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Mentor"
-        "400":
-          description: Dados inválidos
   /mentores/{id}:
     parameters:
       - name: id
@@ -142,6 +128,8 @@ paths:
       tags: [Mentores]
       summary: Busca por id
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Encontrado
           content:
@@ -152,7 +140,7 @@ paths:
           description: Não encontrado
     put:
       tags: [Mentores]
-      summary: Atualiza por id
+      summary: Atualiza o perfil (só o próprio mentor)
       requestBody:
         required: true
         content:
@@ -160,6 +148,8 @@ paths:
             schema:
               $ref: "#/components/schemas/Mentor"
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Atualizado com sucesso
           content:
@@ -172,8 +162,10 @@ paths:
           description: Não encontrado
     delete:
       tags: [Mentores]
-      summary: Remove por id
+      summary: Exclui a conta (perfil, login, agenda, convites e agendamentos). Só o próprio mentor
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "204":
           description: Removido com sucesso
         "404":
@@ -206,6 +198,8 @@ paths:
             type: string
             enum: [PENDENTE, ACEITO, RECUSADO]
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Lista retornada com sucesso
           content:
@@ -225,6 +219,8 @@ paths:
             schema:
               $ref: "#/components/schemas/Convite"
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "201":
           description: Criado com sucesso
           content:
@@ -265,6 +261,8 @@ paths:
             type: string
             enum: [PENDENTE, ACEITO, RECUSADO]
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Lista retornada com sucesso
           content:
@@ -285,40 +283,14 @@ paths:
       tags: [Convites]
       summary: Busca por id
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Encontrado
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Convite"
-        "404":
-          description: Não encontrado
-    put:
-      tags: [Convites]
-      summary: Atualiza por id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Convite"
-      responses:
-        "200":
-          description: Atualizado com sucesso
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Convite"
-        "400":
-          description: Dados inválidos
-        "404":
-          description: Não encontrado
-    delete:
-      tags: [Convites]
-      summary: Remove por id
-      responses:
-        "204":
-          description: Removido com sucesso
         "404":
           description: Não encontrado
   /convites/{id}/aceitar:
@@ -333,6 +305,8 @@ paths:
       tags: [Convites]
       summary: O mentor aceita o convite
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Convite aceito (status ACEITO)
           content:
@@ -355,6 +329,8 @@ paths:
       tags: [Convites]
       summary: O mentor recusa o convite
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Convite recusado (status RECUSADO)
           content:
@@ -377,6 +353,8 @@ paths:
       tags: [Mentores]
       summary: Lista as certificações do mentor (mais recentes primeiro)
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Lista retornada com sucesso
           content:
@@ -397,6 +375,8 @@ paths:
             schema:
               $ref: "#/components/schemas/Certificacao"
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "201":
           description: Criada com sucesso
           content:
@@ -425,6 +405,8 @@ paths:
       tags: [Mentores]
       summary: Remove uma certificação do perfil do mentor
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "204":
           description: Removida com sucesso
         "404":
@@ -441,6 +423,8 @@ paths:
       tags: [Startups]
       summary: Lista as certificações da startup (mais recentes primeiro)
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Lista retornada com sucesso
           content:
@@ -461,6 +445,8 @@ paths:
             schema:
               $ref: "#/components/schemas/Certificacao"
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "201":
           description: Criada com sucesso
           content:
@@ -489,6 +475,8 @@ paths:
       tags: [Startups]
       summary: Remove uma certificação do perfil da startup
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "204":
           description: Removida com sucesso
         "404":
@@ -503,6 +491,8 @@ paths:
       tags: [Agenda]
       summary: Horários em que o mentor atende na semana
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Faixas semanais, ordenadas de segunda a domingo
           content:
@@ -524,6 +514,8 @@ paths:
               maxItems: 50
               items: { $ref: "#/components/schemas/FaixaDisponibilidade" }
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Disponibilidade salva
           content:
@@ -549,6 +541,8 @@ paths:
         - { name: de, in: query, required: true, schema: { type: string, format: date, example: "2026-11-01" } }
         - { name: ate, in: query, required: true, schema: { type: string, format: date, example: "2026-11-30" } }
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Início de cada horário livre (horário de Recife)
           content:
@@ -566,6 +560,8 @@ paths:
         - { name: startupId, in: query, required: false, schema: { type: integer, format: int64 } }
         - { name: mentorId, in: query, required: false, schema: { type: integer, format: int64 } }
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Agendamentos em ordem de data
           content:
@@ -586,6 +582,8 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/NovoAgendamento" }
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "201":
           description: Pedido criado
           content:
@@ -593,7 +591,7 @@ paths:
               schema: { $ref: "#/components/schemas/Agendamento" }
         "400": { description: Dados inválidos ou falta a forma de pagamento }
         "404": { description: Startup ou mentor não encontrado }
-        "409": { description: Horário fora da disponibilidade, no passado ou já ocupado }
+        "409": { description: "Horário fora da disponibilidade, no passado ou já ocupado" }
   /agendamentos/{id}/confirmar:
     parameters:
       - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
@@ -610,6 +608,8 @@ paths:
               properties:
                 linkReuniao: { type: string, maxLength: 500, pattern: "^https://\\S+$", example: "https://meet.google.com/abc-defg-hij" }
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Confirmado
           content:
@@ -625,6 +625,8 @@ paths:
       tags: [Agenda]
       summary: O mentor recusa o pedido (pagamento vira REEMBOLSADO)
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Recusado
           content:
@@ -639,17 +641,20 @@ paths:
       tags: [Agenda]
       summary: Cancela uma mentoria pendente ou confirmada que ainda não começou
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Cancelado
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Agendamento" }
         "404": { description: Agendamento não encontrado }
-        "409": { description: Já começou, já aconteceu ou já foi recusado/cancelado }
+        "409": { description: "Já começou, já aconteceu ou já foi recusado/cancelado" }
   /auth/cadastro/startup:
     post:
       tags: [Auth]
       summary: Cadastra um usuário do tipo startup (credenciais + perfil da startup)
+      security: []
       requestBody:
         required: true
         content:
@@ -671,6 +676,7 @@ paths:
     post:
       tags: [Auth]
       summary: Cadastra um usuário do tipo mentor (credenciais + perfil do mentor)
+      security: []
       requestBody:
         required: true
         content:
@@ -692,6 +698,7 @@ paths:
     post:
       tags: [Auth]
       summary: Faz login com e-mail e senha e devolve um token JWT
+      security: []
       requestBody:
         required: true
         content:
@@ -716,21 +723,53 @@ paths:
       security:
         - bearerAuth: []
       responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
           description: Usuário logado
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UsuarioResumo"
-        "401":
-          description: Token ausente, inválido ou expirado
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    SemLogin:
+      description: Token ausente, inválido ou expirado
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Erro" }
+    SemPermissao:
+      description: Logado, mas sem permissão para mexer neste recurso
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Erro" }
   schemas:
+    Erro:
+      type: object
+      description: Formato padrão de erro (Problem Details, RFC 9457) com textos em português.
+      properties:
+        type: { type: string, example: about:blank }
+        title: { type: string, example: Dados inválidos }
+        status: { type: integer, example: 400 }
+        detail: { type: string, example: "email: deve ser um endereço de e-mail bem formado" }
+        instance: { type: string, example: /auth/cadastro/mentor }
+        message:
+          type: string
+          description: Mesmo texto de `detail`, pronto para mostrar ao usuário.
+          example: "email: deve ser um endereço de e-mail bem formado"
+        campos:
+          type: array
+          description: Só em erros de validação. Um item por campo inválido.
+          items:
+            type: object
+            properties:
+              campo: { type: string, example: email }
+              mensagem: { type: string, example: deve ser um endereço de e-mail bem formado }
     Startup:
       type: object
       required: [nome]

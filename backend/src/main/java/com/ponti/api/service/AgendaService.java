@@ -274,7 +274,7 @@ public class AgendaService {
         }
     }
 
-    private Agendamento buscar(Long id) {
+    public Agendamento buscar(Long id) {
         return agendamentoRepository.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Agendamento não encontrado"));
     }

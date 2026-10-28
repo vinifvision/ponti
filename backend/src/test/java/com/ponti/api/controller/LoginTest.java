@@ -105,7 +105,7 @@ class LoginTest {
         void senhaErradaDa401() throws Exception {
             login(EMAIL, "senhaErrada")
                     .andExpect(status().isUnauthorized())
-                    .andExpect(status().reason("E-mail ou senha inválidos"));
+                    .andExpect(jsonPath("$.message").value("E-mail ou senha inválidos"));
         }
 
         @Test
@@ -119,7 +119,7 @@ class LoginTest {
             // Mesma mensagem dos dois casos: quem tenta adivinhar não descobre se o e-mail existe
             login("ninguem@exemplo.com", SENHA)
                     .andExpect(status().isUnauthorized())
-                    .andExpect(status().reason("E-mail ou senha inválidos"));
+                    .andExpect(jsonPath("$.message").value("E-mail ou senha inválidos"));
         }
 
         @Test
@@ -163,7 +163,7 @@ class LoginTest {
         void comTokenInvalidoDa401() throws Exception {
             eu("Bearer isso-nao-e-um-token")
                     .andExpect(status().isUnauthorized())
-                    .andExpect(status().reason("Token inválido ou expirado"));
+                    .andExpect(jsonPath("$.message").value("Token inválido ou expirado"));
         }
 
         @Test

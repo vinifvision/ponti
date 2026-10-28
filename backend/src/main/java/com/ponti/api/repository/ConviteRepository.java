@@ -20,4 +20,8 @@ public interface ConviteRepository extends JpaRepository<Convite, Long> {
     List<Convite> findByStartupIdAndStatus(Long startupId, StatusConvite status);
 
     List<Convite> findByStatus(StatusConvite status);
+
+    // Usado ao excluir a conta (ver ContaService)
+    void deleteByStartupId(Long startupId);
+    void deleteByMentorId(Long mentorId);
 }

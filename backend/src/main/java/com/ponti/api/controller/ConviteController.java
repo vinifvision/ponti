@@ -9,6 +9,8 @@ import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
+import com.ponti.api.seguranca.Acesso;
+import com.ponti.api.seguranca.UsuarioLogado;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -22,34 +24,35 @@ public class ConviteController {
     private final ConviteRepository repository;
     private final StartupRepository startupRepository;
     private final MentorRepository mentorRepository;
+    private final Acesso acesso;
 
     public ConviteController(ConviteRepository repository,
                              StartupRepository startupRepository,
-                             MentorRepository mentorRepository) {
+                             MentorRepository mentorRepository,
+                             Acesso acesso) {
         this.repository = repository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
+        this.acesso = acesso;
     }
 
-    // READ (todos), com filtros opcionais:
-    //   /convites?mentorId=1            -> inbox do mentor
-    //   /convites?mentorId=1&status=PENDENTE
-    //   /convites?startupId=2           -> convites enviados pela startup
+    // Convites de quem está logado (a startup vê os dela; o mentor, os dele), com filtro opcional de status.
+    // Os parâmetros startupId/mentorId continuam aceitos, mas só para o próprio perfil.
+    //   /convites                 -> convites do usuário logado
+    //   /convites?status=PENDENTE -> só os pendentes
     @GetMapping
     public List<Convite> listar(@RequestParam(required = false) Long mentorId,
                                 @RequestParam(required = false) Long startupId,
                                 @RequestParam(required = false) StatusConvite status) {
-        if (mentorId != null) {
-            return status != null
-                    ? repository.findByMentorIdAndStatus(mentorId, status)
-                    : repository.findByMentorId(mentorId);
+        UsuarioLogado logado = acesso.atual();
+        if (mentorId != null || (startupId == null && logado.mentorId() != null)) {
+            Long id = mentorId != null ? mentorId : logado.mentorId();
+            acesso.exigirMentor(id);
+            return status != null ? repository.findByMentorIdAndStatus(id, status) : repository.findByMentorId(id);
         }
-        if (startupId != null) {
-            return status != null
-                    ? repository.findByStartupIdAndStatus(startupId, status)
-                    : repository.findByStartupId(startupId);
-        }
-        return status != null ? repository.findByStatus(status) : repository.findAll();
+        Long id = startupId != null ? startupId : logado.startupId();
+        acesso.exigirStartup(id);
+        return status != null ? repository.findByStartupIdAndStatus(id, status) : repository.findByStartupId(id);
     }
 
     // READ (todos), já com os dados da startup e do mentor. Aceita os mesmos filtros de GET /convites.
@@ -63,10 +66,12 @@ public class ConviteController {
         return listar(mentorId, startupId, status).stream().map(this::detalhar).toList();
     }
 
-    // READ (um)
+    // READ (um): só a startup e o mentor do convite
     @GetMapping("/{id}")
     public Convite buscar(@PathVariable Long id) {
-        return procurar(id);
+        Convite convite = procurar(id);
+        acesso.exigirParticipante(convite.getStartupId(), convite.getMentorId());
+        return convite;
     }
 
     // CREATE: a startup convida um mentor, ou o mentor convida uma startup (enviadoPor).
@@ -74,6 +79,15 @@ public class ConviteController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Convite criar(@Valid @RequestBody Convite body) {
+        if (body.getEnviadoPor() == null) {
+            body.setEnviadoPor(TipoUsuario.STARTUP);
+        }
+        // Quem envia precisa ser o lado que aparece como remetente
+        if (body.getEnviadoPor() == TipoUsuario.MENTOR) {
+            acesso.exigirMentor(body.getMentorId());
+        } else {
+            acesso.exigirStartup(body.getStartupId());
+        }
         if (!startupRepository.existsById(body.getStartupId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Startup não encontrada");
         }
@@ -86,14 +100,10 @@ public class ConviteController {
         }
         body.setId(null);
         body.setStatus(StatusConvite.PENDENTE);
-        if (body.getEnviadoPor() == null) {
-            body.setEnviadoPor(TipoUsuario.STARTUP);
-        }
         return repository.save(body);
     }
 
-    // Quem recebeu o convite aceita
-    // TODO (PR de segurança): conferir pelo token que quem responde é o lado que recebeu
+    // Quem recebeu o convite aceita (o lado que não enviou)
     @PostMapping("/{id}/aceitar")
     public Convite aceitar(@PathVariable Long id) {
         return responder(id, StatusConvite.ACEITO);
@@ -103,26 +113,6 @@ public class ConviteController {
     @PostMapping("/{id}/recusar")
     public Convite recusar(@PathVariable Long id) {
         return responder(id, StatusConvite.RECUSADO);
-    }
-
-    // UPDATE
-    @PutMapping("/{id}")
-    public Convite atualizar(@PathVariable Long id, @Valid @RequestBody Convite body) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Convite não encontrado(a)");
-        }
-        body.setId(id);
-        return repository.save(body);
-    }
-
-    // DELETE
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deletar(@PathVariable Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Convite não encontrado(a)");
-        }
-        repository.deleteById(id);
     }
 
     private ConviteDetalhe detalhar(Convite convite) {
@@ -148,6 +138,11 @@ public class ConviteController {
     // Só convites PENDENTES podem ser respondidos, e só uma vez
     private Convite responder(Long id, StatusConvite novoStatus) {
         Convite convite = procurar(id);
+        if (convite.getEnviadoPor() == TipoUsuario.MENTOR) {
+            acesso.exigirStartup(convite.getStartupId());
+        } else {
+            acesso.exigirMentor(convite.getMentorId());
+        }
         if (convite.getStatus() != StatusConvite.PENDENTE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Esse convite já foi respondido (" + convite.getStatus() + ")");

@@ -16,6 +16,7 @@ import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
+import com.ponti.api.support.Login;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,15 +63,18 @@ class ConviteNosDoisSentidosTest {
                 .content(objectMapper.writeValueAsString(body)));
     }
 
+    // Faz o pedido como o lado que envia o convite (o mentor, se enviadoPor = MENTOR; senão, a startup)
     Long criarConvite(Map<String, Object> body) throws Exception {
-        String json = enviarJson(post("/convites"), body)
+        var quem = "MENTOR".equals(body.get("enviadoPor")) ? Login.comoMentor(mentorId) : Login.comoStartup(startupId);
+        String json = enviarJson(post("/convites").with(quem), body)
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(json).get("id").asLong();
     }
 
     JsonNode detalhado(String filtro, Long valor, Long conviteId) throws Exception {
-        String json = mockMvc.perform(get("/convites/detalhados").param(filtro, valor.toString()))
+        String json = mockMvc.perform(get("/convites/detalhados").param(filtro, valor.toString())
+                        .with("startupId".equals(filtro) ? Login.comoStartup(valor) : Login.comoMentor(valor)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         for (JsonNode convite : objectMapper.readTree(json)) {
@@ -109,7 +113,7 @@ class ConviteNosDoisSentidosTest {
         void startupAceitaConviteDoMentor() throws Exception {
             Long id = criarConvite(Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "MENTOR"));
 
-            mockMvc.perform(post("/convites/" + id + "/aceitar"))
+            mockMvc.perform(post("/convites/" + id + "/aceitar").with(Login.comoStartup(startupId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("ACEITO"))
                     .andExpect(jsonPath("$.enviadoPor").value("MENTOR"));
@@ -119,7 +123,7 @@ class ConviteNosDoisSentidosTest {
         void soExisteUmConvitePorParSejaQualForOSentido() throws Exception {
             criarConvite(Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "MENTOR"));
 
-            enviarJson(post("/convites"), Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "STARTUP"))
+            enviarJson(post("/convites").with(Login.comoStartup(startupId)), Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "STARTUP"))
                     .andExpect(status().isConflict())
                     .andExpect(result -> assertThat(result.getResolvedException().getMessage())
                             .contains("Já existe um convite entre essa startup e esse mentor"));
@@ -127,7 +131,7 @@ class ConviteNosDoisSentidosTest {
 
         @Test
         void recusaQuemEnviouInvalido() throws Exception {
-            enviarJson(post("/convites"), Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "INVESTIDOR"))
+            enviarJson(post("/convites").with(Login.comoStartup(startupId)), Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "INVESTIDOR"))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -175,23 +179,23 @@ class ConviteNosDoisSentidosTest {
         void adicionaListaERemoveCertificacaoDaStartup() throws Exception {
             String base = "/startups/" + startupId + "/certificacoes";
 
-            String json = enviarJson(post(base), Map.of("titulo", "Programa de aceleração", "anoInicio", 2026))
+            String json = enviarJson(post(base).with(Login.comoStartup(startupId)), Map.of("titulo", "Programa de aceleração", "anoInicio", 2026))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.startupId").value(startupId))
                     .andReturn().getResponse().getContentAsString();
             long certificacaoId = objectMapper.readTree(json).get("id").asLong();
 
-            mockMvc.perform(get(base))
+            mockMvc.perform(get(base).with(Login.comoStartup(startupId)))
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].titulo").value("Programa de aceleração"));
 
-            mockMvc.perform(delete(base + "/" + certificacaoId)).andExpect(status().isNoContent());
+            mockMvc.perform(delete(base + "/" + certificacaoId).with(Login.comoStartup(startupId))).andExpect(status().isNoContent());
             assertThat(certificacaoRepository.existsById(certificacaoId)).isFalse();
         }
 
         @Test
         void naoRemoveCertificacaoDeOutraStartup() throws Exception {
-            String json = enviarJson(post("/startups/" + startupId + "/certificacoes"), Map.of("titulo", "Prêmio"))
+            String json = enviarJson(post("/startups/" + startupId + "/certificacoes").with(Login.comoStartup(startupId)), Map.of("titulo", "Prêmio"))
                     .andReturn().getResponse().getContentAsString();
             long certificacaoId = objectMapper.readTree(json).get("id").asLong();
 
@@ -199,13 +203,13 @@ class ConviteNosDoisSentidosTest {
             outra.setNome("Outra");
             Long outraId = startupRepository.save(outra).getId();
 
-            mockMvc.perform(delete("/startups/" + outraId + "/certificacoes/" + certificacaoId))
+            mockMvc.perform(delete("/startups/" + outraId + "/certificacoes/" + certificacaoId).with(Login.comoStartup(outraId)))
                     .andExpect(status().isNotFound());
         }
 
         @Test
         void startupInexistenteDa404() throws Exception {
-            mockMvc.perform(get("/startups/999999/certificacoes")).andExpect(status().isNotFound());
+            mockMvc.perform(get("/startups/999999/certificacoes").with(Login.comoStartup(startupId))).andExpect(status().isNotFound());
         }
     }
 }

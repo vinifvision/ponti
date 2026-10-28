@@ -11,4 +11,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // Usado pelo login
     Optional<Usuario> findByEmail(String email);
+
+    // Usado ao excluir a conta (ver ContaService)
+    void deleteByStartupId(Long startupId);
+    void deleteByMentorId(Long mentorId);
 }

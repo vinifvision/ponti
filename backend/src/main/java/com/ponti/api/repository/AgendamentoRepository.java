@@ -25,4 +25,8 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
                                       @Param("status") Collection<StatusAgendamento> status,
                                       @Param("de") LocalDateTime de,
                                       @Param("ate") LocalDateTime ate);
+
+    // Usado ao excluir a conta (ver ContaService)
+    void deleteByStartupId(Long startupId);
+    void deleteByMentorId(Long mentorId);
 }

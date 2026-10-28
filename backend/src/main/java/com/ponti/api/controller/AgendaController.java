@@ -4,6 +4,9 @@ import com.ponti.api.dto.AgendamentoDetalhe;
 import com.ponti.api.dto.ConfirmacaoAgendamento;
 import com.ponti.api.dto.FaixaDisponibilidade;
 import com.ponti.api.dto.NovoAgendamento;
+import com.ponti.api.model.Agendamento;
+import com.ponti.api.seguranca.Acesso;
+import com.ponti.api.seguranca.UsuarioLogado;
 import com.ponti.api.service.AgendaService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
@@ -18,14 +21,16 @@ import org.springframework.web.bind.annotation.*;
 //   1. o mentor define os horários em que atende na semana;
 //   2. a startup vê os horários livres e agenda um (pagamento simulado);
 //   3. o mentor confirma com o link do Google Meet, ou recusa.
-// TODO (PR de segurança): conferir pelo token quem está agindo em cada rota.
+// Todas as rotas exigem login; quem pode fazer cada ação é conferido pela classe Acesso.
 @RestController
 public class AgendaController {
 
     private final AgendaService agendaService;
+    private final Acesso acesso;
 
-    public AgendaController(AgendaService agendaService) {
+    public AgendaController(AgendaService agendaService, Acesso acesso) {
         this.agendaService = agendaService;
+        this.acesso = acesso;
     }
 
     @GetMapping("/mentores/{id}/disponibilidade")
@@ -38,6 +43,7 @@ public class AgendaController {
     public List<FaixaDisponibilidade> definirDisponibilidade(
             @PathVariable Long id,
             @RequestBody @Size(max = 50, message = "No máximo 50 faixas de horário") List<@Valid FaixaDisponibilidade> faixas) {
+        acesso.exigirMentor(id);
         return agendaService.definirDisponibilidade(id, faixas);
     }
 
@@ -49,31 +55,44 @@ public class AgendaController {
         return agendaService.horariosLivres(id, de, ate);
     }
 
-    // Mentorias de uma startup ou de um mentor: /agendamentos?startupId=1 ou /agendamentos?mentorId=2
+    // Mentorias de quem está logado. Os parâmetros startupId/mentorId são aceitos só para o próprio perfil.
     @GetMapping("/agendamentos")
     public List<AgendamentoDetalhe> listar(@RequestParam(required = false) Long startupId,
                                            @RequestParam(required = false) Long mentorId) {
-        return agendaService.listar(startupId, mentorId);
+        UsuarioLogado logado = acesso.atual();
+        if (mentorId != null || (startupId == null && logado.mentorId() != null)) {
+            Long id = mentorId != null ? mentorId : logado.mentorId();
+            acesso.exigirMentor(id);
+            return agendaService.listar(null, id);
+        }
+        Long id = startupId != null ? startupId : logado.startupId();
+        acesso.exigirStartup(id);
+        return agendaService.listar(id, null);
     }
 
     @PostMapping("/agendamentos")
     @ResponseStatus(HttpStatus.CREATED)
     public AgendamentoDetalhe agendar(@Valid @RequestBody NovoAgendamento body) {
+        acesso.exigirStartup(body.startupId()); // a startup só agenda em nome dela
         return agendaService.detalhar(agendaService.agendar(body));
     }
 
     @PostMapping("/agendamentos/{id}/confirmar")
     public AgendamentoDetalhe confirmar(@PathVariable Long id, @Valid @RequestBody ConfirmacaoAgendamento body) {
+        acesso.exigirMentor(agendaService.buscar(id).getMentorId());
         return agendaService.detalhar(agendaService.confirmar(id, body.linkReuniao()));
     }
 
     @PostMapping("/agendamentos/{id}/recusar")
     public AgendamentoDetalhe recusar(@PathVariable Long id) {
+        acesso.exigirMentor(agendaService.buscar(id).getMentorId());
         return agendaService.detalhar(agendaService.recusar(id));
     }
 
     @PostMapping("/agendamentos/{id}/cancelar")
     public AgendamentoDetalhe cancelar(@PathVariable Long id) {
+        Agendamento agendamento = agendaService.buscar(id);
+        acesso.exigirParticipante(agendamento.getStartupId(), agendamento.getMentorId());
         return agendaService.detalhar(agendaService.cancelar(id));
     }
 }
