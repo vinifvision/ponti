@@ -48,6 +48,7 @@ export class EncontrarStartupsComponent implements OnInit {
   ];
 
   readonly opcoesOrdenacao: OpcaoFiltro[] = [
+    { valor: 'compatibilidade', rotulo: 'Mais compatíveis' },
     { valor: 'nome', rotulo: 'Nome (A-Z)' },
     { valor: 'mais-madura', rotulo: 'Mais madura primeiro' },
     { valor: 'menos-madura', rotulo: 'Menos madura primeiro' },
@@ -86,7 +87,7 @@ export class EncontrarStartupsComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.startupService.listar().subscribe({
+    this.startupService.recomendadas().subscribe({
       next: (dados) => {
         this.startups.set(dados);
         this.carregando.set(false);

@@ -1,6 +1,15 @@
 <section class="pt-6">
   <h1 class="text-balance text-3xl font-medium sm:text-4xl">Mentores recomendados</h1>
 
+  <p class="mt-2 max-w-3xl text-gray-600">Ordenados pela compatibilidade com o que a sua startup precisa.</p>
+
+  @if (semTemas()) {
+    <p class="mt-4 max-w-3xl rounded-lg border border-ponti-amarelo bg-ponti-amarelo/10 p-4 text-gray-800" role="status">
+      Escolha os temas em que a sua startup precisa de ajuda para ver a compatibilidade com cada mentor.
+      <a routerLink="/perfil/editar" class="font-medium text-ponti-roxo hover:underline">Escolher agora</a>
+    </p>
+  }
+
   <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
     <app-filtro-select
       rotulo="Área de atuação"
@@ -23,7 +32,7 @@
       [limpavel]="true"
       [(valor)]="faixaPreco"
     />
-    <app-filtro-select rotulo="Filtro" placeholder="Filtrar" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
+    <app-filtro-select rotulo="Ordenar" placeholder="Mais compatíveis" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
   </div>
 
 
@@ -43,7 +52,6 @@
             <app-mentor-card
               class="block w-full max-w-3xl shrink-0"
               [mentor]="mentor"
-              [compativel]="ehCompativel(mentor)"
               [selecionado]="mentor.id === selecionadoId()"
               (selecionar)="selecionar($event)"
             />

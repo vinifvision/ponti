@@ -31,6 +31,8 @@ tags:
       a startup escolhe um horário livre e paga (pagamento SIMULADO), e o mentor confirma
       com o link do Google Meet ou recusa.
   - name: Auth
+  - name: Match
+    description: Compatibilidade entre startups e mentores, calculada a partir dos temas e do setor.
   - name: Temas
     description: Assuntos usados no match entre startups e mentores.
 paths:
@@ -49,6 +51,41 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TemaOpcao"
+  /mentores/recomendados:
+    get:
+      tags: [Match]
+      summary: Mentores ordenados pela compatibilidade com a startup logada
+      description: >
+        Só para startups (mentor recebe 403). A compatibilidade vai de 0 a 100: 75 pontos pelos temas que o
+        mentor cobre entre os que a startup precisa, mais 25 pelo setor (metade se o mentor atende todas as áreas).
+        Cada item traz os motivos escritos.
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MentorRecomendado"
+  /startups/recomendadas:
+    get:
+      tags: [Match]
+      summary: Startups ordenadas pela compatibilidade com o mentor logado
+      description: Só para mentores (startup recebe 403). Mesma regra de pontuação de /mentores/recomendados.
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StartupRecomendada"
   /startups:
     get:
       tags: [Startups]
@@ -857,6 +894,23 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Erro" }
   schemas:
+    MentorRecomendado:
+      type: object
+      properties:
+        mentor: { $ref: "#/components/schemas/Mentor" }
+        compatibilidade: { type: integer, minimum: 0, maximum: 100, example: 75 }
+        motivos:
+          type: array
+          items: { type: string }
+          example: ["Ajuda com Validação de ideia e Pitch e captação (2 de 3 temas que você precisa)", "Conhece o setor PetTech"]
+    StartupRecomendada:
+      type: object
+      properties:
+        startup: { $ref: "#/components/schemas/Startup" }
+        compatibilidade: { type: integer, minimum: 0, maximum: 100, example: 100 }
+        motivos:
+          type: array
+          items: { type: string }
     Tema:
       type: string
       description: Assunto em que uma startup precisa de ajuda ou em que um mentor ajuda.

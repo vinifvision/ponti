@@ -67,7 +67,7 @@ public class DadosIniciais implements CommandLineRunner {
                     8, new BigDecimal("120.00"), 60));
             juliana.setLinkedinUrl("https://www.linkedin.com/in/exemplo-juliana");
             juliana.setFotoUrl("/demo/mentores/juliana.svg");
-            juliana.setTemas(temas(Tema.VALIDACAO, Tema.PRODUTO));
+            juliana.setTemas(temas(Tema.VALIDACAO, Tema.PRODUTO, Tema.PITCH));
             juliana = mentorRepository.save(juliana);
             certificacaoRepository.save(certificacao(juliana, "Mentoria programa Porto Digital", "Porto Digital",
                     2026, 2026, "Mentoria de validação de produto para startups do programa de aceleração."));

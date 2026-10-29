@@ -1,6 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Startup } from '../../models';
+import { CompatibilidadeComponent } from '../../shared/compatibilidade/compatibilidade.component';
+import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import { NIVEL_MAXIMO, nomeDoNivel } from '../../shared/maturidade.utils';
 import { iniciais } from '../../shared/texto.utils';
@@ -9,7 +11,7 @@ import { iniciais } from '../../shared/texto.utils';
 @Component({
   selector: 'app-startup-card',
   standalone: true,
-  imports: [IconeComponent, RouterLink],
+  imports: [IconeComponent, RouterLink, CompatibilidadeComponent, TemasChipsComponent],
   templateUrl: './startup-card.component.html',
 })
 export class StartupCardComponent {

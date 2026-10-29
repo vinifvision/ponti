@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { CrudService } from '../crud.service';
 import { Certificacao, Startup } from '../models';
 
@@ -8,6 +8,13 @@ import { Certificacao, Startup } from '../models';
 export class StartupService extends CrudService<Startup> {
   constructor(http: HttpClient) {
     super(http, 'startups');
+  }
+
+  // GET /startups/recomendadas -> startups da mais à menos compatível com o mentor logado.
+  recomendadas(): Observable<Startup[]> {
+    return this.http
+      .get<{ startup: Startup; compatibilidade: number; motivos: string[] }[]>(`${this.url}/recomendadas`)
+      .pipe(map((lista) => lista.map((r) => ({ ...r.startup, compatibilidade: r.compatibilidade, motivos: r.motivos }))));
   }
 
   // GET /startups/{id}/certificacoes -> conquistas e programas da startup

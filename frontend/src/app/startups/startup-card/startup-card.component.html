@@ -37,6 +37,11 @@
       <p class="mt-3 text-sm text-gray-500">Maturidade ainda não informada</p>
     }
 
+    @if (startup().necessidades?.length) {
+      <app-temas-chips class="mt-3 block" [codigos]="startup().necessidades" rotulo="Temas em que precisa de ajuda" />
+    }
+    <app-compatibilidade [pontos]="startup().compatibilidade" [motivos]="startup().motivos" />
+
     <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
       <p class="max-w-prose text-pretty text-lg leading-relaxed text-gray-800">
         {{ startup().descricao || 'Esta startup ainda não adicionou uma descrição.' }}

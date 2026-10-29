@@ -1,4 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { SessaoService } from '../../auth/sessao.service';
+import { StartupService } from '../../startups/startup.service';
 import { BuscaService } from '../../layout/busca.service';
 import { MentorCardComponent } from '../../mentores/mentor-card/mentor-card.component';
 import { MentorDestaqueComponent } from '../../mentores/mentor-destaque/mentor-destaque.component';
@@ -12,16 +15,20 @@ import { separarLista } from '../../shared/texto.utils';
 @Component({
   selector: 'app-encontrar-mentores',
   standalone: true,
-  imports: [FiltroSelectComponent, MentorCardComponent, MentorDestaqueComponent],
+  imports: [FiltroSelectComponent, MentorCardComponent, MentorDestaqueComponent, RouterLink],
   templateUrl: './encontrar-mentores.component.html',
 })
 export class EncontrarMentoresComponent implements OnInit {
   private mentorService = inject(MentorService);
   private busca = inject(BuscaService);
+  private sessao = inject(SessaoService);
+  private startupService = inject(StartupService);
 
   mentores = signal<Mentor[]>([]);
   carregando = signal(true);
   erro = signal('');
+  // true quando a startup ainda não escolheu os temas (sem eles não há como calcular o match)
+  semTemas = signal(false);
 
   area = signal('');
   experiencia = signal('');
@@ -39,6 +46,7 @@ export class EncontrarMentoresComponent implements OnInit {
   readonly opcoesPreco: OpcaoFiltro[] = FAIXAS_PRECO;
 
   readonly opcoesOrdenacao: OpcaoFiltro[] = [
+    { valor: 'compatibilidade', rotulo: 'Mais compatíveis' },
     { valor: 'nome', rotulo: 'Nome (A-Z)' },
     { valor: 'menor-valor', rotulo: 'Menor valor por sessão' },
     { valor: 'maior-valor', rotulo: 'Maior valor por sessão' },
@@ -69,13 +77,20 @@ export class EncontrarMentoresComponent implements OnInit {
         return [...filtrados].sort((a, b) => (a.valorSessao ?? 0) - (b.valorSessao ?? 0));
       case 'maior-valor':
         return [...filtrados].sort((a, b) => (b.valorSessao ?? 0) - (a.valorSessao ?? 0));
-      default:
+      default: // 'compatibilidade' ou vazio: a ordem que o backend mandou (mais compatível primeiro)
         return filtrados;
     }
   });
 
   ngOnInit() {
-    this.mentorService.listar().subscribe({
+    const startupId = this.sessao.startupId();
+    if (startupId !== null) {
+      this.startupService.buscar(startupId).subscribe({
+        next: (s) => this.semTemas.set(!s.necessidades?.length),
+        error: () => {}, // sem o aviso a lista continua funcionando
+      });
+    }
+    this.mentorService.recomendados().subscribe({
       next: (dados) => {
         this.mentores.set(dados);
         this.carregando.set(false);
@@ -85,11 +100,6 @@ export class EncontrarMentoresComponent implements OnInit {
         this.carregando.set(false);
       },
     });
-  }
-
-  ehCompativel(mentor: Mentor): boolean {
-    const area = this.area().toLowerCase();
-    return !!area && separarLista(mentor.ecossistemas).some((e) => e.toLowerCase() === area);
   }
 
   selecionar(mentor: Mentor) {

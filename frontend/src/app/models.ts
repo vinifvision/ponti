@@ -14,6 +14,9 @@ export interface Startup {
   estagioMaturidade?: number | null;
   // Temas em que a startup precisa de ajuda (códigos de GET /temas)
   necessidades?: string[];
+  // Só nas listas "recomendadas" do mentor: compatibilidade (0 a 100) e o porquê
+  compatibilidade?: number;
+  motivos?: string[];
 }
 
 export type StatusConvite = 'PENDENTE' | 'ACEITO' | 'RECUSADO';
@@ -65,6 +68,9 @@ export interface Mentor {
   ecossistemas?: string;
   // Temas em que o mentor ajuda (códigos de GET /temas)
   temas?: string[];
+  // Só na lista "recomendados" da startup: compatibilidade (0 a 100) e o porquê
+  compatibilidade?: number;
+  motivos?: string[];
   anosExperiencia?: number | null;
   valorSessao?: number | null;
   duracaoSessaoMinutos?: number | null;

@@ -62,14 +62,7 @@
 
     <app-temas-chips class="mt-3 block" [codigos]="mentor().temas" rotulo="Temas em que ajuda" />
 
-    @if (compativel()) {
-      <span
-        class="mt-4 inline-flex w-fit items-center gap-2 bg-gradient-to-r from-ponti-amarelo/80 to-ponti-lilas/80 px-2 py-1 font-medium text-gray-900"
-      >
-        <app-icone nome="brilho" [tamanho]="18" />
-        Compatível com seu perfil!
-      </span>
-    }
+    <app-compatibilidade [pontos]="mentor().compatibilidade" [motivos]="mentor().motivos" />
 
     <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
       <p class="max-w-prose text-pretty text-lg leading-relaxed text-gray-800">

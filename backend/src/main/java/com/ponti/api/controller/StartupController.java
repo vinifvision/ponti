@@ -2,12 +2,15 @@ package com.ponti.api.controller;
 
 import com.ponti.api.dto.AtualizacaoStartup;
 import com.ponti.api.dto.NovaCertificacao;
+import com.ponti.api.dto.StartupRecomendada;
 import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Startup;
 import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.seguranca.Acesso;
+import com.ponti.api.seguranca.UsuarioLogado;
 import com.ponti.api.service.ContaService;
+import com.ponti.api.service.MatchService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -22,13 +25,15 @@ public class StartupController {
     private final CertificacaoRepository certificacaoRepository;
     private final ContaService contaService;
     private final Acesso acesso;
+    private final MatchService matchService;
 
     public StartupController(StartupRepository repository, CertificacaoRepository certificacaoRepository,
-                             ContaService contaService, Acesso acesso) {
+                             ContaService contaService, Acesso acesso, MatchService matchService) {
         this.repository = repository;
         this.certificacaoRepository = certificacaoRepository;
         this.contaService = contaService;
         this.acesso = acesso;
+        this.matchService = matchService;
     }
 
     // Certificações e conquistas da startup (ex.: programas de aceleração), mais recentes primeiro
@@ -64,6 +69,17 @@ public class StartupController {
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Startup não encontrado(a)");
         }
+    }
+
+    // Startups ordenadas pela compatibilidade com o mentor logado (temas que ela precisa e setor).
+    // Só mentores usam esta lista; a startup logada recebe 403.
+    @GetMapping("/recomendadas")
+    public List<StartupRecomendada> recomendadas() {
+        UsuarioLogado logado = acesso.atual();
+        if (logado.mentorId() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, Acesso.SEM_PERMISSAO);
+        }
+        return matchService.startupsParaMentor(logado.mentorId());
     }
 
     // READ (todos)

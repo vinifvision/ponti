@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { CrudService } from '../crud.service';
 import { AvaliacaoPublica, Certificacao, Mentor } from '../models';
 
@@ -8,6 +8,14 @@ import { AvaliacaoPublica, Certificacao, Mentor } from '../models';
 export class MentorService extends CrudService<Mentor> {
   constructor(http: HttpClient) {
     super(http, 'mentores');
+  }
+
+  // GET /mentores/recomendados -> mentores do mais ao menos compatível com a startup logada.
+  // O backend devolve { mentor, compatibilidade, motivos }; aqui vira um Mentor com esses dois campos a mais.
+  recomendados(): Observable<Mentor[]> {
+    return this.http
+      .get<{ mentor: Mentor; compatibilidade: number; motivos: string[] }[]>(`${this.url}/recomendados`)
+      .pipe(map((lista) => lista.map((r) => ({ ...r.mentor, compatibilidade: r.compatibilidade, motivos: r.motivos }))));
   }
 
   // GET /mentores/{id}/certificacoes -> seção "Experiência" do perfil
