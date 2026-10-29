@@ -7,28 +7,38 @@ import { Component, computed, input } from '@angular/core';
   standalone: true,
   template: `
     @if (pontos() !== null && pontos() !== undefined) {
-      <div class="mt-4 w-full max-w-md rounded-lg border p-3" [class]="caixa()">
-        <p class="flex items-baseline justify-between gap-3 text-sm font-semibold">
-          <span>{{ pontos() }}% compatível</span>
-          <span class="text-xs font-medium opacity-80">{{ nivel() }}</span>
+      @if (compacto()) {
+        <p
+          class="w-full rounded-md bg-ponti-lilas/25 px-4 py-3 text-center text-lg font-semibold text-ponti-marinho"
+          [attr.title]="motivos()?.join(' • ') || null"
+        >
+          {{ pontos() }}% compatível
         </p>
-        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/70" role="img" [attr.aria-label]="pontos() + '% de compatibilidade'">
+      } @else {
+      <div class="mt-4 w-full max-w-2xl rounded-xl border-2 p-6" [class]="caixa()">
+        <p class="flex items-baseline justify-between gap-3 text-xl font-semibold">
+          <span>{{ pontos() }}% compatível</span>
+          <span class="text-base font-medium opacity-80">{{ nivel() }}</span>
+        </p>
+        <div class="mt-3 h-3 w-full overflow-hidden rounded-full bg-white/70" role="img" [attr.aria-label]="pontos() + '% de compatibilidade'">
           <div class="h-full rounded-full transition-all" [class]="barra()" [style.width.%]="pontos()"></div>
         </div>
         @if (motivos()?.length) {
-          <ul class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-gray-700">
+          <ul class="mt-4 list-disc space-y-1.5 pl-6 text-lg text-gray-700">
             @for (m of motivos(); track m) {
               <li>{{ m }}</li>
             }
           </ul>
         }
       </div>
+      }
     }
   `,
 })
 export class CompatibilidadeComponent {
   pontos = input<number | null | undefined>(null);
   motivos = input<string[] | null | undefined>([]);
+  compacto = input(false);
 
   nivel = computed(() => {
     const p = this.pontos() ?? 0;

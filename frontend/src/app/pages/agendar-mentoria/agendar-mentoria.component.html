@@ -12,9 +12,9 @@
     <!-- Cabeçalho do mentor -->
     <div class="mt-8 flex flex-col gap-6 sm:flex-row">
       @if (m.fotoUrl) {
-        <img [src]="m.fotoUrl" [alt]="'Foto de ' + m.nome" class="size-36 shrink-0 rounded-md border border-gray-300 object-cover" />
+        <img [src]="m.fotoUrl" [alt]="'Foto de ' + m.nome" class="size-44 shrink-0 rounded-md border border-gray-300 object-cover" />
       } @else {
-        <div class="flex size-36 shrink-0 items-center justify-center rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho" aria-hidden="true">
+        <div class="flex size-44 shrink-0 items-center justify-center rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho" aria-hidden="true">
           {{ iniciais() }}
         </div>
       }
@@ -39,12 +39,16 @@
             {{ m.ecossistemas }}
           </p>
         }
-        <p class="mt-4 inline-flex w-fit flex-wrap items-baseline gap-x-2 rounded-lg bg-ponti-lilas/25 px-4 py-2 text-ponti-marinho">
-          <span class="text-xl font-semibold">{{ valor() }}</span>
-          <span>por sessão de {{ duracao() }}</span>
-        </p>
+        @if (m.anosExperiencia !== null && m.anosExperiencia !== undefined) {
+          <p class="mt-1 text-gray-600">{{ m.anosExperiencia }} {{ m.anosExperiencia === 1 ? 'ano' : 'anos' }} de experiência</p>
+        }
       </div>
     </div>
+
+    <p class="mt-6 flex w-fit flex-col justify-center rounded-lg border border-ponti-lilas px-5 py-2 leading-tight">
+      <span class="text-2xl font-bold text-ponti-roxo">{{ valor() }}</span>
+      <span class="text-sm text-gray-600">{{ duracao() }} de sessão</span>
+    </p>
 
     @if (!ehStartup()) {
       <p class="mt-8 rounded-lg bg-ponti-lilas/20 p-4 text-ponti-marinho">

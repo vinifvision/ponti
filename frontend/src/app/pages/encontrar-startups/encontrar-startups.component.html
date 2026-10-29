@@ -2,7 +2,7 @@
   <h1 class="text-balance text-3xl font-medium sm:text-4xl">Startups na plataforma</h1>
   <p class="mt-2 text-gray-500">Encontre startups para mentorar e sugira uma mentoria às que combinam com a sua experiência.</p>
 
-  <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+  <div class="mt-6 flex max-w-[50rem] flex-col gap-4 sm:flex-row sm:flex-wrap">
     <app-filtro-select rotulo="Segmento" placeholder="Todos" [opcoes]="opcoesSegmento()" [limpavel]="true" [(valor)]="segmento" />
     <app-filtro-select rotulo="Maturidade" placeholder="Todas" [opcoes]="opcoesMaturidade" [limpavel]="true" [(valor)]="maturidade" />
     <app-filtro-select rotulo="Ordenar" placeholder="Mais compatíveis" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
@@ -22,7 +22,7 @@
         Nenhuma startup encontrada com esses filtros.
       </p>
     } @else {
-      <ul class="flex max-w-4xl flex-col gap-8">
+      <ul class="flex w-full max-w-7xl flex-col gap-8">
         @for (startup of startupsFiltradas(); track startup.id) {
           <li>
             <app-startup-card
