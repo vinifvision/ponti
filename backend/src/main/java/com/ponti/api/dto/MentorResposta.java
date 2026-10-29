@@ -1,7 +1,9 @@
 package com.ponti.api.dto;
 
 import com.ponti.api.model.Mentor;
+import com.ponti.api.model.Tema;
 import java.math.BigDecimal;
+import java.util.Set;
 
 // Mentor como a API devolve: os dados do perfil mais a reputação na plataforma
 // (média das avaliações, quantidade de avaliações e de mentorias já realizadas).
@@ -11,6 +13,7 @@ public record MentorResposta(
         String bio,
         String areasAtuacao,
         String ecossistemas,
+        Set<Tema> temas,
         Integer anosExperiencia,
         BigDecimal valorSessao,
         Integer duracaoSessaoMinutos,
@@ -22,7 +25,7 @@ public record MentorResposta(
         long totalMentorias) {
 
     public static MentorResposta de(Mentor m, Double notaMedia, long totalAvaliacoes, long totalMentorias) {
-        return new MentorResposta(m.getId(), m.getNome(), m.getBio(), m.getAreasAtuacao(), m.getEcossistemas(),
+        return new MentorResposta(m.getId(), m.getNome(), m.getBio(), m.getAreasAtuacao(), m.getEcossistemas(), m.getTemas(),
                 m.getAnosExperiencia(), m.getValorSessao(), m.getDuracaoSessaoMinutos(), m.getFotoUrl(),
                 m.getVideoUrl(), m.getLinkedinUrl(), notaMedia, totalAvaliacoes, totalMentorias);
     }

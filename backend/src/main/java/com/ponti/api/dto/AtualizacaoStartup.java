@@ -1,8 +1,10 @@
 package com.ponti.api.dto;
 
+import com.ponti.api.model.Tema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
+import java.util.Set;
 
 // Corpo de PATCH /startups/{id}: só os campos enviados mudam; os que ficam de fora continuam iguais.
 // Texto vazio ("") apaga o campo.
@@ -16,5 +18,7 @@ public record AtualizacaoStartup(
         @Size(max = 120) String cidade,
         @Size(max = 2) String estado,
         @Size(max = 500) String site,
-        @Min(1) @Max(9) Integer estagioMaturidade) {
+        @Min(1) @Max(9) Integer estagioMaturidade,
+        // Lista vazia apaga; ausente mantém
+        @Size(max = 3) Set<Tema> necessidades) {
 }

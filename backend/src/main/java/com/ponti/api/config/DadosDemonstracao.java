@@ -11,6 +11,7 @@ import com.ponti.api.model.StatusAgendamento;
 import com.ponti.api.model.StatusConvite;
 import com.ponti.api.model.StatusPagamento;
 import com.ponti.api.model.Startup;
+import com.ponti.api.model.Tema;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.AgendamentoRepository;
@@ -97,6 +98,7 @@ public class DadosDemonstracao implements CommandLineRunner {
         carregarPerfisBase();
         criarMentores();
         criarStartups();
+        definirTemas();
         criarHistorico();
         log.info("Dados de demonstração carregados: {} mentores, {} startups, {} mentorias",
                 mentorRepository.count(), startupRepository.count(), agendamentoRepository.count());
@@ -184,6 +186,37 @@ public class DadosDemonstracao implements CommandLineRunner {
         disponivel("lucas", DayOfWeek.MONDAY, "08:00", "10:00");
         disponivel("lucas", DayOfWeek.THURSDAY, "16:00", "19:00");
         certificacao("lucas", "Mentor de pré-aceleração", "Sebrae PE", 2020, 2026, "Programas de validação de modelo de negócio.");
+    }
+
+    // Temas dos perfis de demonstração: é com eles que o app sugere os mentores certos para cada startup.
+    private void definirTemas() {
+        temasDoMentor("camila", Tema.PRODUTO, Tema.VALIDACAO);
+        temasDoMentor("rafael", Tema.PITCH, Tema.FINANCAS);
+        temasDoMentor("beatriz", Tema.MARKETING, Tema.VENDAS);
+        temasDoMentor("thiago", Tema.TECNOLOGIA, Tema.PRODUTO);
+        temasDoMentor("fernanda", Tema.JURIDICO, Tema.GESTAO);
+        temasDoMentor("marcos", Tema.VENDAS, Tema.GESTAO);
+        temasDoMentor("anapaula", Tema.VALIDACAO, Tema.VENDAS);
+        temasDoMentor("diego", Tema.PRODUTO, Tema.VALIDACAO);
+        temasDoMentor("patricia", Tema.JURIDICO, Tema.VALIDACAO);
+        temasDoMentor("lucas", Tema.VALIDACAO, Tema.FINANCAS);
+
+        necessidadesDaStartup("agrosense", Tema.VENDAS, Tema.FINANCAS);
+        necessidadesDaStartup("edutrilha", Tema.PRODUTO, Tema.MARKETING);
+        necessidadesDaStartup("finfacil", Tema.PITCH, Tema.MARKETING);
+        necessidadesDaStartup("mareslimpas", Tema.VALIDACAO, Tema.FINANCAS);
+    }
+
+    private void temasDoMentor(String chave, Tema... temas) {
+        Mentor m = mentores.get(chave);
+        m.setTemas(DadosIniciais.temas(temas));
+        mentorRepository.save(m);
+    }
+
+    private void necessidadesDaStartup(String chave, Tema... temas) {
+        Startup s = startups.get(chave);
+        s.setNecessidades(DadosIniciais.temas(temas));
+        startupRepository.save(s);
     }
 
     private void criarStartups() {

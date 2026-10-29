@@ -121,6 +121,10 @@
           }
         </p>
       }
+      @if (s.necessidades?.length) {
+        <h3 class="mt-6 font-medium text-ponti-marinho">Precisa de ajuda com</h3>
+        <app-temas-chips class="mt-2 block" [codigos]="s.necessidades" rotulo="Temas em que precisa de ajuda" />
+      }
       @if (s.atuacoes) {
         <h3 class="mt-6 font-medium text-ponti-marinho">Áreas de atuação</h3>
         <p class="mt-1 text-gray-700">{{ s.atuacoes }}</p>

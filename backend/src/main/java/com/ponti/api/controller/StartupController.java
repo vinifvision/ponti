@@ -104,6 +104,7 @@ public class StartupController {
         if (dados.cidade() != null) s.setCidade(texto(dados.cidade()));
         if (dados.estado() != null) s.setEstado(texto(dados.estado().toUpperCase()));
         if (dados.site() != null) s.setSite(texto(dados.site()));
+        if (dados.necessidades() != null) s.setNecessidades(dados.necessidades());
         if (dados.estagioMaturidade() != null) s.setEstagioMaturidade(dados.estagioMaturidade());
         return repository.save(s);
     }

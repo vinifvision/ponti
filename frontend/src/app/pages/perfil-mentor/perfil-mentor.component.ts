@@ -8,6 +8,7 @@ import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { MentorService } from '../../mentores/mentor.service';
 import { AvaliacaoPublica, Certificacao, Mentor } from '../../models';
 import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
+import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import {
   formatarDuracao,
@@ -23,7 +24,7 @@ import { iniciais } from '../../shared/texto.utils';
 @Component({
   selector: 'app-perfil-mentor',
   standalone: true,
-  imports: [IconeComponent, RouterLink, EstrelasComponent],
+  imports: [IconeComponent, RouterLink, EstrelasComponent, TemasChipsComponent],
   templateUrl: './perfil-mentor.component.html',
 })
 export class PerfilMentorComponent implements OnInit {

@@ -54,6 +54,7 @@ public class CadastroService {
         startup.setVideoPitchUrl(dados.videoPitchUrl());
         startup.setFotoUrl(dados.fotoUrl());
         startup.setSite(dados.site());
+        startup.setNecessidades(dados.necessidades());
         // estagioMaturidade fica vazio: é preenchido depois, pelo formulário de maturidade
 
         usuario.setStartupId(startupRepository.save(startup).getId());
@@ -70,6 +71,7 @@ public class CadastroService {
         mentor.setAnosExperiencia(dados.anosExperiencia());
         mentor.setBio(dados.sobre());
         mentor.setEcossistemas(dados.ecossistemas());
+        mentor.setTemas(dados.temas());
         mentor.setFotoUrl(dados.fotoUrl());
         mentor.setVideoUrl(dados.videoUrl());
         mentor.setLinkedinUrl(dados.linkedinUrl());

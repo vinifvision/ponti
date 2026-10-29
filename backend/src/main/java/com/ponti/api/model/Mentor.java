@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 public class Mentor {
@@ -22,6 +24,13 @@ public class Mentor {
 
     private String areasAtuacao;
     private String ecossistemas;
+
+    // Temas em que o mentor ajuda (até 5). É a base do match com as startups.
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "mentor_temas", joinColumns = @JoinColumn(name = "mentor_id"))
+    @Column(name = "tema")
+    private Set<Tema> temas = new LinkedHashSet<>();
 
     // Tempo de experiência, em anos
     @Min(0) @Max(70)
@@ -56,6 +65,8 @@ public class Mentor {
     public void setBio(String bio) { this.bio = bio; }
     public String getAreasAtuacao() { return areasAtuacao; }
     public void setAreasAtuacao(String areasAtuacao) { this.areasAtuacao = areasAtuacao; }
+    public Set<Tema> getTemas() { return temas; }
+    public void setTemas(Set<Tema> temas) { this.temas = temas == null ? new LinkedHashSet<>() : new LinkedHashSet<>(temas); }
     public String getEcossistemas() { return ecossistemas; }
     public void setEcossistemas(String ecossistemas) { this.ecossistemas = ecossistemas; }
     public Integer getAnosExperiencia() { return anosExperiencia; }

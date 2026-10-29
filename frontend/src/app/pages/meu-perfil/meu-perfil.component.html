@@ -104,6 +104,10 @@
             Os horários em que você atende ficam em <a routerLink="/agenda" class="font-medium text-ponti-roxo hover:underline">Minha agenda</a>.
           </p>
         </fieldset>
+        <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
+          <legend class="px-1 text-lg font-semibold">Temas</legend>
+          <app-seletor-temas rotulo="Em que temas você ajuda as startups?" [max]="5" [(selecionados)]="temasMentor" />
+        </fieldset>
 
         @if (mentorId !== null) {
           <app-editor-certificacoes
@@ -157,6 +161,10 @@
               </label>
             }
           </div>
+        </fieldset>
+        <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
+          <legend class="px-1 text-lg font-semibold">O que a startup precisa</legend>
+          <app-seletor-temas rotulo="Em que a sua startup precisa de ajuda?" [max]="3" [(selecionados)]="necessidadesStartup" />
         </fieldset>
 
         @if (startupId !== null) {

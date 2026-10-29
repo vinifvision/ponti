@@ -13,6 +13,8 @@ export interface CadastroStartup {
   sobre: string;
   email: string;
   senha: string;
+  // Temas em que a startup precisa de ajuda (1 a 3)
+  necessidades?: string[];
 }
 
 export interface CadastroMentor {
@@ -23,6 +25,8 @@ export interface CadastroMentor {
   // Etapa 2: perfil profissional
   areaAtuacao: string;
   ecossistemas?: string;
+  // Temas em que o mentor ajuda (1 a 5)
+  temas?: string[];
   anosExperiencia: number;
   sobre: string;
   fotoUrl?: string;

@@ -31,7 +31,24 @@ tags:
       a startup escolhe um horário livre e paga (pagamento SIMULADO), e o mentor confirma
       com o link do Google Meet ou recusa.
   - name: Auth
+  - name: Temas
+    description: Assuntos usados no match entre startups e mentores.
 paths:
+  /temas:
+    get:
+      tags: [Temas]
+      summary: Lista os temas disponíveis
+      description: Lista pública (usada no cadastro, antes do login). É a mesma para startups e mentores.
+      security: []
+      responses:
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemaOpcao"
   /startups:
     get:
       tags: [Startups]
@@ -840,6 +857,16 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Erro" }
   schemas:
+    Tema:
+      type: string
+      description: Assunto em que uma startup precisa de ajuda ou em que um mentor ajuda.
+      enum: [VALIDACAO, PRODUTO, TECNOLOGIA, PITCH, FINANCAS, VENDAS, MARKETING, JURIDICO, GESTAO]
+      example: VALIDACAO
+    TemaOpcao:
+      type: object
+      properties:
+        codigo: { type: string, example: VALIDACAO }
+        nome: { type: string, example: Validação de ideia }
     Erro:
       type: object
       description: Formato padrão de erro (Problem Details, RFC 9457) com textos em português.
@@ -865,6 +892,11 @@ components:
       type: object
       required: [nome]
       properties:
+        necessidades:
+          type: array
+          maxItems: 3
+          items: { $ref: "#/components/schemas/Tema" }
+          description: "Temas em que a startup precisa de ajuda. Alimentam o match com os mentores."
         id:
           type: integer
           format: int64
@@ -911,6 +943,11 @@ components:
       type: object
       required: [nome]
       properties:
+        temas:
+          type: array
+          maxItems: 5
+          items: { $ref: "#/components/schemas/Tema" }
+          description: "Temas em que o mentor ajuda. Alimentam o match com as startups."
         id:
           type: integer
           format: int64
@@ -965,6 +1002,11 @@ components:
       type: object
       description: Todos os campos são opcionais
       properties:
+        temas:
+          type: array
+          maxItems: 5
+          items: { $ref: "#/components/schemas/Tema" }
+          description: "Lista vazia apaga; campo ausente mantém."
         nome: { type: string, minLength: 2, maxLength: 120 }
         bio: { type: string, maxLength: 2000 }
         areasAtuacao: { type: string }
@@ -979,6 +1021,11 @@ components:
       type: object
       description: Todos os campos são opcionais
       properties:
+        necessidades:
+          type: array
+          maxItems: 3
+          items: { $ref: "#/components/schemas/Tema" }
+          description: "Lista vazia apaga; campo ausente mantém."
         nome: { type: string, minLength: 2, maxLength: 120 }
         descricao: { type: string, maxLength: 2000 }
         videoPitchUrl: { type: string, maxLength: 500 }
@@ -1162,6 +1209,11 @@ components:
       description: O nível de maturidade não entra no cadastro; é definido depois, em outro formulário.
       required: [nome, areaAtuacao, sobre, email, senha]
       properties:
+        necessidades:
+          type: array
+          maxItems: 3
+          items: { $ref: "#/components/schemas/Tema" }
+          description: "Temas em que a startup precisa de ajuda (escolha de 1 a 3 na tela de cadastro)."
         nome:
           type: string
           maxLength: 255
@@ -1195,6 +1247,11 @@ components:
       type: object
       required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, valorSessao, duracaoSessaoMinutos]
       properties:
+        temas:
+          type: array
+          maxItems: 5
+          items: { $ref: "#/components/schemas/Tema" }
+          description: "Temas em que o mentor ajuda (escolha de 1 a 5 na tela de cadastro)."
         nome:
           type: string
           maxLength: 255

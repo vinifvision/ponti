@@ -12,6 +12,8 @@ export interface Startup {
   // Ainda não existe no backend: o perfil só mostra a seção "Redes de contato" quando a API passar a mandar este campo
   linkedinUrl?: string | null;
   estagioMaturidade?: number | null;
+  // Temas em que a startup precisa de ajuda (códigos de GET /temas)
+  necessidades?: string[];
 }
 
 export type StatusConvite = 'PENDENTE' | 'ACEITO' | 'RECUSADO';
@@ -61,6 +63,8 @@ export interface Mentor {
   bio?: string;
   areasAtuacao?: string;
   ecossistemas?: string;
+  // Temas em que o mentor ajuda (códigos de GET /temas)
+  temas?: string[];
   anosExperiencia?: number | null;
   valorSessao?: number | null;
   duracaoSessaoMinutos?: number | null;
