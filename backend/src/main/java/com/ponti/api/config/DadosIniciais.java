@@ -4,6 +4,7 @@ import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Disponibilidade;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Startup;
+import com.ponti.api.model.Tema;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.CertificacaoRepository;
@@ -14,6 +15,9 @@ import com.ponti.api.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -63,6 +67,7 @@ public class DadosIniciais implements CommandLineRunner {
                     8, new BigDecimal("120.00"), 60));
             juliana.setLinkedinUrl("https://www.linkedin.com/in/exemplo-juliana");
             juliana.setFotoUrl("/demo/mentores/juliana.svg");
+            juliana.setTemas(temas(Tema.VALIDACAO, Tema.PRODUTO, Tema.PITCH));
             juliana = mentorRepository.save(juliana);
             certificacaoRepository.save(certificacao(juliana, "Mentoria programa Porto Digital", "Porto Digital",
                     2026, 2026, "Mentoria de validação de produto para startups do programa de aceleração."));
@@ -75,6 +80,7 @@ public class DadosIniciais implements CommandLineRunner {
                     "Health-techs, PetTech",
                     5, BigDecimal.ZERO, 45));
             roberto.setFotoUrl("/demo/mentores/roberto.svg");
+            roberto.setTemas(temas(Tema.VALIDACAO, Tema.VENDAS));
             roberto = mentorRepository.save(roberto);
             // Horários em que cada mentor atende, para a agenda já aparecer com opções
             disponivel(juliana, DayOfWeek.TUESDAY, "09:00", "12:00");
@@ -93,16 +99,23 @@ public class DadosIniciais implements CommandLineRunner {
                     "Aplicativo que conecta tutores a veterinários para consultas rápidas e acompanhamento da saúde do pet.",
                     "PetTech", "Recife", "PE", 2));
             petCare.setFotoUrl("/demo/startups/petcare.svg");
+            petCare.setNecessidades(temas(Tema.VALIDACAO, Tema.PITCH, Tema.TECNOLOGIA));
             petCare = startupRepository.save(petCare);
             Startup saudeAgora = startupRepository.save(startup(
                     "SaúdeAgora",
                     "Plataforma de triagem online que organiza o atendimento inicial em clínicas pequenas.",
                     "Health-tech", "Olinda", "PE", 1));
             saudeAgora.setFotoUrl("/demo/startups/saudeagora.svg");
+            saudeAgora.setNecessidades(temas(Tema.VALIDACAO, Tema.JURIDICO));
             saudeAgora = startupRepository.save(saudeAgora);
             usuarioRepository.save(usuarioDaStartup("petcare@exemplo.com", petCare));
             usuarioRepository.save(usuarioDaStartup("saudeagora@exemplo.com", saudeAgora));
         }
+    }
+
+    // Monta o conjunto de temas de um perfil de exemplo (mantém a ordem dada)
+    static Set<Tema> temas(Tema... temas) {
+        return new LinkedHashSet<>(Arrays.asList(temas));
     }
 
     private Mentor mentor(String nome, String bio, String areasAtuacao, String ecossistemas,

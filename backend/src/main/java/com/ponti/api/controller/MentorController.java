@@ -2,6 +2,7 @@ package com.ponti.api.controller;
 
 import com.ponti.api.dto.AtualizacaoMentor;
 import com.ponti.api.dto.AvaliacaoPublica;
+import com.ponti.api.dto.MentorRecomendado;
 import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.NovaCertificacao;
 import com.ponti.api.model.Certificacao;
@@ -9,8 +10,10 @@ import com.ponti.api.model.Mentor;
 import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.seguranca.Acesso;
+import com.ponti.api.seguranca.UsuarioLogado;
 import com.ponti.api.service.AvaliacaoService;
 import com.ponti.api.service.ContaService;
+import com.ponti.api.service.MatchService;
 import com.ponti.api.service.MentorService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -28,16 +31,19 @@ public class MentorController {
     private final Acesso acesso;
     private final MentorService mentorService;
     private final AvaliacaoService avaliacaoService;
+    private final MatchService matchService;
 
     public MentorController(MentorRepository repository, CertificacaoRepository certificacaoRepository,
                             ContaService contaService, Acesso acesso,
-                            MentorService mentorService, AvaliacaoService avaliacaoService) {
+                            MentorService mentorService, AvaliacaoService avaliacaoService,
+                            MatchService matchService) {
         this.repository = repository;
         this.certificacaoRepository = certificacaoRepository;
         this.contaService = contaService;
         this.acesso = acesso;
         this.mentorService = mentorService;
         this.avaliacaoService = avaliacaoService;
+        this.matchService = matchService;
     }
 
     // Avaliações que o mentor recebeu, mais recentes primeiro
@@ -81,6 +87,17 @@ public class MentorController {
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)");
         }
+    }
+
+    // Mentores ordenados pela compatibilidade com a startup logada (temas que ela precisa e setor).
+    // Só startups usam esta lista; o mentor logado recebe 403.
+    @GetMapping("/recomendados")
+    public List<MentorRecomendado> recomendados() {
+        UsuarioLogado logado = acesso.atual();
+        if (logado.startupId() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, Acesso.SEM_PERMISSAO);
+        }
+        return matchService.mentoresParaStartup(logado.startupId());
     }
 
     // READ (todos), já com a reputação de cada mentor (nota média e mentorias realizadas)

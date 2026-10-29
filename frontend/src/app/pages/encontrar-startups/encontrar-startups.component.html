@@ -5,7 +5,7 @@
   <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
     <app-filtro-select rotulo="Segmento" placeholder="Todos" [opcoes]="opcoesSegmento()" [limpavel]="true" [(valor)]="segmento" />
     <app-filtro-select rotulo="Maturidade" placeholder="Todas" [opcoes]="opcoesMaturidade" [limpavel]="true" [(valor)]="maturidade" />
-    <app-filtro-select rotulo="Ordenar" placeholder="Padrão" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
+    <app-filtro-select rotulo="Ordenar" placeholder="Mais compatíveis" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
   </div>
 
   @if (erroConvite()) {

@@ -8,6 +8,7 @@ import { SessaoService } from '../../auth/sessao.service';
 import { SENHA_MINIMA, validarConta } from '../../auth/validacao-cadastro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
 import { StartupService } from '../../startups/startup.service';
+import { SeletorTemasComponent } from '../../shared/seletor-temas/seletor-temas.component';
 import {
   NIVEL_MAXIMO,
   NOMES_NIVEIS,
@@ -25,7 +26,7 @@ import {
 @Component({
   selector: 'app-cadastro-startup',
   standalone: true,
-  imports: [AuthCabecalhoComponent, FormsModule],
+  imports: [AuthCabecalhoComponent, FormsModule, SeletorTemasComponent],
   templateUrl: './cadastro-startup.component.html',
 })
 export class CadastroStartupComponent {
@@ -50,6 +51,7 @@ export class CadastroStartupComponent {
   sobre = '';
   email = '';
   senha = '';
+  necessidades = signal<string[]>([]);
 
   // Fica true quando a conta já foi criada mas o nível ainda não foi gravado (ex.: a rede caiu).
   // Assim, tentar de novo só regrava o nível, em vez de tentar criar a conta outra vez.
@@ -107,11 +109,15 @@ export class CadastroStartupComponent {
       this.erro.set(erro);
       return;
     }
+    if (this.necessidades().length === 0) {
+      this.erro.set('Escolha pelo menos um tema em que a sua startup precisa de ajuda.');
+      return;
+    }
 
     this.salvando.set(true);
     this.erro.set('');
 
-    this.auth.cadastrarStartup(campos).subscribe({
+    this.auth.cadastrarStartup({ ...campos, necessidades: this.necessidades() }).subscribe({
       // Conta criada e login feito: agora grava o nível do questionário
       next: () => {
         this.contaCriada.set(true);

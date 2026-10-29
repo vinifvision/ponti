@@ -12,6 +12,7 @@ import { NOMES_NIVEIS } from '../../shared/maturidade';
 import { StartupService } from '../../startups/startup.service';
 import { iniciais } from '../../shared/texto.utils';
 import { EditorCertificacoesComponent } from '../../shared/editor-certificacoes/editor-certificacoes.component';
+import { SeletorTemasComponent } from '../../shared/seletor-temas/seletor-temas.component';
 
 // "Editar perfil" (rota /perfil/editar): a startup ou o mentor edita os próprios dados.
 // Quem chega aqui vem do botão "Editar perfil" da página do próprio perfil (/perfil).
@@ -19,7 +20,7 @@ import { EditorCertificacoesComponent } from '../../shared/editor-certificacoes/
 @Component({
   selector: 'app-meu-perfil',
   standalone: true,
-  imports: [FormsModule, RouterLink, EditorCertificacoesComponent],
+  imports: [FormsModule, RouterLink, EditorCertificacoesComponent, SeletorTemasComponent],
   templateUrl: './meu-perfil.component.html',
 })
 export class MeuPerfilComponent implements OnInit {
@@ -40,6 +41,9 @@ export class MeuPerfilComponent implements OnInit {
   mentor: Partial<Mentor> = {};
   startup: Partial<Startup> = {};
   gratuita = false;
+  // Temas escolhidos (mentor: em que ajuda; startup: do que precisa)
+  temasMentor = signal<string[]>([]);
+  necessidadesStartup = signal<string[]>([]);
 
   // Para o editor de certificações
   mentorId = this.sessao.mentorId();
@@ -56,6 +60,7 @@ export class MeuPerfilComponent implements OnInit {
       this.mentorService.buscar(mentorId).subscribe({
         next: (m) => {
           this.mentor = { ...m };
+          this.temasMentor.set([...(m.temas ?? [])]);
           this.gratuita = Number(m.valorSessao ?? 0) === 0;
           this.carregando.set(false);
         },
@@ -66,6 +71,7 @@ export class MeuPerfilComponent implements OnInit {
         next: (s) => {
           this.startup = { ...s };
           this.suportaLinkedin.set('linkedinUrl' in s);
+          this.necessidadesStartup.set([...(s.necessidades ?? [])]);
           this.carregando.set(false);
         },
         error: (e: HttpErrorResponse) => this.falhou(e),
@@ -110,6 +116,7 @@ export class MeuPerfilComponent implements OnInit {
             duracaoSessaoMinutos: this.mentor.duracaoSessaoMinutos ?? undefined,
             linkedinUrl: this.mentor.linkedinUrl ?? '',
             videoUrl: this.mentor.videoUrl ?? '',
+            temas: this.temasMentor(),
           })
         : this.startupService.atualizarParcial(startupId!, {
             nome: this.startup.nome,
@@ -122,6 +129,7 @@ export class MeuPerfilComponent implements OnInit {
             videoPitchUrl: this.startup.videoPitchUrl ?? '',
             estagioMaturidade: this.startup.estagioMaturidade ?? undefined,
             ...(this.suportaLinkedin() ? { linkedinUrl: this.startup.linkedinUrl ?? '' } : {}),
+            necessidades: this.necessidadesStartup(),
           });
 
     pedido.subscribe({

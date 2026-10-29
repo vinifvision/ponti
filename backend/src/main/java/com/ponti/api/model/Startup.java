@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 public class Startup {
@@ -34,6 +36,13 @@ public class Startup {
     private String estado;
     private String site;
 
+    // Temas em que a startup precisa de ajuda (até 3). É a base do match com os mentores.
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "startup_necessidades", joinColumns = @JoinColumn(name = "startup_id"))
+    @Column(name = "tema")
+    private Set<Tema> necessidades = new LinkedHashSet<>();
+
     // Escala de maturidade (inspirada no TRL): 1 a 9
     @Min(1) @Max(9)
     private Integer estagioMaturidade;
@@ -58,6 +67,8 @@ public class Startup {
     public void setEstado(String estado) { this.estado = estado; }
     public String getSite() { return site; }
     public void setSite(String site) { this.site = site; }
+    public Set<Tema> getNecessidades() { return necessidades; }
+    public void setNecessidades(Set<Tema> necessidades) { this.necessidades = necessidades == null ? new LinkedHashSet<>() : new LinkedHashSet<>(necessidades); }
     public Integer getEstagioMaturidade() { return estagioMaturidade; }
     public void setEstagioMaturidade(Integer estagioMaturidade) { this.estagioMaturidade = estagioMaturidade; }
 }

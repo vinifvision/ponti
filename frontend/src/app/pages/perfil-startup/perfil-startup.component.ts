@@ -7,6 +7,7 @@ import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { ConviteService } from '../../convites/convite.service';
 import { Certificacao, Convite, Startup } from '../../models';
+import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import { NIVEL_MAXIMO, nomeDoNivel } from '../../shared/maturidade.utils';
 import { formatarPeriodo, idVideoYoutube, linkSeguro } from '../../shared/mentoria.utils';
@@ -20,7 +21,7 @@ import { StartupService } from '../../startups/startup.service';
 @Component({
   selector: 'app-perfil-startup',
   standalone: true,
-  imports: [IconeComponent, RouterLink],
+  imports: [IconeComponent, RouterLink, TemasChipsComponent],
   templateUrl: './perfil-startup.component.html',
 })
 export class PerfilStartupComponent implements OnInit {

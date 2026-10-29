@@ -108,6 +108,7 @@
     <p class="mt-4 whitespace-pre-line text-pretty text-lg leading-relaxed text-gray-800">
       {{ m.bio || 'Este mentor ainda não adicionou uma descrição.' }}
     </p>
+    <app-temas-chips class="mt-4 block" [codigos]="m.temas" rotulo="Temas em que ajuda" />
 
     <!-- Experiência -->
     @if (certificacoes().length) {

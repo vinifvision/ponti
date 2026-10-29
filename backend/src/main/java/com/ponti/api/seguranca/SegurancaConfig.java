@@ -53,7 +53,7 @@ public class SegurancaConfig {
                 .authorizeHttpRequests(rotas -> {
                     rotas.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     rotas.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/cadastro/startup", "/auth/cadastro/mentor").permitAll();
-                    rotas.requestMatchers(HttpMethod.GET, "/auth/me").permitAll();
+                    rotas.requestMatchers(HttpMethod.GET, "/auth/me", "/temas").permitAll();
                     rotas.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll();
                     if (consoleH2) {
                         rotas.requestMatchers("/h2-console/**").permitAll();

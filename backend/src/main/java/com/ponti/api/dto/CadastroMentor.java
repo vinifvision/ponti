@@ -1,5 +1,6 @@
 package com.ponti.api.dto;
 
+import com.ponti.api.model.Tema;
 import com.ponti.api.model.Usuario;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -13,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 // Corpo de POST /auth/cadastro/mentor. Só os campos do formulário de cadastro.
 // A senha tem no máximo 72 caracteres porque o BCrypt ignora o que passa disso.
@@ -25,6 +27,8 @@ public record CadastroMentor(
         // Etapa 2: perfil profissional
         @NotBlank @Size(max = 255) String areaAtuacao,
         @Size(max = 255) String ecossistemas,
+        // Temas em que o mentor ajuda (até 5); alimentam o match com as startups
+        @Size(max = 5) Set<Tema> temas,
         @NotNull @Min(0) @Max(70) Integer anosExperiencia,
         @NotBlank @Size(max = 2000) String sobre,
         @Size(max = 500) String fotoUrl,

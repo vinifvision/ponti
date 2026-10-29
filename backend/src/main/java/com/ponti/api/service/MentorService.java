@@ -53,6 +53,7 @@ public class MentorService {
         if (dados.bio() != null) m.setBio(vazioViraNulo(dados.bio()));
         if (dados.areasAtuacao() != null) m.setAreasAtuacao(vazioViraNulo(dados.areasAtuacao()));
         if (dados.ecossistemas() != null) m.setEcossistemas(vazioViraNulo(dados.ecossistemas()));
+        if (dados.temas() != null) m.setTemas(dados.temas());
         if (dados.anosExperiencia() != null) m.setAnosExperiencia(dados.anosExperiencia());
         if (dados.valorSessao() != null) m.setValorSessao(dados.valorSessao());
         if (dados.duracaoSessaoMinutos() != null) m.setDuracaoSessaoMinutos(dados.duracaoSessaoMinutos());
