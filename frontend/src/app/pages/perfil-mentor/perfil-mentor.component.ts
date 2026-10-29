@@ -43,6 +43,11 @@ export class PerfilMentorComponent implements OnInit {
 
   readonly formatarPeriodo = formatarPeriodo;
   ehStartup = computed(() => this.sessao.startupId() !== null);
+  // true quando o mentor logado está olhando o próprio perfil (rota /perfil): aparece "Editar perfil"
+  proprio = computed(() => {
+    const logado = this.sessao.mentorId();
+    return logado !== null && logado === this.mentor()?.id;
+  });
   iniciais = computed(() => iniciais(this.mentor()?.nome ?? ''));
   valor = computed(() => formatarValorSessao(this.mentor()?.valorSessao));
   duracao = computed(() => formatarDuracao(this.mentor()?.duracaoSessaoMinutos));

@@ -11,13 +11,15 @@ import { Mentor, Startup } from '../../models';
 import { NOMES_NIVEIS } from '../../shared/maturidade';
 import { StartupService } from '../../startups/startup.service';
 import { iniciais } from '../../shared/texto.utils';
+import { EditorCertificacoesComponent } from '../../shared/editor-certificacoes/editor-certificacoes.component';
 
-// "Meu perfil": a startup ou o mentor edita os próprios dados.
+// "Editar perfil" (rota /perfil/editar): a startup ou o mentor edita os próprios dados.
+// Quem chega aqui vem do botão "Editar perfil" da página do próprio perfil (/perfil).
 // Salva com PATCH, mandando só os campos do formulário (o resto do perfil não é tocado).
 @Component({
   selector: 'app-meu-perfil',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, EditorCertificacoesComponent],
   templateUrl: './meu-perfil.component.html',
 })
 export class MeuPerfilComponent implements OnInit {
@@ -39,9 +41,13 @@ export class MeuPerfilComponent implements OnInit {
   startup: Partial<Startup> = {};
   gratuita = false;
 
-  linkPublico = computed(() =>
-    this.ehMentor() ? ['/mentores', this.sessao.mentorId(), 'perfil'] : ['/startups', this.sessao.startupId(), 'perfil'],
-  );
+  // Para o editor de certificações
+  mentorId = this.sessao.mentorId();
+  startupId = this.sessao.startupId();
+
+  // O LinkedIn da startup só aparece quando a API já devolve esse campo (o backend ainda precisa criá-lo).
+  // Antes disso, o campo salvaria "no vazio", então é melhor não mostrar.
+  suportaLinkedin = signal(false);
 
   ngOnInit() {
     const mentorId = this.sessao.mentorId();
@@ -59,6 +65,7 @@ export class MeuPerfilComponent implements OnInit {
       this.startupService.buscar(startupId).subscribe({
         next: (s) => {
           this.startup = { ...s };
+          this.suportaLinkedin.set('linkedinUrl' in s);
           this.carregando.set(false);
         },
         error: (e: HttpErrorResponse) => this.falhou(e),
@@ -114,6 +121,7 @@ export class MeuPerfilComponent implements OnInit {
             site: this.startup.site ?? '',
             videoPitchUrl: this.startup.videoPitchUrl ?? '',
             estagioMaturidade: this.startup.estagioMaturidade ?? undefined,
+            ...(this.suportaLinkedin() ? { linkedinUrl: this.startup.linkedinUrl ?? '' } : {}),
           });
 
     pedido.subscribe({

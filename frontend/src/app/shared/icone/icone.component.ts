@@ -12,7 +12,9 @@ export type NomeIcone =
   | 'fechar'
   | 'maleta'
   | 'alvo'
-  | 'brilho';
+  | 'brilho'
+  | 'grafico'
+  | 'linkedin';
 
 @Component({
   selector: 'app-icone',
@@ -75,6 +77,14 @@ export type NomeIcone =
           <svg:circle cx="12" cy="12" r="10" />
           <svg:circle cx="12" cy="12" r="6" />
           <svg:circle cx="12" cy="12" r="2" />
+        }
+        @case ('grafico') {
+          <svg:path d="M6 20v-6M12 20V4M18 20V10" />
+        }
+        @case ('linkedin') {
+          <svg:path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+          <svg:rect width="4" height="12" x="2" y="9" />
+          <svg:circle cx="4" cy="4" r="2" />
         }
         @case ('brilho') {
           <svg:path

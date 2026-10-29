@@ -9,6 +9,8 @@ export interface Startup {
   cidade?: string;
   estado?: string;
   site?: string;
+  // Ainda não existe no backend: o perfil só mostra a seção "Redes de contato" quando a API passar a mandar este campo
+  linkedinUrl?: string | null;
   estagioMaturidade?: number | null;
 }
 
@@ -100,6 +102,26 @@ export interface FaixaDisponibilidade {
   diaSemana: DiaSemana;
   horaInicio: string;
   horaFim: string;
+}
+
+// Faixa de horas dentro de uma data específica ("14:00" a "16:00")
+export interface FaixaHorario {
+  horaInicio: string;
+  horaFim: string;
+}
+
+// Ajuste de UMA data: vale no lugar do horário semanal daquele dia (não atende, ou atende só nessas faixas).
+// sessoesMarcadas = mentorias pendentes ou confirmadas já marcadas nessa data.
+export interface ExcecaoDia {
+  data: string; // "2026-10-29"
+  indisponivel: boolean;
+  faixas: FaixaHorario[];
+  sessoesMarcadas: number;
+}
+
+export interface DefinicaoExcecao {
+  indisponivel: boolean;
+  faixas: FaixaHorario[];
 }
 
 export type StatusAgendamento = 'PENDENTE' | 'CONFIRMADO' | 'RECUSADO' | 'CANCELADO';
