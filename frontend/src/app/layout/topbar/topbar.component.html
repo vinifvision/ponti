@@ -1,74 +1,169 @@
-<header class="flex items-center justify-end gap-4 px-4 py-4 sm:gap-6 sm:px-8">
-  <div class="relative w-full max-w-md">
-    <label for="busca-mentores" class="sr-only">{{ textoBusca() }}</label>
-    <input
-      id="busca-mentores"
-      type="search"
-      [placeholder]="textoBusca()"
-      [value]="busca.termo()"
-      (input)="busca.termo.set($any($event.target).value)"
-      class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-4 pr-11 text-base text-gray-900 placeholder:text-gray-400 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30"
-    />
-    <app-icone nome="busca" [tamanho]="20" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
-  </div>
+<!-- Fundo escurecido enquanto a busca está esticada; clicar nele fecha o painel -->
+<div
+  class="fixed inset-0 z-30 bg-black/40 transition-opacity duration-300"
+  [class]="buscaAberta() ? 'opacity-100' : 'pointer-events-none opacity-0'"
+  (click)="fecharBusca()"
+  aria-hidden="true"
+></div>
 
-  <a
-    routerLink="/mentorias"
-    class="relative rounded-full p-2 text-ponti-marinho transition-colors hover:bg-ponti-lilas/30"
-    [attr.aria-label]="rotuloNotificacao()"
-  >
-    <app-icone nome="sino" [tamanho]="26" />
-    @if (temNotificacao()) {
-      <span class="absolute right-2 top-2 size-2.5 rounded-full bg-ponti-amarelo ring-2 ring-white">
-        <span class="sr-only">{{ rotuloNotificacao() }}</span>
-      </span>
-    }
-  </a>
+<header class="sticky top-0 z-40 border-b border-gray-200 bg-white">
+  <div class="relative flex flex-wrap items-center gap-x-3 gap-y-3 px-4 py-3 sm:px-6 md:flex-nowrap md:gap-x-4">
+    <a [routerLink]="inicio()" class="mr-1 shrink-0 sm:mr-3" aria-label="Ponti - página inicial">
+      <img src="logo.svg" alt="Ponti" class="hidden h-10 w-auto sm:block" />
+      <img src="logo-mini.svg" alt="Ponti" class="h-9 w-auto sm:hidden" />
+    </a>
 
-  <div class="relative shrink-0">
-    <button
-      type="button"
-      (click)="alternarMenu()"
-      class="flex items-center gap-3 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-gray-100"
-      aria-haspopup="menu"
-      [attr.aria-expanded]="menuAberto()"
-    >
-      @if (usuario().foto) {
-        <img [src]="usuario().foto" alt="" class="size-12 rounded-full border border-gray-200 object-cover" />
-      } @else {
-        <span class="size-12 rounded-full bg-gray-200" aria-hidden="true"></span>
-      }
-      <span class="hidden flex-col items-start leading-tight sm:flex">
-        <span class="flex items-center gap-1 font-semibold">
-          {{ usuario().nome }}
-          <app-icone nome="seta-baixo" [tamanho]="18" class="transition-transform" [class.rotate-180]="menuAberto()" />
-        </span>
-        <span class="text-sm text-gray-400">{{ usuario().papel }}</span>
-      </span>
-    </button>
-
-    @if (menuAberto()) {
-      <div
-        role="menu"
-        class="absolute right-0 top-full z-20 mt-2 w-48 rounded-md border border-gray-200 bg-white py-2 shadow-lg"
-      >
+    <nav aria-label="Menu principal" class="flex items-center gap-0.5 lg:gap-2">
+      @for (item of itens(); track item.rota) {
         <a
-          role="menuitem"
-          routerLink="/perfil"
-          (click)="menuAberto.set(false)"
-          class="block px-4 py-2 text-sm hover:bg-ponti-lilas/20"
+          [routerLink]="item.rota"
+          [attr.aria-current]="ativo(item) ? 'page' : null"
+          [attr.title]="item.rotulo"
+          class="flex items-center rounded-lg px-2.5 py-2 text-base font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-roxo"
+          [class]="ativo(item) ? 'text-ponti-roxo' : 'text-ponti-marinho hover:text-ponti-roxo'"
         >
-          Meu perfil
+          <app-icone [nome]="item.icone" [tamanho]="24" />
+          <!-- O rótulo some (some a largura, não só a cor) quando a busca estica; abaixo de lg só os ícones aparecem -->
+          <span
+            class="overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out"
+            [class]="buscaAberta() ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-60 lg:opacity-100'"
+          >
+            <span class="block pl-2">{{ item.rotulo }}</span>
+          </span>
         </a>
-        <button
-          role="menuitem"
-          type="button"
-          (click)="sair()"
-          class="block w-full px-4 py-2 text-left text-sm hover:bg-ponti-lilas/20"
+      }
+    </nav>
+
+    <!-- Em telas pequenas a busca ocupa a segunda linha -->
+    <div class="order-last flex basis-full justify-end md:order-none md:min-w-0 md:flex-1 md:basis-auto">
+      <div
+        #caixa
+        role="search"
+        class="w-full transition-[width] duration-300 ease-out md:max-w-full lg:relative"
+        [class]="buscaAberta() ? 'md:w-full' : 'md:w-[34rem]'"
+        (focusout)="fecharSeFocoSaiu($event, caixa)"
+      >
+        <label for="busca-navbar" class="sr-only">{{ textoBusca() }}</label>
+        <div class="relative">
+          <input
+            #campoBusca
+            id="busca-navbar"
+            type="search"
+            autocomplete="off"
+            [placeholder]="textoBusca()"
+            [value]="termoDigitado()"
+            (input)="termoDigitado.set($any($event.target).value)"
+            (focus)="abrirBusca()"
+            (click)="abrirBusca()"
+            (keydown.enter)="aplicarBusca()"
+            aria-controls="painel-busca"
+            [attr.aria-expanded]="buscaAberta()"
+            class="w-full appearance-none rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-4 pr-11 text-base text-gray-900 transition-colors placeholder:text-gray-400 focus:border-ponti-roxo focus:bg-white focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30 [&::-webkit-search-cancel-button]:appearance-none"
+          />
+          @if (busca.ativa()) {
+            <button
+              type="button"
+              (click)="limparBusca()"
+              aria-label="Limpar busca"
+              title="Limpar busca"
+              class="cursor-pointer absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-ponti-marinho focus-visible:outline-2 focus-visible:outline-ponti-roxo"
+            >
+              <app-icone nome="fechar" [tamanho]="18" />
+            </button>
+          } @else {
+            <app-icone
+              nome="busca"
+              [tamanho]="20"
+              class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+            />
+          }
+        </div>
+
+        <!-- Filtros: aparecem logo abaixo da barra. Valem para a lista só depois do Enter -->
+        <div
+          id="painel-busca"
+          class="absolute inset-x-4 top-full mt-2 origin-top rounded-xl sm:inset-x-6 lg:inset-x-0 lg:top-[calc(100%+0.75rem)] lg:mt-0 border border-gray-200 bg-white p-4 shadow-xl transition-[opacity,transform,visibility] duration-200 ease-out"
+          [class]="buscaAberta() ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'"
+          (keydown.enter)="aplicarBusca()"
         >
-          Sair
-        </button>
+          <div class="grid gap-3 sm:grid-cols-2 [&_select]:text-sm" [class]="filtros().length > 3 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'">
+            @for (f of filtros(); track f.rotulo; let i = $index) {
+              <app-filtro-select
+                class="sm:w-full!"
+                [rotulo]="f.rotulo"
+                [placeholder]="f.placeholder"
+                [opcoes]="f.opcoes"
+                [limpavel]="f.limpavel"
+                [valor]="valorDoRascunho(i)"
+                (valorChange)="definirRascunho(i, $event)"
+              />
+            }
+          </div>
+          <p class="mt-3 text-sm text-gray-500">Pressione Enter para buscar com o texto e os filtros escolhidos.</p>
+        </div>
       </div>
-    }
+    </div>
+
+    <a
+      routerLink="/mentorias"
+      class="relative ml-auto shrink-0 rounded-full p-2 text-ponti-marinho transition-colors hover:bg-ponti-lilas/30 md:ml-0"
+      [attr.aria-label]="rotuloNotificacao()"
+    >
+      <app-icone nome="sino" [tamanho]="26" />
+      @if (temNotificacao()) {
+        <span class="absolute right-2 top-2 size-2.5 rounded-full bg-ponti-amarelo ring-2 ring-white">
+          <span class="sr-only">{{ rotuloNotificacao() }}</span>
+        </span>
+      }
+    </a>
+
+    <div class="relative shrink-0">
+      <button
+        type="button"
+        (click)="alternarMenu()"
+        class="flex items-center gap-3 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-gray-100"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="menuAberto()"
+      >
+        @if (usuario().foto) {
+          <img [src]="usuario().foto" alt="" class="size-11 rounded-full border border-gray-200 object-cover" />
+        } @else {
+          <span class="size-11 rounded-full bg-gray-200" aria-hidden="true"></span>
+        }
+        <span class="hidden flex-col items-start leading-tight sm:flex">
+          <span class="flex items-center gap-1 font-semibold">
+            {{ usuario().nome }}
+            <app-icone nome="seta-baixo" [tamanho]="18" class="transition-transform" [class.rotate-180]="menuAberto()" />
+          </span>
+          <span class="text-sm text-gray-400">{{ usuario().papel }}</span>
+        </span>
+      </button>
+
+      @if (menuAberto()) {
+        <div
+          role="menu"
+          class="absolute right-0 top-full z-20 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
+        >
+          <a
+            role="menuitem"
+            routerLink="/perfil"
+            (click)="menuAberto.set(false)"
+            class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-ponti-lilas/20"
+          >
+            <app-icone nome="usuario" [tamanho]="18" />
+            Meu perfil
+          </a>
+          <button
+            role="menuitem"
+            type="button"
+            (click)="sair()"
+            class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-ponti-lilas/20"
+          >
+            <app-icone nome="sair" [tamanho]="18" />
+            Sair
+          </button>
+        </div>
+      }
+    </div>
   </div>
 </header>

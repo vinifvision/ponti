@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 
-// Página temporária para as rotas da sidebar que ainda não foram construídas.
+// Página temporária para as rotas da navbar que ainda não foram construídas.
 @Component({
   selector: 'app-em-breve',
   standalone: true,

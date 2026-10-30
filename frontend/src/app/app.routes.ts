@@ -23,7 +23,7 @@ export const routes: Routes = [
   // Primeira tela ao abrir o site
   { path: '', pathMatch: 'full', redirectTo: 'bem-vindo' },
 
-  // Telas públicas (sem sidebar/topbar)
+  // Telas públicas (sem navbar)
   {
     path: '',
     component: AuthLayoutComponent,

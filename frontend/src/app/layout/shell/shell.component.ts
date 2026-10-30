@@ -1,18 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent],
+  imports: [RouterOutlet, TopbarComponent],
   templateUrl: './shell.component.html',
 })
-export class ShellComponent {
-  sidebarRecolhida = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
-
-  alternarSidebar() {
-    this.sidebarRecolhida.update((valor) => !valor);
-  }
-}
+export class ShellComponent {}
