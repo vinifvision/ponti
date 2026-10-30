@@ -16,18 +16,14 @@ import { MinhaAgendaComponent } from './pages/minha-agenda/minha-agenda.componen
 import { EncontrarMentoresComponent } from './pages/encontrar-mentores/encontrar-mentores.component';
 import { EmBreveComponent } from './pages/em-breve/em-breve.component';
 import { MeuPerfilComponent } from './pages/meu-perfil/meu-perfil.component';
-import { PerfilProprioComponent } from './pages/meu-perfil/perfil-proprio.component';
+import { EditarPerfilComponent } from './pages/editar-perfil/editar-perfil.component';
 import { ConfiguracoesComponent } from './pages/configuracoes/configuracoes.component';
-import { StartupListComponent } from './startups/startup-list.component';
-import { StartupFormComponent } from './startups/startup-form.component';
-import { MentorListComponent } from './mentores/mentor-list.component';
-import { MentorFormComponent } from './mentores/mentor-form.component';
 
 export const routes: Routes = [
   // Primeira tela ao abrir o site
   { path: '', pathMatch: 'full', redirectTo: 'bem-vindo' },
 
-  // Telas públicas (sem sidebar/topbar)
+  // Telas públicas (sem navbar)
   {
     path: '',
     component: AuthLayoutComponent,
@@ -63,17 +59,9 @@ export const routes: Routes = [
       { path: 'mentores/:id/perfil', component: PerfilMentorComponent, title: 'Perfil do mentor | Ponti' },
       { path: 'startups/:id/perfil', component: PerfilStartupComponent, title: 'Perfil da startup | Ponti' },
       // /perfil mostra o próprio perfil; o botão "Editar perfil" leva para /perfil/editar
-      { path: 'perfil', component: PerfilProprioComponent, title: 'Meu perfil | Ponti' },
-      { path: 'perfil/editar', component: MeuPerfilComponent, title: 'Editar perfil | Ponti' },
+      { path: 'perfil', component: MeuPerfilComponent, title: 'Meu perfil | Ponti' },
+      { path: 'perfil/editar', component: EditarPerfilComponent, title: 'Editar perfil | Ponti' },
       { path: 'configuracoes', component: ConfiguracoesComponent, title: 'Configurações | Ponti' },
-
-      // Telas de CRUD feitas para a atividade (continuam funcionando dentro do novo layout)
-      { path: 'startups', component: StartupListComponent },
-      { path: 'startups/novo', component: StartupFormComponent },
-      { path: 'startups/:id/editar', component: StartupFormComponent },
-      { path: 'mentores', component: MentorListComponent },
-      { path: 'mentores/novo', component: MentorFormComponent },
-      { path: 'mentores/:id/editar', component: MentorFormComponent },
     ],
   },
   { path: '**', redirectTo: '' },

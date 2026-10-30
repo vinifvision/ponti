@@ -8,6 +8,8 @@ import { SessaoService } from '../../auth/sessao.service';
 import { SENHA_MINIMA, validarConta } from '../../auth/validacao-cadastro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
 import { StartupService } from '../../startups/startup.service';
+import { SETORES } from '../../shared/areas-atuacao';
+import { SeletorBuscaComponent } from '../../shared/seletor-busca/seletor-busca.component';
 import { SeletorTemasComponent } from '../../shared/seletor-temas/seletor-temas.component';
 import {
   NIVEL_MAXIMO,
@@ -26,7 +28,7 @@ import {
 @Component({
   selector: 'app-cadastro-startup',
   standalone: true,
-  imports: [AuthCabecalhoComponent, FormsModule, SeletorTemasComponent],
+  imports: [AuthCabecalhoComponent, FormsModule, SeletorBuscaComponent, SeletorTemasComponent],
   templateUrl: './cadastro-startup.component.html',
 })
 export class CadastroStartupComponent {
@@ -47,7 +49,15 @@ export class CadastroStartupComponent {
   // Depois do resultado do questionário vem a etapa de criar a conta.
   etapaConta = signal(false);
   nome = '';
+  readonly setores = SETORES;
   areaAtuacao = '';
+
+  get areaSelecionada(): string[] {
+    return this.areaAtuacao ? [this.areaAtuacao] : [];
+  }
+  set areaSelecionada(v: string[]) {
+    this.areaAtuacao = v[0] ?? '';
+  }
   sobre = '';
   email = '';
   senha = '';

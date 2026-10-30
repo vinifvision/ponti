@@ -6,6 +6,7 @@ import { ConviteService } from '../../convites/convite.service';
 import { BuscaService } from '../../layout/busca.service';
 import { Convite, Startup } from '../../models';
 import { FiltroSelectComponent, OpcaoFiltro } from '../../shared/filtro-select/filtro-select.component';
+import { OPCOES_MATURIDADE, OPCOES_ORDENACAO_STARTUPS, opcoesDeSegmento } from '../../shared/busca-opcoes';
 import { StartupCardComponent } from '../../startups/startup-card/startup-card.component';
 import { StartupService } from '../../startups/startup.service';
 
@@ -28,7 +29,7 @@ export class EncontrarStartupsComponent implements OnInit {
   private startupService = inject(StartupService);
   private conviteService = inject(ConviteService);
   private sessao = inject(SessaoService);
-  private busca = inject(BuscaService);
+  readonly busca = inject(BuscaService);
 
   startups = signal<Startup[]>([]);
   convites = signal<Convite[]>([]);
@@ -37,27 +38,15 @@ export class EncontrarStartupsComponent implements OnInit {
   erroConvite = signal('');
   enviandoId = signal<number | null>(null);
 
-  segmento = signal('');
-  maturidade = signal('');
-  ordenacao = signal('');
+  // Os filtros ficam no BuscaService: a navbar (Enter na busca) e esta tela mexem nos mesmos valores
+  segmento = this.busca.segmento;
+  maturidade = this.busca.maturidade;
+  ordenacao = this.busca.ordenacaoStartups;
 
-  readonly opcoesMaturidade: OpcaoFiltro[] = [
-    { valor: 'ideacao', rotulo: 'Ideação (níveis 1 a 3)' },
-    { valor: 'validacao', rotulo: 'Validação (níveis 4 a 6)' },
-    { valor: 'operacao', rotulo: 'Operação (níveis 7 a 9)' },
-  ];
+  readonly opcoesMaturidade: OpcaoFiltro[] = OPCOES_MATURIDADE;
+  readonly opcoesOrdenacao: OpcaoFiltro[] = OPCOES_ORDENACAO_STARTUPS;
 
-  readonly opcoesOrdenacao: OpcaoFiltro[] = [
-    { valor: 'compatibilidade', rotulo: 'Mais compatíveis' },
-    { valor: 'nome', rotulo: 'Nome (A-Z)' },
-    { valor: 'mais-madura', rotulo: 'Mais madura primeiro' },
-    { valor: 'menos-madura', rotulo: 'Menos madura primeiro' },
-  ];
-
-  opcoesSegmento = computed<OpcaoFiltro[]>(() => {
-    const segmentos = new Set(this.startups().map((s) => s.segmento?.trim()).filter((s): s is string => !!s));
-    return [...segmentos].sort().map((s) => ({ valor: s, rotulo: s }));
-  });
+  opcoesSegmento = computed<OpcaoFiltro[]>(() => opcoesDeSegmento(this.startups()));
 
   startupsFiltradas = computed(() => {
     const termo = this.busca.termo().trim().toLowerCase();
@@ -90,6 +79,8 @@ export class EncontrarStartupsComponent implements OnInit {
     this.startupService.recomendadas().subscribe({
       next: (dados) => {
         this.startups.set(dados);
+        // A navbar mostra o mesmo filtro de segmento no painel da busca
+        this.busca.opcoesSegmento.set(this.opcoesSegmento());
         this.carregando.set(false);
       },
       error: (e: HttpErrorResponse) => {

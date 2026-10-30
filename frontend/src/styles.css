@@ -20,63 +20,6 @@
   }
 }
 
-/*
-  Estilos antigos das telas de CRUD. Ficam dentro de um @layer para que as
-  classes utilitárias do Tailwind sempre tenham prioridade sobre eles.
-*/
-@layer components {
-  .card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 24px;
-    margin-top: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  }
-
-  .cabecalho {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  .cabecalho h1 { margin: 0; font-size: 1.4rem; }
-
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
-  th { font-size: 0.8rem; text-transform: uppercase; color: #6b7280; }
-
-  .btn {
-    display: inline-block;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    text-decoration: none;
-    background: #e5e7eb;
-    color: #1f2937;
-  }
-  .btn-primario { background: var(--color-ponti-roxo); color: #fff; }
-  .btn-perigo { background: #dc2626; color: #fff; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .acoes { display: flex; gap: 8px; }
-
-  form { display: grid; gap: 14px; }
-  form label { display: grid; gap: 4px; font-size: 0.9rem; font-weight: 600; }
-  form input, form textarea, form select {
-    font: inherit;
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-weight: 400;
-  }
-  input.ng-invalid.ng-touched { border-color: #dc2626; }
-  .erro { color: #dc2626; font-size: 0.85rem; font-weight: 400; }
-  .vazio { color: #6b7280; padding: 16px 0; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-}
-
-
 /* Campo de formulário padrão (telas Meu perfil e Configurações) */
 @layer components {
   .campo {

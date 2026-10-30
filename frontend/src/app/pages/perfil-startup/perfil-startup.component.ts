@@ -7,6 +7,8 @@ import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { ConviteService } from '../../convites/convite.service';
 import { Certificacao, Convite, Startup } from '../../models';
+import { CompatibilidadeComponent } from '../../shared/compatibilidade/compatibilidade.component';
+import { lerCompatibilidadeDaNavegacao } from '../../shared/compatibilidade/compatibilidade.utils';
 import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import { NIVEL_MAXIMO, nomeDoNivel } from '../../shared/maturidade.utils';
@@ -21,7 +23,7 @@ import { StartupService } from '../../startups/startup.service';
 @Component({
   selector: 'app-perfil-startup',
   standalone: true,
-  imports: [IconeComponent, RouterLink, TemasChipsComponent],
+  imports: [IconeComponent, RouterLink, TemasChipsComponent, CompatibilidadeComponent],
   templateUrl: './perfil-startup.component.html',
 })
 export class PerfilStartupComponent implements OnInit {
@@ -44,6 +46,7 @@ export class PerfilStartupComponent implements OnInit {
 
   readonly nivelMaximo = NIVEL_MAXIMO;
   readonly formatarPeriodo = formatarPeriodo;
+  readonly compat = lerCompatibilidadeDaNavegacao();
   ehMentor = computed(() => this.sessao.mentorId() !== null);
   // true quando a startup logada está olhando o próprio perfil (rota /perfil): aparece "Editar perfil"
   proprio = computed(() => {

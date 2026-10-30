@@ -1,16 +1,16 @@
 <article
-  class="flex flex-col gap-6 rounded-xl border bg-white p-6 transition-shadow hover:border-ponti-roxo hover:shadow-md hover:ring-2 hover:ring-ponti-roxo/20 sm:flex-row sm:p-8"
+  class="flex flex-col gap-6 rounded-xl border bg-white p-6 transition-shadow hover:border-ponti-roxo hover:shadow-md hover:ring-2 hover:ring-ponti-roxo/20 lg:flex-row sm:p-8"
   [class]="selecionado() ? 'border-ponti-roxo ring-2 ring-ponti-roxo/20' : 'border-gray-300'"
 >
   @if (mentor().fotoUrl) {
     <img
       [src]="mentor().fotoUrl"
       [alt]="'Foto de ' + mentor().nome"
-      class="size-40 shrink-0 rounded-md object-cover sm:size-44"
+      class="size-40 shrink-0 self-start rounded-md object-cover sm:size-44"
     />
   } @else {
     <div
-      class="flex size-40 shrink-0 items-center justify-center rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho sm:size-44"
+      class="flex size-40 shrink-0 items-center justify-center self-start rounded-md bg-ponti-lilas/40 text-4xl font-semibold text-ponti-marinho sm:size-44"
       aria-hidden="true"
     >
       {{ iniciais() }}
@@ -53,36 +53,37 @@
       </p>
     }
 
-    <p class="mt-3 flex w-fit flex-wrap items-baseline gap-x-2 rounded-md bg-ponti-lilas/25 px-3 py-1 text-ponti-marinho">
-      <span class="font-semibold">{{ valor() }}</span>
-      @if (duracao()) {
-        <span class="text-sm">por sessão de {{ duracao() }}</span>
-      }
-    </p>
-
     <app-temas-chips class="mt-3 block" [codigos]="mentor().temas" rotulo="Temas em que ajuda" />
 
-    <app-compatibilidade [pontos]="mentor().compatibilidade" [motivos]="mentor().motivos" />
+    <p class="mt-4 text-pretty text-left text-base leading-relaxed text-gray-800 xl:text-justify xl:text-lg">
+      {{ mentor().bio || 'Este mentor ainda não adicionou uma descrição.' }}
+    </p>
+  </div>
 
-    <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-      <p class="max-w-prose text-pretty text-lg leading-relaxed text-gray-800">
-        {{ mentor().bio || 'Este mentor ainda não adicionou uma descrição.' }}
-      </p>
+  <aside class="flex w-full shrink-0 flex-col gap-4 lg:w-52" aria-label="Valor e ações">
+    <div>
+      <p class="text-4xl font-bold text-ponti-roxo">{{ valor() }}</p>
+      @if (duracao()) {
+        <p class="text-lg text-gray-600">{{ duracao() }} de sessão</p>
+      }
+    </div>
 
-      <div class="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row lg:flex-col">
+    <app-compatibilidade [pontos]="mentor().compatibilidade" [motivos]="mentor().motivos" [compacto]="true" />
+
+    <div class="flex flex-col gap-2">
       <a
         [routerLink]="['/mentores', mentor().id, 'perfil']"
-        class="rounded-lg border border-ponti-lilas px-6 py-3 text-center text-lg font-medium text-gray-700 transition-colors hover:bg-ponti-lilas/20"
+        [state]="{ compatibilidade: mentor().compatibilidade, motivos: mentor().motivos }"
+        class="rounded-lg border border-ponti-lilas px-6 py-3 text-center text-lg font-medium text-gray-900 transition-colors hover:bg-ponti-lilas/20"
       >
         Ver perfil
       </a>
       <a
         [routerLink]="['/mentores', mentor().id, 'agendar']"
-        class="shrink-0 rounded-lg bg-ponti-roxo px-12 py-3 text-center text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+        class="rounded-lg bg-ponti-roxo px-6 py-3 text-center text-lg font-medium text-white transition-colors hover:bg-ponti-roxo/90"
       >
         Agendar
       </a>
-      </div>
     </div>
-  </div>
+  </aside>
 </article>

@@ -7,6 +7,8 @@ import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { MentorService } from '../../mentores/mentor.service';
 import { AvaliacaoPublica, Certificacao, Mentor } from '../../models';
+import { CompatibilidadeComponent } from '../../shared/compatibilidade/compatibilidade.component';
+import { lerCompatibilidadeDaNavegacao } from '../../shared/compatibilidade/compatibilidade.utils';
 import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
@@ -24,7 +26,7 @@ import { iniciais } from '../../shared/texto.utils';
 @Component({
   selector: 'app-perfil-mentor',
   standalone: true,
-  imports: [IconeComponent, RouterLink, EstrelasComponent, TemasChipsComponent],
+  imports: [IconeComponent, RouterLink, EstrelasComponent, TemasChipsComponent, CompatibilidadeComponent],
   templateUrl: './perfil-mentor.component.html',
 })
 export class PerfilMentorComponent implements OnInit {
@@ -43,6 +45,7 @@ export class PerfilMentorComponent implements OnInit {
   erro = signal('');
 
   readonly formatarPeriodo = formatarPeriodo;
+  readonly compat = lerCompatibilidadeDaNavegacao();
   ehStartup = computed(() => this.sessao.startupId() !== null);
   // true quando o mentor logado está olhando o próprio perfil (rota /perfil): aparece "Editar perfil"
   proprio = computed(() => {

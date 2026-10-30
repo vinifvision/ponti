@@ -10,7 +10,7 @@
     </p>
   }
 
-  <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+  <div class="mt-6 flex max-w-[67rem] flex-col gap-4 sm:flex-row sm:flex-wrap">
     <app-filtro-select
       rotulo="Área de atuação"
       placeholder="Todas"
@@ -46,18 +46,18 @@
         Nenhum mentor encontrado com esses filtros.
       </p>
     } @else {
-      <ul class="flex flex-col items-start gap-8">
+      <ul class="flex max-w-[67rem] flex-col gap-8">
         @for (mentor of mentoresFiltrados(); track mentor.id) {
-          <li class="flex gap-8" (mouseenter)="focar(mentor)" (mouseleave)="desfocarSe(mentor)">
+          <li class="relative" (mouseenter)="focar(mentor)" (mouseleave)="desfocarSe(mentor)">
             <app-mentor-card
-              class="block w-full max-w-3xl shrink-0"
+              class="block w-full"
               [mentor]="mentor"
               [selecionado]="mentor.id === selecionadoId()"
               (selecionar)="selecionar($event)"
             />
 
             @if (focoId() === mentor.id) {
-              <div class="hidden w-96 shrink-0 xl:block">
+              <div class="absolute left-full top-0 hidden h-full w-[26rem] pl-8 xl:block">
                 <app-mentor-destaque [mentor]="mentor" class="block h-full" />
               </div>
             }
