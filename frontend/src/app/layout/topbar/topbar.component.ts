@@ -113,12 +113,12 @@ export class TopbarComponent {
           { rotulo: 'Encontrar Startups', rota: '/encontrar-startups', icone: 'busca', relacionadas: ['/startups'] },
           { rotulo: 'Mentorias', rota: '/mentorias', icone: 'agenda' },
           { rotulo: 'Minha agenda', rota: '/agenda', icone: 'agenda' },
-          { rotulo: 'Configurações', rota: '/configuracoes', icone: 'config' },
+          { rotulo: 'Meu perfil', rota: '/perfil', icone: 'usuario' },
         ]
       : [
           { rotulo: 'Encontrar Mentores', rota: '/encontrar-mentores', icone: 'busca', relacionadas: ['/mentores'] },
           { rotulo: 'Mentorias', rota: '/mentorias', icone: 'agenda' },
-          { rotulo: 'Configurações', rota: '/configuracoes', icone: 'config' },
+          { rotulo: 'Meu perfil', rota: '/perfil', icone: 'usuario' },
         ],
   );
 
@@ -149,6 +149,11 @@ export class TopbarComponent {
   ativo(item: ItemNavegacao): boolean {
     const url = this.urlAtual();
     return [item.rota, ...(item.relacionadas ?? [])].some((rota) => url === rota || url.startsWith(rota + '/'));
+  }
+
+  // Configurações fica dentro do menu da conta; quando a tela está aberta, o item aparece em destaque lá
+  emConfiguracoes(): boolean {
+    return this.urlAtual() === '/configuracoes';
   }
 
   private caminhoDe(url: string): string {

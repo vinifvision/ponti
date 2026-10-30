@@ -23,10 +23,10 @@
           [class]="ativo(item) ? 'text-ponti-roxo' : 'text-ponti-marinho hover:text-ponti-roxo'"
         >
           <app-icone [nome]="item.icone" [tamanho]="24" />
-          <!-- O rótulo some (some a largura, não só a cor) quando a busca estica; abaixo de lg só os ícones aparecem -->
+          <!-- O rótulo some (some a largura, não só a cor) quando a busca estica; abaixo de xl só os ícones aparecem (com 4 links a busca ficaria espremida) -->
           <span
             class="overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out"
-            [class]="buscaAberta() ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-60 lg:opacity-100'"
+            [class]="buscaAberta() ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 xl:max-w-60 xl:opacity-100'"
           >
             <span class="block pl-2">{{ item.rotulo }}</span>
           </span>
@@ -146,12 +146,14 @@
         >
           <a
             role="menuitem"
-            routerLink="/perfil"
+            routerLink="/configuracoes"
             (click)="menuAberto.set(false)"
+            [attr.aria-current]="emConfiguracoes() ? 'page' : null"
             class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-ponti-lilas/20"
+            [class.text-ponti-roxo]="emConfiguracoes()"
           >
-            <app-icone nome="usuario" [tamanho]="18" />
-            Meu perfil
+            <app-icone nome="config" [tamanho]="18" />
+            Configurações
           </a>
           <button
             role="menuitem"
