@@ -2,7 +2,9 @@
   <app-topbar />
 
   <!-- Só esta área rola: a barra de rolagem fica abaixo da navbar e a navbar não sai do lugar -->
-  <div class="min-h-0 flex-1 overflow-y-auto">
+  <!-- "relative": elementos absolutos sem pai posicionado (ex.: textos sr-only) ficam dentro desta área e rolam com ela,
+       em vez de esticarem a página e criarem uma segunda barra de rolagem -->
+  <div class="relative min-h-0 flex-1 overflow-y-auto">
     <main class="mx-auto w-full max-w-[102rem] px-4 pb-12 sm:px-8 lg:px-16">
       <router-outlet />
     </main>

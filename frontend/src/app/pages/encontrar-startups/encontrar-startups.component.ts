@@ -8,6 +8,7 @@ import { Convite, Startup } from '../../models';
 import { FiltroSelectComponent, OpcaoFiltro } from '../../shared/filtro-select/filtro-select.component';
 import { OPCOES_MATURIDADE, OPCOES_ORDENACAO_STARTUPS, opcoesDeSegmento } from '../../shared/busca-opcoes';
 import { StartupCardComponent } from '../../startups/startup-card/startup-card.component';
+import { StartupDestaqueComponent } from '../../startups/startup-destaque/startup-destaque.component';
 import { StartupService } from '../../startups/startup.service';
 
 // Faixas de maturidade (níveis do questionário TRL) usadas no filtro
@@ -22,7 +23,7 @@ const FAIXAS: Record<string, [number, number]> = {
 @Component({
   selector: 'app-encontrar-startups',
   standalone: true,
-  imports: [FiltroSelectComponent, StartupCardComponent],
+  imports: [FiltroSelectComponent, StartupCardComponent, StartupDestaqueComponent],
   templateUrl: './encontrar-startups.component.html',
 })
 export class EncontrarStartupsComponent implements OnInit {
@@ -37,6 +38,8 @@ export class EncontrarStartupsComponent implements OnInit {
   erro = signal('');
   erroConvite = signal('');
   enviandoId = signal<number | null>(null);
+  // Startup sob o mouse: o painel de destaque aparece ao lado do card dela
+  focoId = signal<number | undefined>(undefined);
 
   // Os filtros ficam no BuscaService: a navbar (Enter na busca) e esta tela mexem nos mesmos valores
   segmento = this.busca.segmento;
@@ -128,5 +131,15 @@ export class EncontrarStartupsComponent implements OnInit {
         );
       },
     });
+  }
+
+  focar(startup: Startup) {
+    this.focoId.set(startup.id);
+  }
+
+  desfocarSe(startup: Startup) {
+    if (this.focoId() === startup.id) {
+      this.focoId.set(undefined);
+    }
   }
 }

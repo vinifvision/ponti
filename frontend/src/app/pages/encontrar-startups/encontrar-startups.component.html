@@ -22,14 +22,27 @@
         Nenhuma startup encontrada com esses filtros.
       </p>
     } @else {
-      <ul class="flex w-full max-w-7xl flex-col gap-8">
+      <!-- Mesma largura da lista de mentores: sobra espaço à direita para o painel de destaque -->
+      <ul class="flex max-w-[67rem] flex-col gap-8">
         @for (startup of startupsFiltradas(); track startup.id) {
-          <li>
+          <li class="relative" (mouseenter)="focar(startup)" (mouseleave)="desfocarSe(startup)">
             <app-startup-card
+              class="block w-full"
               [startup]="startup"
               [situacao]="enviandoId() === startup.id ? 'Enviando...' : situacao(startup)"
               (convidar)="convidar($event)"
             />
+
+            @if (focoId() === startup.id) {
+              <div class="absolute left-full top-0 hidden h-full w-[20rem] pl-8 min-[1360px]:w-[26rem] xl:block">
+                <app-startup-destaque
+                  class="block h-full"
+                  [startup]="startup"
+                  [situacao]="enviandoId() === startup.id ? 'Enviando...' : situacao(startup)"
+                  (convidar)="convidar($event)"
+                />
+              </div>
+            }
           </li>
         }
       </ul>
