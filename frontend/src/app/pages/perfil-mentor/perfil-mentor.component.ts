@@ -22,7 +22,8 @@ import {
 import { iniciais } from '../../shared/texto.utils';
 
 // Página pública do mentor (design "Mentores recomendados > perfil"):
-// cabeçalho, preço e duração, Agendar, Sobre mim com vídeo, Experiência e Redes de contato.
+// cabeçalho, preço e duração, Agendar, compatibilidade com a startup logada, Sobre mim com vídeo,
+// Experiência e Redes de contato.
 @Component({
   selector: 'app-perfil-mentor',
   standalone: true,
@@ -45,7 +46,8 @@ export class PerfilMentorComponent implements OnInit {
   erro = signal('');
 
   readonly formatarPeriodo = formatarPeriodo;
-  readonly compat = lerCompatibilidadeDaNavegacao();
+  // Vem do "Ver perfil" dos cards. Quando a startup chega por outro caminho (ex.: Mentorias), é buscado em ngOnInit.
+  compat = signal<CompatibilidadeNavegacao | null>(lerCompatibilidadeDaNavegacao());
   ehStartup = computed(() => this.sessao.startupId() !== null);
   // true quando o mentor logado está olhando o próprio perfil (rota /perfil): aparece "Editar perfil"
   proprio = computed(() => {
@@ -81,6 +83,19 @@ export class PerfilMentorComponent implements OnInit {
         this.carregando.set(false);
       },
     });
+
+    // Sem a compatibilidade vinda da lista, a startup logada pega do cálculo de recomendados
+    if (this.ehStartup() && !this.compat()) {
+      this.mentorService.recomendados().subscribe({
+        next: (lista) => {
+          const m = lista.find((r) => r.id === mentorId);
+          if (typeof m?.compatibilidade === 'number') {
+            this.compat.set({ pontos: m.compatibilidade, motivos: m.motivos ?? [] });
+          }
+        },
+        error: () => {}, // sem o cálculo, o card só não aparece
+      });
+    }
 
     this.mentorService.avaliacoes(mentorId).subscribe({
       next: (lista) => this.avaliacoes.set(lista),

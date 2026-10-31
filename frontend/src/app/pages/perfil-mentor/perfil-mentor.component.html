@@ -92,6 +92,11 @@
       </div>
     }
 
+    <!-- Compatibilidade com a startup (vem do card "Ver perfil" ou do cálculo de recomendados) -->
+    @if (ehStartup() && compat(); as c) {
+      <app-compatibilidade class="mt-8 block" [pontos]="c.pontos" [motivos]="c.motivos" />
+    }
+
     <!-- Sobre mim -->
     <h2 class="mt-10 text-2xl font-medium">Sobre mim</h2>
     @if (video(); as url) {

@@ -18,6 +18,7 @@ import { iniciais } from '../../shared/texto.utils';
         @if (idVideo(); as id) {
           <a
             [routerLink]="['/mentores', mentor().id, 'perfil']"
+            [state]="estado()"
             class="group absolute inset-0 block focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ponti-marinho"
             [attr.aria-label]="'Assistir ao vídeo de apresentação de ' + mentor().nome"
           >
@@ -52,6 +53,7 @@ import { iniciais } from '../../shared/texto.utils';
         </a>
         <a
           [routerLink]="['/mentores', mentor().id, 'perfil']"
+          [state]="estado()"
           class="rounded-lg border border-ponti-lilas py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-ponti-lilas/20"
         >
           Ver Perfil
@@ -63,6 +65,9 @@ import { iniciais } from '../../shared/texto.utils';
 export class MentorDestaqueComponent {
   mentor = input.required<Mentor>();
   iniciais = computed(() => iniciais(this.mentor().nome));
+
+  // O perfil mostra a compatibilidade que já veio na lista, sem pedir de novo
+  estado = computed(() => ({ compatibilidade: this.mentor().compatibilidade, motivos: this.mentor().motivos }));
 
   // Só o id de 11 caracteres do YouTube entra no endereço da imagem (link estranho não vira <img>)
   idVideo = computed(() => idVideoYoutube(this.mentor().videoUrl));
