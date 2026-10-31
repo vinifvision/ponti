@@ -8,7 +8,10 @@ import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { MentorService } from '../../mentores/mentor.service';
 import { AvaliacaoPublica, Certificacao, Mentor } from '../../models';
 import { CompatibilidadeComponent } from '../../shared/compatibilidade/compatibilidade.component';
-import { lerCompatibilidadeDaNavegacao } from '../../shared/compatibilidade/compatibilidade.utils';
+import {
+  CompatibilidadeNavegacao,
+  lerCompatibilidadeDaNavegacao,
+} from '../../shared/compatibilidade/compatibilidade.utils';
 import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
