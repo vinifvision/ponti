@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,21 +13,28 @@ import { StartupService } from '../../startups/startup.service';
 import { iniciais } from '../../shared/texto.utils';
 import { EditorCertificacoesComponent } from '../../shared/editor-certificacoes/editor-certificacoes.component';
 import { SeletorTemasComponent } from '../../shared/seletor-temas/seletor-temas.component';
+import { DialogoConfirmacaoComponent } from '../../shared/dialogo-confirmacao/dialogo-confirmacao.component';
+import { fotografar } from '../../shared/mudancas';
+import { ProtegeSaida } from '../../shared/sair-sem-salvar.guard';
 
 // "Editar perfil" (rota /perfil/editar): a startup ou o mentor edita os próprios dados.
 // Quem chega aqui vem do botão "Editar perfil" da página do próprio perfil (/perfil).
 // Salva com PATCH, mandando só os campos do formulário (o resto do perfil não é tocado).
+// Se houver alterações não salvas, pede confirmação antes de sair da tela (troca de página no app,
+// botão voltar) e o navegador avisa ao fechar ou recarregar a aba.
 @Component({
   selector: 'app-editar-perfil',
   standalone: true,
-  imports: [FormsModule, RouterLink, EditorCertificacoesComponent, SeletorTemasComponent],
+  imports: [FormsModule, RouterLink, EditorCertificacoesComponent, SeletorTemasComponent, DialogoConfirmacaoComponent],
   templateUrl: './editar-perfil.component.html',
+  host: { '(window:beforeunload)': 'avisarAoFecharAba($event)' },
 })
-export class EditarPerfilComponent implements OnInit {
+export class EditarPerfilComponent implements OnInit, ProtegeSaida {
   private sessao = inject(SessaoService);
   private mentorService = inject(MentorService);
   private startupService = inject(StartupService);
   private perfilLogado = inject(PerfilLogadoService);
+  private saida = viewChild.required(DialogoConfirmacaoComponent);
 
   readonly niveis = Object.entries(NOMES_NIVEIS).map(([n, nome]) => ({ nivel: Number(n), nome }));
   readonly duracoes = [30, 45, 60, 90, 120];
@@ -53,6 +60,9 @@ export class EditarPerfilComponent implements OnInit {
   // Antes disso, o campo salvaria "no vazio", então é melhor não mostrar.
   suportaLinkedin = signal(false);
 
+  // Como o formulário estava quando foi carregado ou salvo pela última vez (para detectar alterações)
+  private situacaoSalva = '';
+
   ngOnInit() {
     const mentorId = this.sessao.mentorId();
     const startupId = this.sessao.startupId();
@@ -62,6 +72,7 @@ export class EditarPerfilComponent implements OnInit {
           this.mentor = { ...m };
           this.temasMentor.set([...(m.temas ?? [])]);
           this.gratuita = Number(m.valorSessao ?? 0) === 0;
+          this.situacaoSalva = this.situacaoAtual();
           this.carregando.set(false);
         },
         error: (e: HttpErrorResponse) => this.falhou(e),
@@ -72,6 +83,7 @@ export class EditarPerfilComponent implements OnInit {
           this.startup = { ...s };
           this.suportaLinkedin.set('linkedinUrl' in s);
           this.necessidadesStartup.set([...(s.necessidades ?? [])]);
+          this.situacaoSalva = this.situacaoAtual();
           this.carregando.set(false);
         },
         error: (e: HttpErrorResponse) => this.falhou(e),
@@ -136,6 +148,7 @@ export class EditarPerfilComponent implements OnInit {
       next: (perfil) => {
         this.salvando.set(false);
         this.sucesso.set(true);
+        this.situacaoSalva = this.situacaoAtual();
         this.perfilLogado.atualizar(perfil.nome, perfil.fotoUrl ?? null);
         setTimeout(() => this.sucesso.set(false), 4000);
       },
@@ -144,6 +157,32 @@ export class EditarPerfilComponent implements OnInit {
         this.erro.set(mensagemDeErro(e, 'Não foi possível salvar. Confira os campos.'));
       },
     });
+  }
+
+  private situacaoAtual(): string {
+    return fotografar(
+      this.ehMentor()
+        ? { mentor: this.mentor, gratuita: this.gratuita, temas: this.temasMentor() }
+        : { startup: this.startup, necessidades: this.necessidadesStartup() },
+    );
+  }
+
+  temAlteracoes(): boolean {
+    return !this.carregando() && this.situacaoSalva !== '' && this.situacaoAtual() !== this.situacaoSalva;
+  }
+
+  // Chamado pelo guard antes de trocar de página (links da navbar, "Voltar", botão voltar do navegador)
+  podeSair(): boolean | Promise<boolean> {
+    // Sem login (sessão vencida) não dá mais para salvar, então não adianta segurar a pessoa aqui
+    if (!this.sessao.logado() || !this.temAlteracoes()) return true;
+    return this.saida().perguntar();
+  }
+
+  // Fechar ou recarregar a aba, ou digitar outro endereço: o navegador mostra o aviso padrão dele
+  avisarAoFecharAba(evento: BeforeUnloadEvent) {
+    if (!this.temAlteracoes()) return;
+    evento.preventDefault();
+    evento.returnValue = '';
   }
 
   private falhou(e: HttpErrorResponse) {

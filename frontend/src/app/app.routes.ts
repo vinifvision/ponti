@@ -17,6 +17,7 @@ import { EncontrarMentoresComponent } from './pages/encontrar-mentores/encontrar
 import { EmBreveComponent } from './pages/em-breve/em-breve.component';
 import { MeuPerfilComponent } from './pages/meu-perfil/meu-perfil.component';
 import { EditarPerfilComponent } from './pages/editar-perfil/editar-perfil.component';
+import { sairSemSalvarGuard } from './shared/sair-sem-salvar.guard';
 import { ConfiguracoesComponent } from './pages/configuracoes/configuracoes.component';
 
 export const routes: Routes = [
@@ -60,7 +61,7 @@ export const routes: Routes = [
       { path: 'startups/:id/perfil', component: PerfilStartupComponent, title: 'Perfil da startup | Ponti' },
       // /perfil mostra o próprio perfil; o botão "Editar perfil" leva para /perfil/editar
       { path: 'perfil', component: MeuPerfilComponent, title: 'Meu perfil | Ponti' },
-      { path: 'perfil/editar', component: EditarPerfilComponent, title: 'Editar perfil | Ponti' },
+      { path: 'perfil/editar', component: EditarPerfilComponent, canDeactivate: [sairSemSalvarGuard], title: 'Editar perfil | Ponti' },
       { path: 'configuracoes', component: ConfiguracoesComponent, title: 'Configurações | Ponti' },
     ],
   },

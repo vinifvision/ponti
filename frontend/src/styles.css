@@ -26,3 +26,35 @@
     @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 focus:border-ponti-roxo focus:outline-none focus:ring-2 focus:ring-ponti-roxo/30;
   }
 }
+
+/* Barra de rolagem na identidade da Ponti: fina, arredondada e roxa (marinho ao passar o mouse).
+   Chrome, Edge e Safari usam os pseudo-elementos abaixo; o Firefox usa as propriedades padrão. */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background-color: #f6f6f6;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-ponti-roxo);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 5px;
+    transition: background-color 0.10s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ponti-marinho);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-ponti-roxo) transparent;
+    }
+  }
+}

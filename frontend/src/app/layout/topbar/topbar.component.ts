@@ -112,7 +112,7 @@ export class TopbarComponent {
       ? [
           { rotulo: 'Encontrar Startups', rota: '/encontrar-startups', icone: 'busca', relacionadas: ['/startups'] },
           { rotulo: 'Mentorias', rota: '/mentorias', icone: 'agenda' },
-          { rotulo: 'Minha agenda', rota: '/agenda', icone: 'agenda' },
+          { rotulo: 'Minha agenda', rota: '/agenda', icone: 'agenda-relogio' },
           { rotulo: 'Meu perfil', rota: '/perfil', icone: 'usuario' },
         ]
       : [
@@ -258,9 +258,13 @@ export class TopbarComponent {
   sair() {
     this.menuAberto.set(false);
     this.buscaAberta.set(false);
-    this.busca.limpar();
-    this.sessao.sair();
-    this.router.navigateByUrl('/bem-vindo');
+    // Primeiro navega: se a tela atual pedir confirmação (ex.: edição de perfil com alterações não salvas)
+    // e a pessoa escolher continuar, a sessão não pode ter sido encerrada.
+    this.router.navigateByUrl('/bem-vindo').then((saiu) => {
+      if (!saiu) return;
+      this.busca.limpar();
+      this.sessao.sair();
+    });
   }
 
   @HostListener('document:click', ['$event'])

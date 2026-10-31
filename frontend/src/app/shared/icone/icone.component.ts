@@ -3,6 +3,7 @@ import { Component, input } from '@angular/core';
 export type NomeIcone =
   | 'busca'
   | 'agenda'
+  | 'agenda-relogio'
   | 'usuario'
   | 'config'
   | 'recolher'
@@ -42,6 +43,12 @@ export type NomeIcone =
         @case ('agenda') {
           <svg:rect width="18" height="18" x="3" y="4" rx="2" />
           <svg:path d="M8 2v4M16 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+        }
+        @case ('agenda-relogio') {
+          <svg:path d="M16 14v2.2l1.6 1" />
+          <svg:path d="M16 2v4M8 2v4M3 10h5" />
+          <svg:path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" />
+          <svg:circle cx="16" cy="16" r="6" />
         }
         @case ('usuario') {
           <svg:circle cx="12" cy="8" r="5" />

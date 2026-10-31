@@ -1,7 +1,10 @@
-<div class="flex min-h-screen flex-col bg-white font-sans text-gray-900">
+<div class="flex h-dvh flex-col bg-white font-sans text-gray-900">
   <app-topbar />
 
-  <main class="mx-auto w-full max-w-[102rem] flex-1 px-4 pb-12 sm:px-8 lg:px-16">
-    <router-outlet />
-  </main>
+  <!-- Só esta área rola: a barra de rolagem fica abaixo da navbar e a navbar não sai do lugar -->
+  <div class="min-h-0 flex-1 overflow-y-auto">
+    <main class="mx-auto w-full max-w-[102rem] px-4 pb-12 sm:px-8 lg:px-16">
+      <router-outlet />
+    </main>
+  </div>
 </div>

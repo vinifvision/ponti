@@ -6,15 +6,15 @@ import { Component, computed, input } from '@angular/core';
   selector: 'app-compatibilidade',
   standalone: true,
   template: `
-    @if (pontos() !== null && pontos() !== undefined) {
-      @if (compacto()) {
-        <p
-          class="w-full rounded-md bg-ponti-lilas/25 px-4 py-3 text-center text-lg font-semibold text-ponti-marinho"
-          [attr.title]="motivos()?.join(' • ') || null"
-        >
-          {{ pontos() }}% compatível
-        </p>
-      } @else {
+  @if (pontos() !== null && pontos() !== undefined) {
+    @if (compacto()) {
+      <p
+        class="w-fit rounded-md bg-ponti-lilas/25 px-3 py-2 text-left text-lg font-semibold text-ponti-marinho"
+        [attr.title]="motivos()?.join(' • ') || null"
+      >
+        {{ pontos() }}% compatível
+      </p>
+    } @else {
       <div class="mt-4 w-full max-w-2xl rounded-xl border-2 p-6" [class]="caixa()">
         <p class="flex items-baseline justify-between gap-3 text-xl font-semibold">
           <span>{{ pontos() }}% compatível</span>
@@ -31,7 +31,7 @@ import { Component, computed, input } from '@angular/core';
           </ul>
         }
       </div>
-      }
+    }
     }
   `,
 })
