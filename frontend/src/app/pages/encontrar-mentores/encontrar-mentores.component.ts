@@ -7,9 +7,15 @@ import { MentorCardComponent } from '../../mentores/mentor-card/mentor-card.comp
 import { MentorDestaqueComponent } from '../../mentores/mentor-destaque/mentor-destaque.component';
 import { MentorService } from '../../mentores/mentor.service';
 import { atendeFaixaExperiencia } from '../../shared/experiencia.utils';
-import { FAIXAS_PRECO, atendeFaixaPreco } from '../../shared/preco.utils';
+import { atendeFaixaPreco } from '../../shared/preco.utils';
 import { Mentor } from '../../models';
 import { FiltroSelectComponent, OpcaoFiltro } from '../../shared/filtro-select/filtro-select.component';
+import {
+  OPCOES_EXPERIENCIA,
+  OPCOES_ORDENACAO_MENTORES,
+  OPCOES_PRECO,
+  opcoesDeArea,
+} from '../../shared/busca-opcoes';
 import { separarLista } from '../../shared/texto.utils';
 
 @Component({
@@ -20,7 +26,7 @@ import { separarLista } from '../../shared/texto.utils';
 })
 export class EncontrarMentoresComponent implements OnInit {
   private mentorService = inject(MentorService);
-  private busca = inject(BuscaService);
+  readonly busca = inject(BuscaService);
   private sessao = inject(SessaoService);
   private startupService = inject(StartupService);
 
@@ -30,32 +36,19 @@ export class EncontrarMentoresComponent implements OnInit {
   // true quando a startup ainda não escolheu os temas (sem eles não há como calcular o match)
   semTemas = signal(false);
 
-  area = signal('');
-  experiencia = signal('');
-  faixaPreco = signal('');
-  ordenacao = signal('');
+  // Os filtros ficam no BuscaService: a navbar (Enter na busca) e esta tela mexem nos mesmos valores
+  area = this.busca.area;
+  experiencia = this.busca.experiencia;
+  faixaPreco = this.busca.faixaPreco;
+  ordenacao = this.busca.ordenacaoMentores;
   selecionadoId = signal<number | undefined>(undefined);
   focoId = signal<number | undefined>(undefined);
 
-  readonly opcoesExperiencia: OpcaoFiltro[] = [
-    { valor: 'iniciante', rotulo: 'Até 2 anos' },
-    { valor: 'intermediario', rotulo: '3 a 5 anos' },
-    { valor: 'senior', rotulo: 'Mais de 5 anos' },
-  ];
+  readonly opcoesExperiencia: OpcaoFiltro[] = OPCOES_EXPERIENCIA;
+  readonly opcoesPreco: OpcaoFiltro[] = OPCOES_PRECO;
+  readonly opcoesOrdenacao: OpcaoFiltro[] = OPCOES_ORDENACAO_MENTORES;
 
-  readonly opcoesPreco: OpcaoFiltro[] = FAIXAS_PRECO;
-
-  readonly opcoesOrdenacao: OpcaoFiltro[] = [
-    { valor: 'compatibilidade', rotulo: 'Mais compatíveis' },
-    { valor: 'nome', rotulo: 'Nome (A-Z)' },
-    { valor: 'menor-valor', rotulo: 'Menor valor por sessão' },
-    { valor: 'maior-valor', rotulo: 'Maior valor por sessão' },
-  ];
-
-  opcoesArea = computed<OpcaoFiltro[]>(() => {
-    const areas = new Set(this.mentores().flatMap((m) => separarLista(m.ecossistemas)));
-    return [...areas].sort().map((area) => ({ valor: area, rotulo: area }));
-  });
+  opcoesArea = computed<OpcaoFiltro[]>(() => opcoesDeArea(this.mentores()));
 
   mentoresFiltrados = computed(() => {
     const termo = this.busca.termo().trim().toLowerCase();
@@ -93,6 +86,8 @@ export class EncontrarMentoresComponent implements OnInit {
     this.mentorService.recomendados().subscribe({
       next: (dados) => {
         this.mentores.set(dados);
+        // A navbar mostra o mesmo filtro de área no painel da busca
+        this.busca.opcoesArea.set(this.opcoesArea());
         this.carregando.set(false);
       },
       error: () => {

@@ -7,6 +7,11 @@ import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { MentorService } from '../../mentores/mentor.service';
 import { AvaliacaoPublica, Certificacao, Mentor } from '../../models';
+import { CompatibilidadeComponent } from '../../shared/compatibilidade/compatibilidade.component';
+import {
+  CompatibilidadeNavegacao,
+  lerCompatibilidadeDaNavegacao,
+} from '../../shared/compatibilidade/compatibilidade.utils';
 import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { TemasChipsComponent } from '../../shared/temas-chips/temas-chips.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
@@ -20,11 +25,12 @@ import {
 import { iniciais } from '../../shared/texto.utils';
 
 // Página pública do mentor (design "Mentores recomendados > perfil"):
-// cabeçalho, preço e duração, Agendar, Sobre mim com vídeo, Experiência e Redes de contato.
+// cabeçalho, preço e duração, Agendar, compatibilidade com a startup logada, Sobre mim com vídeo,
+// Experiência e Redes de contato.
 @Component({
   selector: 'app-perfil-mentor',
   standalone: true,
-  imports: [IconeComponent, RouterLink, EstrelasComponent, TemasChipsComponent],
+  imports: [IconeComponent, RouterLink, EstrelasComponent, TemasChipsComponent, CompatibilidadeComponent],
   templateUrl: './perfil-mentor.component.html',
 })
 export class PerfilMentorComponent implements OnInit {
@@ -43,6 +49,8 @@ export class PerfilMentorComponent implements OnInit {
   erro = signal('');
 
   readonly formatarPeriodo = formatarPeriodo;
+  // Vem do "Ver perfil" dos cards. Quando a startup chega por outro caminho (ex.: Mentorias), é buscado em ngOnInit.
+  compat = signal<CompatibilidadeNavegacao | null>(lerCompatibilidadeDaNavegacao());
   ehStartup = computed(() => this.sessao.startupId() !== null);
   // true quando o mentor logado está olhando o próprio perfil (rota /perfil): aparece "Editar perfil"
   proprio = computed(() => {
@@ -78,6 +86,19 @@ export class PerfilMentorComponent implements OnInit {
         this.carregando.set(false);
       },
     });
+
+    // Sem a compatibilidade vinda da lista, a startup logada pega do cálculo de recomendados
+    if (this.ehStartup() && !this.compat()) {
+      this.mentorService.recomendados().subscribe({
+        next: (lista) => {
+          const m = lista.find((r) => r.id === mentorId);
+          if (typeof m?.compatibilidade === 'number') {
+            this.compat.set({ pontos: m.compatibilidade, motivos: m.motivos ?? [] });
+          }
+        },
+        error: () => {}, // sem o cálculo, o card só não aparece
+      });
+    }
 
     this.mentorService.avaliacoes(mentorId).subscribe({
       next: (lista) => this.avaliacoes.set(lista),

@@ -7,6 +7,8 @@ import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { SENHA_MAXIMA, SENHA_MINIMA } from '../../auth/validacao-cadastro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
 import { Certificacao } from '../../models';
+import { PROFISSOES, SETORES } from '../../shared/areas-atuacao';
+import { SeletorBuscaComponent } from '../../shared/seletor-busca/seletor-busca.component';
 import { SeletorTemasComponent } from '../../shared/seletor-temas/seletor-temas.component';
 import { formatarPeriodo, formatarValorSessao, idVideoYoutube, linkSeguro } from '../../shared/mentoria.utils';
 
@@ -18,7 +20,7 @@ const ANO_ATUAL = new Date().getFullYear();
 @Component({
   selector: 'app-cadastro-mentor',
   standalone: true,
-  imports: [AuthCabecalhoComponent, FormsModule, SeletorTemasComponent],
+  imports: [AuthCabecalhoComponent, FormsModule, SeletorBuscaComponent, SeletorTemasComponent],
   templateUrl: './cadastro-mentor.component.html',
 })
 export class CadastroMentorComponent {
@@ -39,8 +41,10 @@ export class CadastroMentorComponent {
   senha = '';
 
   // Etapa 2: perfil profissional
-  areaAtuacao = '';
-  ecossistemas = '';
+  readonly profissoes = PROFISSOES;
+  readonly setores = SETORES;
+  areaAtuacao = signal<string[]>([]);
+  ecossistemas = signal<string[]>([]);
   temas = signal<string[]>([]);
   anosExperiencia: number | null = null;
   sobre = '';
@@ -126,8 +130,8 @@ export class CadastroMentorComponent {
         nome: this.nome.trim(),
         email: this.email.trim(),
         senha: this.senha,
-        areaAtuacao: this.areaAtuacao.trim(),
-        ecossistemas: this.opcional(this.ecossistemas),
+        areaAtuacao: this.areaAtuacao().join(', '),
+        ecossistemas: this.opcional(this.ecossistemas().join(', ')),
         temas: this.temas(),
         anosExperiencia: this.anosExperiencia!,
         sobre: this.sobre.trim(),
@@ -159,7 +163,7 @@ export class CadastroMentorComponent {
         return '';
       case 1: {
         const anos = this.anosExperiencia;
-        if (!this.areaAtuacao.trim()) return 'Informe a sua área de atuação.';
+        if (this.areaAtuacao().length === 0) return 'Informe a sua área de atuação.';
         if (this.temas().length === 0) return 'Escolha pelo menos um tema em que você ajuda as startups.';
         if (anos === null || !Number.isInteger(anos) || anos < 0 || anos > 70)
           return 'Informe o tempo de experiência em anos (de 0 a 70).';

@@ -3,9 +3,11 @@ import { Component, input } from '@angular/core';
 export type NomeIcone =
   | 'busca'
   | 'agenda'
+  | 'agenda-relogio'
   | 'usuario'
   | 'config'
   | 'recolher'
+  | 'sair'
   | 'sino'
   | 'seta-baixo'
   | 'seta-esquerda'
@@ -14,7 +16,8 @@ export type NomeIcone =
   | 'alvo'
   | 'brilho'
   | 'grafico'
-  | 'linkedin';
+  | 'linkedin'
+  | 'patinha';
 
 @Component({
   selector: 'app-icone',
@@ -41,6 +44,12 @@ export type NomeIcone =
           <svg:rect width="18" height="18" x="3" y="4" rx="2" />
           <svg:path d="M8 2v4M16 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
         }
+        @case ('agenda-relogio') {
+          <svg:path d="M16 14v2.2l1.6 1" />
+          <svg:path d="M16 2v4M8 2v4M3 10h5" />
+          <svg:path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" />
+          <svg:circle cx="16" cy="16" r="6" />
+        }
         @case ('usuario') {
           <svg:circle cx="12" cy="8" r="5" />
           <svg:path d="M20 21a8 8 0 0 0-16 0" />
@@ -51,6 +60,10 @@ export type NomeIcone =
           />
           <svg:circle cx="12" cy="12" r="3" />
         }
+        @case ('sair') {
+          <svg:path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <svg:path d="m16 17 5-5-5-5M21 12H9" />
+        }
         @case ('recolher') {
           <svg:path d="M3 12h18M9 6h12M9 18h12M6 9l-3 3 3 3" />
         }
@@ -58,6 +71,16 @@ export type NomeIcone =
           <svg:path d="M10.268 21a2 2 0 0 0 3.464 0" />
           <svg:path
             d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+          />
+        }
+        @case ('patinha') {
+          <svg:circle cx="11" cy="4" r="2" fill="currentColor" />
+          <svg:circle cx="18" cy="8" r="2" fill="currentColor" />
+          <svg:circle cx="20" cy="16" r="2" fill="currentColor" />
+          <svg:circle cx="4.5" cy="8" r="2" fill="currentColor" />
+          <svg:path
+            d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+            fill="currentColor"
           />
         }
         @case ('seta-baixo') {

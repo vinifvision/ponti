@@ -1,10 +1,11 @@
-<div class="flex min-h-screen bg-white font-sans text-gray-900">
-  <app-sidebar [recolhida]="sidebarRecolhida()" (alternar)="alternarSidebar()" />
+<div class="flex h-dvh flex-col bg-white font-sans text-gray-900">
+  <app-topbar />
 
-  <div class="flex min-w-0 flex-1 flex-col">
-    <app-topbar />
-
-    <main class="flex-1 px-4 pb-12 sm:px-8 lg:px-16">
+  <!-- Só esta área rola: a barra de rolagem fica abaixo da navbar e a navbar não sai do lugar -->
+  <!-- "relative": elementos absolutos sem pai posicionado (ex.: textos sr-only) ficam dentro desta área e rolam com ela,
+       em vez de esticarem a página e criarem uma segunda barra de rolagem -->
+  <div class="relative min-h-0 flex-1 overflow-y-auto">
+    <main class="mx-auto w-full max-w-[102rem] px-4 pb-12 sm:px-8 lg:px-16">
       <router-outlet />
     </main>
   </div>

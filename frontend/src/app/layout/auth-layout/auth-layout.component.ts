@@ -10,7 +10,7 @@ import { RouterOutlet } from '@angular/router';
   template: `
     <div class="flex min-h-screen bg-white font-sans text-gray-900">
       <aside
-        class="hidden w-1/2 shrink-0 flex-col items-center justify-center rounded-r-[3rem] bg-auth-lilas text-auth-marinho lg:flex"
+        class="sticky top-0 hidden h-screen w-1/2 shrink-0 flex-col items-center justify-center self-start rounded-r-[3rem] bg-auth-lilas text-auth-marinho lg:flex"
         aria-hidden="true"
       >
         <img src="logo.svg" alt="" class="w-3/5" />

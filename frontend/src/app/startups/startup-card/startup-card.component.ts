@@ -22,6 +22,7 @@ export class StartupCardComponent {
   convidar = output<Startup>();
 
   readonly nivelMaximo = NIVEL_MAXIMO;
+  ehPet = computed(() => /pet/i.test(this.startup().segmento ?? ''));
   iniciais = computed(() => iniciais(this.startup().nome));
   nivel = computed(() => this.startup().estagioMaturidade ?? null);
   nomeNivel = computed(() => nomeDoNivel(this.nivel()));

@@ -122,8 +122,12 @@
         <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
           <legend class="px-1 text-lg font-semibold">Sobre a startup</legend>
           <label class="grid gap-1">
-            <span class="text-sm font-medium text-gray-700">Descrição</span>
-            <textarea name="descricao" rows="4" maxlength="2000" [(ngModel)]="startup.descricao" class="campo" placeholder="Que problema vocês resolvem e para quem"></textarea>
+            <span class="text-sm font-medium text-gray-700">Descrição completa</span>
+            <textarea name="descricao" rows="8" maxlength="2000" [(ngModel)]="startup.descricao" class="campo" placeholder="Que problema vocês resolvem, para quem, como funciona e em que fase estão"></textarea>
+            <span class="text-xs text-gray-500">
+              Aparece em "Sobre a startup" no seu perfil. Separe parágrafos com uma linha em branco, comece a linha com "- " para fazer
+              uma lista e com "## " para criar um título.
+            </span>
           </label>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="grid gap-1">
@@ -194,4 +198,6 @@
       </div>
     </form>
   }
+
+  <app-dialogo-confirmacao />
 </section>
