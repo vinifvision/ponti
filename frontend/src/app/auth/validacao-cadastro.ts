@@ -27,3 +27,12 @@ export function validarConta(c: CamposConta): string {
   if (c.senha.length > SENHA_MAXIMA) return `A senha pode ter no máximo ${SENHA_MAXIMA} caracteres.`;
   return '';
 }
+
+// WhatsApp (Brasil): DDD + número, com ou sem o 55 na frente. Pontuação e espaços não contam,
+// então "(81) 99999-8888" e "+55 81 99999-8888" valem. Igual ao Whatsapp.normalizar do backend.
+export function validarWhatsapp(texto: string, obrigatorio: boolean): string {
+  if (!texto.trim()) return obrigatorio ? 'Informe o seu WhatsApp com DDD.' : '';
+  const digitos = texto.replace(/\D/g, '');
+  const completo = digitos.length === 10 || digitos.length === 11 ? '55' + digitos : digitos;
+  return /^55\d{10,11}$/.test(completo) ? '' : 'Informe um WhatsApp válido, com DDD. Ex.: (81) 99999-8888.';
+}

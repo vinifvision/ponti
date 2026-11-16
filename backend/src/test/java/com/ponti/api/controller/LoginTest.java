@@ -87,6 +87,7 @@ class LoginTest {
                                     "sobre", "Mentora de produto.",
                                     "email", "maria@email.com",
                                     "senha", "senhaSegura123",
+                                    "whatsapp", "81999998888",
                                     "valorSessao", 150,
                                     "duracaoSessaoMinutos", 60))))
                     .andExpect(status().isCreated());

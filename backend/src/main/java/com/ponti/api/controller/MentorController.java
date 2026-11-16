@@ -118,8 +118,11 @@ public class MentorController {
     @PutMapping("/{id}")
     public Mentor atualizar(@PathVariable Long id, @Valid @RequestBody Mentor body) {
         acesso.exigirMentor(id);
-        garantirQueExiste(id);
+        Mentor atual = repository.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)"));
         body.setId(id);
+        // O WhatsApp não vem no JSON (@JsonIgnore); sem isto o PUT apagaria o número salvo
+        body.setWhatsapp(atual.getWhatsapp());
         return repository.save(body);
     }
 

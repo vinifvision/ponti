@@ -101,8 +101,10 @@ public class StartupController {
     @PutMapping("/{id}")
     public Startup atualizar(@PathVariable Long id, @Valid @RequestBody Startup body) {
         acesso.exigirStartup(id);
-        garantirQueExiste(id);
+        Startup atual = buscar(id);
         body.setId(id);
+        // O WhatsApp não vem no JSON (@JsonIgnore); sem isto o PUT apagaria o número salvo
+        body.setWhatsapp(atual.getWhatsapp());
         return repository.save(body);
     }
 

@@ -13,6 +13,8 @@ export interface CadastroStartup {
   sobre: string;
   email: string;
   senha: string;
+  // Opcional para a startup
+  whatsapp?: string;
   // Temas em que a startup precisa de ajuda (1 a 3)
   necessidades?: string[];
 }
@@ -22,6 +24,8 @@ export interface CadastroMentor {
   nome: string;
   email: string;
   senha: string;
+  // Obrigatório para o mentor
+  whatsapp: string;
   // Etapa 2: perfil profissional
   areaAtuacao: string;
   ecossistemas?: string;

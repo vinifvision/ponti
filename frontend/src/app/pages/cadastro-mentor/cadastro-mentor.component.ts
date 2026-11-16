@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
-import { SENHA_MAXIMA, SENHA_MINIMA } from '../../auth/validacao-cadastro';
+import { SENHA_MAXIMA, SENHA_MINIMA, validarWhatsapp } from '../../auth/validacao-cadastro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
 import { Certificacao } from '../../models';
 import { PROFISSOES, SETORES } from '../../shared/areas-atuacao';
@@ -38,6 +38,7 @@ export class CadastroMentorComponent {
   // Etapa 1: conta
   nome = '';
   email = '';
+  whatsapp = '';
   senha = '';
 
   // Etapa 2: perfil profissional
@@ -129,6 +130,7 @@ export class CadastroMentorComponent {
       .cadastrarMentor({
         nome: this.nome.trim(),
         email: this.email.trim(),
+        whatsapp: this.whatsapp.trim(),
         senha: this.senha,
         areaAtuacao: this.areaAtuacao().join(', '),
         ecossistemas: this.opcional(this.ecossistemas().join(', ')),
@@ -154,13 +156,16 @@ export class CadastroMentorComponent {
   // Mesmas regras do backend (CadastroMentor), conferidas antes para mostrar a mensagem certa.
   private validarEtapa(etapa: number): string {
     switch (etapa) {
-      case 0:
+      case 0: {
         if (!this.nome.trim()) return 'Informe o seu nome.';
         if (this.nome.length > 255) return 'O nome pode ter no máximo 255 caracteres.';
         if (!EMAIL_VALIDO.test(this.email.trim())) return 'Informe um e-mail válido.';
+        const erroWhatsapp = validarWhatsapp(this.whatsapp, true);
+        if (erroWhatsapp) return erroWhatsapp;
         if (this.senha.length < SENHA_MINIMA) return `A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`;
         if (this.senha.length > SENHA_MAXIMA) return `A senha pode ter no máximo ${SENHA_MAXIMA} caracteres.`;
         return '';
+      }
       case 1: {
         const anos = this.anosExperiencia;
         if (this.areaAtuacao().length === 0) return 'Informe a sua área de atuação.';

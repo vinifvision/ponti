@@ -1,5 +1,6 @@
 package com.ponti.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -57,6 +58,12 @@ public class Mentor {
     @Column(length = 500)
     private String linkedinUrl;
 
+    // Contato privado: @JsonIgnore garante que nunca sai nas respostas da API
+    // (só é mostrado à startup depois do agendamento, se o mentor autorizar).
+    @JsonIgnore
+    @Column(length = 13)
+    private String whatsapp;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
@@ -81,4 +88,6 @@ public class Mentor {
     public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
     public String getLinkedinUrl() { return linkedinUrl; }
     public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
+    public String getWhatsapp() { return whatsapp; }
+    public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
 }

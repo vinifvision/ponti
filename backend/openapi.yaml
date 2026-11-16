@@ -1297,9 +1297,13 @@ components:
         videoPitchUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
         fotoUrl: { type: string, maxLength: 500 }
         site: { type: string, maxLength: 500 }
+        whatsapp:
+          type: string
+          description: Opcional. WhatsApp (Brasil), com DDD; mesmo formato do mentor. Privado, nunca volta nas respostas.
+          example: "(81) 3333-4444"
     CadastroMentor:
       type: object
-      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, valorSessao, duracaoSessaoMinutos]
+      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, whatsapp, valorSessao, duracaoSessaoMinutos]
       properties:
         temas:
           type: array
@@ -1340,6 +1344,10 @@ components:
         fotoUrl: { type: string, maxLength: 500 }
         videoUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
         linkedinUrl: { type: string, maxLength: 500 }
+        whatsapp:
+          type: string
+          description: WhatsApp (Brasil), com DDD. Aceita "(81) 99999-8888"; é gravado como "5581999998888". Privado, nunca volta nas respostas.
+          example: "(81) 99999-8888"
         certificacoes:
           type: array
           maxItems: 20

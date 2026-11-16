@@ -2,6 +2,7 @@ package com.ponti.api.dto;
 
 import com.ponti.api.model.Tema;
 import com.ponti.api.model.Usuario;
+import com.ponti.api.model.Whatsapp;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,6 +25,9 @@ public record CadastroMentor(
         @NotBlank @Size(max = 255) String nome,
         @NotBlank @Email String email,
         @NotBlank @Size(min = 8, max = 72) String senha,
+        // Obrigatório para o mentor. Aceita "(81) 99999-8888"; é gravado como "5581999998888".
+        @NotBlank @Pattern(regexp = Whatsapp.FORMATO, message = "WhatsApp inválido: informe DDD + número")
+        String whatsapp,
 
         // Etapa 2: perfil profissional
         @NotBlank @Size(max = 255) String areaAtuacao,
@@ -43,5 +48,6 @@ public record CadastroMentor(
     // Normaliza antes da validação, para " Ana@Email.com " ser aceito e não duplicar "ana@email.com"
     public CadastroMentor {
         email = Usuario.normalizarEmail(email);
+        whatsapp = Whatsapp.normalizar(whatsapp);
     }
 }
