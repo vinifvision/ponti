@@ -31,7 +31,8 @@ import { StartupService } from '../../startups/startup.service';
       <div class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <h2 class="text-lg font-semibold">Privacidade (LGPD)</h2>
         <p class="mt-2 text-gray-600">
-          Seus dados de contato não aparecem para outros usuários. As sessões acontecem pelo link do Google Meet
+          Seus dados de contato não aparecem no seu perfil. O WhatsApp só é mostrado à outra parte de uma mentoria
+          confirmada, e apenas se você autorizar em "Editar perfil". As sessões acontecem pelo link do Google Meet
           enviado pelo mentor, e do cartão guardamos só a bandeira e os 4 últimos dígitos.
         </p>
       </div>

@@ -1,6 +1,7 @@
 package com.ponti.api.controller;
 
 import com.ponti.api.dto.AtualizacaoStartup;
+import com.ponti.api.dto.ContatoPrivado;
 import com.ponti.api.dto.NovaCertificacao;
 import com.ponti.api.dto.StartupRecomendada;
 import com.ponti.api.model.Certificacao;
@@ -54,6 +55,14 @@ public class StartupController {
         return certificacaoRepository.save(certificacao);
     }
 
+    // Contato privado da própria startup (tela "Editar perfil"). Ninguém mais acessa.
+    @GetMapping("/{id}/contato")
+    public ContatoPrivado contato(@PathVariable Long id) {
+        acesso.exigirStartup(id);
+        Startup s = buscar(id);
+        return new ContatoPrivado(s.getWhatsapp(), s.isCompartilharWhatsapp());
+    }
+
     // Só a própria startup remove certificações do perfil dela
     @DeleteMapping("/{id}/certificacoes/{certificacaoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -101,8 +110,11 @@ public class StartupController {
     @PutMapping("/{id}")
     public Startup atualizar(@PathVariable Long id, @Valid @RequestBody Startup body) {
         acesso.exigirStartup(id);
-        garantirQueExiste(id);
+        Startup atual = buscar(id);
         body.setId(id);
+        // O WhatsApp e a autorização não vêm no JSON (@JsonIgnore); sem isto o PUT os apagaria
+        body.setWhatsapp(atual.getWhatsapp());
+        body.setCompartilharWhatsapp(atual.isCompartilharWhatsapp());
         return repository.save(body);
     }
 
@@ -122,6 +134,8 @@ public class StartupController {
         if (dados.site() != null) s.setSite(texto(dados.site()));
         if (dados.necessidades() != null) s.setNecessidades(dados.necessidades());
         if (dados.estagioMaturidade() != null) s.setEstagioMaturidade(dados.estagioMaturidade());
+        if (dados.whatsapp() != null) s.setWhatsapp(texto(dados.whatsapp()));
+        if (dados.compartilharWhatsapp() != null) s.setCompartilharWhatsapp(dados.compartilharWhatsapp());
         return repository.save(s);
     }
 

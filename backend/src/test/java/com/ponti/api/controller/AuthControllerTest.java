@@ -72,6 +72,7 @@ class AuthControllerTest {
         body.put("sobre", "Ex-fundadora com 10 anos de experiência em startups.");
         body.put("email", "maria@email.com");
         body.put("senha", "senhaSegura123");
+        body.put("whatsapp", "(81) 99999-8888");
         body.put("valorSessao", 150);
         body.put("duracaoSessaoMinutos", 60);
         return body;
@@ -107,6 +108,28 @@ class AuthControllerTest {
             assertThat(startup.getNome()).isEqualTo("AgroTech Recife");
             assertThat(startup.getSegmento()).isEqualTo("Agritech");
             assertThat(startup.getDescricao()).isEqualTo("Monitoramento de lavouras com sensores de baixo custo.");
+            // WhatsApp é opcional para a startup: sem ele, o cadastro passa e o campo fica vazio
+            assertThat(startup.getWhatsapp()).isNull();
+        }
+
+        @Test
+        void gravaWhatsappOpcionalNormalizado() throws Exception {
+            Map<String, Object> body = startupValida();
+            body.put("whatsapp", "+55 (81) 3333-4444");
+
+            enviar("/auth/cadastro/startup", body).andExpect(status().isCreated());
+
+            Usuario usuario = usuarioRepository.findByEmail("contato@agrotech.com").orElseThrow();
+            Startup startup = startupRepository.findById(usuario.getStartupId()).orElseThrow();
+            assertThat(startup.getWhatsapp()).isEqualTo("558133334444");
+        }
+
+        @Test
+        void whatsappEmBrancoContaComoNaoInformado() throws Exception {
+            Map<String, Object> body = startupValida();
+            body.put("whatsapp", "   ");
+
+            enviar("/auth/cadastro/startup", body).andExpect(status().isCreated());
         }
 
         @Test
@@ -151,7 +174,9 @@ class AuthControllerTest {
                 Arguments.of("e-mail inválido", "email", "nao-e-um-email"),
                 Arguments.of("sem senha", "senha", null),
                 Arguments.of("senha com menos de 8 caracteres", "senha", "1234567"),
-                Arguments.of("senha com mais de 72 caracteres", "senha", "a".repeat(73)));
+                Arguments.of("senha com mais de 72 caracteres", "senha", "a".repeat(73)),
+                Arguments.of("WhatsApp sem DDD", "whatsapp", "99999-8888"),
+                Arguments.of("WhatsApp com letras", "whatsapp", "abc"));
     }
 
     // =====================================================================================
@@ -176,6 +201,8 @@ class AuthControllerTest {
             assertThat(mentor.getAreasAtuacao()).isEqualTo("Produto, Validação de MVP");
             assertThat(mentor.getAnosExperiencia()).isEqualTo(10);
             assertThat(mentor.getBio()).isEqualTo("Ex-fundadora com 10 anos de experiência em startups.");
+            // Gravado só com dígitos e com o 55 do Brasil na frente
+            assertThat(mentor.getWhatsapp()).isEqualTo("5581999998888");
         }
 
         @Test
@@ -213,6 +240,10 @@ class AuthControllerTest {
                 Arguments.of("sem sobre", "sobre", null),
                 Arguments.of("e-mail inválido", "email", "nao-e-um-email"),
                 Arguments.of("senha com menos de 8 caracteres", "senha", "1234567"),
+                Arguments.of("sem WhatsApp", "whatsapp", null),
+                Arguments.of("WhatsApp em branco", "whatsapp", "   "),
+                Arguments.of("WhatsApp sem DDD", "whatsapp", "99999-8888"),
+                Arguments.of("WhatsApp com dígitos demais", "whatsapp", "55819999988881"),
                 Arguments.of("sem valor por sessão", "valorSessao", null),
                 Arguments.of("valor por sessão negativo", "valorSessao", -1),
                 Arguments.of("valor por sessão com 3 casas decimais", "valorSessao", 10.555),

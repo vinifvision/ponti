@@ -1,8 +1,10 @@
 package com.ponti.api.dto;
 
 import com.ponti.api.model.Tema;
+import com.ponti.api.model.Whatsapp;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
 
@@ -20,5 +22,13 @@ public record AtualizacaoStartup(
         @Size(max = 500) String site,
         @Min(1) @Max(9) Integer estagioMaturidade,
         // Lista vazia apaga; ausente mantém
-        @Size(max = 3) Set<Tema> necessidades) {
+        @Size(max = 3) Set<Tema> necessidades,
+        // Opcional para a startup: "" apaga o número
+        @Pattern(regexp = "(" + Whatsapp.FORMATO + ")?", message = "WhatsApp inválido: informe DDD + número")
+        String whatsapp,
+        Boolean compartilharWhatsapp) {
+
+    public AtualizacaoStartup {
+        if (whatsapp != null) whatsapp = whatsapp.isBlank() ? "" : Whatsapp.normalizar(whatsapp);
+    }
 }

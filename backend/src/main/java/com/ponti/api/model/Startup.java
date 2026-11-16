@@ -1,5 +1,6 @@
 package com.ponti.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -36,6 +37,17 @@ public class Startup {
     private String estado;
     private String site;
 
+    // Contato privado e opcional: @JsonIgnore garante que nunca sai nas respostas da API
+    // (só é mostrado ao mentor depois do agendamento, se a startup autorizar).
+    @JsonIgnore
+    @Column(length = 13)
+    private String whatsapp;
+
+    // Autorização do dono para mostrar o WhatsApp ao mentor nas mentorias CONFIRMADAS.
+    // Começa desligada (null = não autorizou).
+    @JsonIgnore
+    private Boolean compartilharWhatsapp;
+
     // Temas em que a startup precisa de ajuda (até 3). É a base do match com os mentores.
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
@@ -67,6 +79,13 @@ public class Startup {
     public void setEstado(String estado) { this.estado = estado; }
     public String getSite() { return site; }
     public void setSite(String site) { this.site = site; }
+    public String getWhatsapp() { return whatsapp; }
+    public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
+    public boolean isCompartilharWhatsapp() { return Boolean.TRUE.equals(compartilharWhatsapp); }
+    public void setCompartilharWhatsapp(Boolean compartilharWhatsapp) { this.compartilharWhatsapp = compartilharWhatsapp; }
+
+    // O número que pode ser mostrado à outra parte de uma mentoria confirmada (ou null)
+    public String whatsappCompartilhado() { return isCompartilharWhatsapp() ? whatsapp : null; }
     public Set<Tema> getNecessidades() { return necessidades; }
     public void setNecessidades(Set<Tema> necessidades) { this.necessidades = necessidades == null ? new LinkedHashSet<>() : new LinkedHashSet<>(necessidades); }
     public Integer getEstagioMaturidade() { return estagioMaturidade; }

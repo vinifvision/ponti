@@ -294,13 +294,16 @@ public class AgendaService {
     private AgendamentoDetalhe detalhar(Agendamento a, Avaliacao avaliacao) {
         Startup s = startupRepository.findById(a.getStartupId()).orElse(null);
         Mentor m = mentorRepository.findById(a.getMentorId()).orElse(null);
+        boolean confirmada = a.getStatus() == StatusAgendamento.CONFIRMADO;
         return new AgendamentoDetalhe(
                 a.getId(), a.getInicio(), a.getFim(), a.getValor(), a.getStatus(), a.getStatusPagamento(),
                 a.getMetodoPagamento(),
-                a.getStatus() == StatusAgendamento.CONFIRMADO ? a.getLinkReuniao() : null,
+                confirmada ? a.getLinkReuniao() : null,
                 a.getMensagem(),
-                s == null ? null : new AgendamentoDetalhe.Parte(s.getId(), s.getNome(), s.getFotoUrl(), s.getSegmento()),
-                m == null ? null : new AgendamentoDetalhe.Parte(m.getId(), m.getNome(), m.getFotoUrl(), m.getAreasAtuacao()),
+                s == null ? null : new AgendamentoDetalhe.Parte(s.getId(), s.getNome(), s.getFotoUrl(), s.getSegmento(),
+                        confirmada ? s.whatsappCompartilhado() : null),
+                m == null ? null : new AgendamentoDetalhe.Parte(m.getId(), m.getNome(), m.getFotoUrl(), m.getAreasAtuacao(),
+                        confirmada ? m.whatsappCompartilhado() : null),
                 realizada(a),
                 a.getCodigoTransacao() == null ? null : new AgendamentoDetalhe.Pagamento(
                         a.getCodigoTransacao(),

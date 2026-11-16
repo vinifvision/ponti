@@ -3,8 +3,10 @@ package com.ponti.api.dto;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import com.ponti.api.model.Tema;
+import com.ponti.api.model.Whatsapp;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -23,5 +25,13 @@ public record AtualizacaoMentor(
         @Min(15) @Max(240) Integer duracaoSessaoMinutos,
         @Size(max = 500) String fotoUrl,
         @Size(max = 500) String videoUrl,
-        @Size(max = 500) String linkedinUrl) {
+        @Size(max = 500) String linkedinUrl,
+        // Obrigatório para o mentor: pode trocar, mas não apagar ("" é recusado)
+        @Pattern(regexp = Whatsapp.FORMATO, message = "WhatsApp inválido: informe DDD + número")
+        String whatsapp,
+        Boolean compartilharWhatsapp) {
+
+    public AtualizacaoMentor {
+        if (whatsapp != null) whatsapp = whatsapp.isBlank() ? "" : Whatsapp.normalizar(whatsapp);
+    }
 }

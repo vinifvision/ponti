@@ -1,4 +1,4 @@
-import { CamposConta, SENHA_MAXIMA, SENHA_MINIMA, validarConta } from './validacao-cadastro';
+import { CamposConta, SENHA_MAXIMA, SENHA_MINIMA, validarConta, validarWhatsapp } from './validacao-cadastro';
 
 const valida: CamposConta = {
   nome: 'PetCare Digital',
@@ -36,5 +36,24 @@ describe('validarConta', () => {
     expect(validarConta({ ...valida, senha: 'a'.repeat(SENHA_MINIMA) })).toBe('');
     expect(validarConta({ ...valida, senha: 'a'.repeat(SENHA_MAXIMA) })).toBe('');
     expect(validarConta({ ...valida, senha: 'a'.repeat(SENHA_MAXIMA + 1) })).toContain(`${SENHA_MAXIMA}`);
+  });
+});
+
+describe('validarWhatsapp', () => {
+  it('aceita DDD + número com ou sem pontuação e com ou sem o 55', () => {
+    expect(validarWhatsapp('(81) 99999-8888', true)).toBe('');
+    expect(validarWhatsapp('81 3333-4444', true)).toBe('');
+    expect(validarWhatsapp('+55 81 99999-8888', true)).toBe('');
+  });
+
+  it('vazio: erro se obrigatório (mentor), ok se opcional (startup)', () => {
+    expect(validarWhatsapp('  ', true)).toContain('WhatsApp');
+    expect(validarWhatsapp('', false)).toBe('');
+  });
+
+  it('rejeita número sem DDD, com dígitos demais ou só letras', () => {
+    expect(validarWhatsapp('99999-8888', false)).toContain('válido');
+    expect(validarWhatsapp('55819999988881', false)).toContain('válido');
+    expect(validarWhatsapp('abc', false)).toContain('válido');
   });
 });

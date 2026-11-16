@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { SessaoService } from '../../auth/sessao.service';
-import { SENHA_MINIMA, validarConta } from '../../auth/validacao-cadastro';
+import { SENHA_MINIMA, validarConta, validarWhatsapp } from '../../auth/validacao-cadastro';
 import { AuthCabecalhoComponent } from '../../layout/auth-layout/auth-cabecalho.component';
 import { StartupService } from '../../startups/startup.service';
 import { SETORES } from '../../shared/areas-atuacao';
@@ -60,6 +60,10 @@ export class CadastroStartupComponent {
   }
   sobre = '';
   email = '';
+  // Opcional para a startup
+  whatsapp = '';
+  // A startup decide se o WhatsApp aparece para o mentor nas mentorias confirmadas (começa desmarcado)
+  compartilharWhatsapp = false;
   senha = '';
   necessidades = signal<string[]>([]);
 
@@ -114,7 +118,7 @@ export class CadastroStartupComponent {
     }
 
     const campos = { nome: this.nome, areaAtuacao: this.areaAtuacao, sobre: this.sobre, email: this.email, senha: this.senha };
-    const erro = validarConta(campos);
+    const erro = validarConta(campos) || validarWhatsapp(this.whatsapp, false);
     if (erro) {
       this.erro.set(erro);
       return;
@@ -127,7 +131,9 @@ export class CadastroStartupComponent {
     this.salvando.set(true);
     this.erro.set('');
 
-    this.auth.cadastrarStartup({ ...campos, necessidades: this.necessidades() }).subscribe({
+    const whatsapp = this.whatsapp.trim() || undefined;
+    const compartilharWhatsapp = !!whatsapp && this.compartilharWhatsapp;
+    this.auth.cadastrarStartup({ ...campos, whatsapp, compartilharWhatsapp, necessidades: this.necessidades() }).subscribe({
       // Conta criada e login feito: agora grava o nível do questionário
       next: () => {
         this.contaCriada.set(true);

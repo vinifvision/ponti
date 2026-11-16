@@ -2,8 +2,10 @@ package com.ponti.api.dto;
 
 import com.ponti.api.model.Tema;
 import com.ponti.api.model.Usuario;
+import com.ponti.api.model.Whatsapp;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
 
@@ -23,11 +25,17 @@ public record CadastroStartup(
         @Size(max = 500) String videoPitchUrl,
         @Size(max = 500) String fotoUrl,
         @Size(max = 500) String site,
+        // Opcional para a startup. Se vier, segue o mesmo formato do mentor.
+        @Pattern(regexp = Whatsapp.FORMATO, message = "WhatsApp inválido: informe DDD + número")
+        String whatsapp,
+        // Autoriza mostrar o WhatsApp à outra parte quando a mentoria for confirmada (padrão: não)
+        Boolean compartilharWhatsapp,
         // Temas em que a startup precisa de ajuda (até 3); alimentam o match com os mentores
         @Size(max = 3) Set<Tema> necessidades) {
 
     // Normaliza antes da validação, para " Ana@Email.com " ser aceito e não duplicar "ana@email.com"
     public CadastroStartup {
         email = Usuario.normalizarEmail(email);
+        whatsapp = Whatsapp.normalizar(whatsapp);
     }
 }

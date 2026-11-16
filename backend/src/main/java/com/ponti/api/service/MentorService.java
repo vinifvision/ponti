@@ -60,6 +60,8 @@ public class MentorService {
         if (dados.fotoUrl() != null) m.setFotoUrl(vazioViraNulo(dados.fotoUrl()));
         if (dados.videoUrl() != null) m.setVideoUrl(vazioViraNulo(dados.videoUrl()));
         if (dados.linkedinUrl() != null) m.setLinkedinUrl(vazioViraNulo(dados.linkedinUrl()));
+        if (dados.whatsapp() != null) m.setWhatsapp(dados.whatsapp());
+        if (dados.compartilharWhatsapp() != null) m.setCompartilharWhatsapp(dados.compartilharWhatsapp());
         return buscar(mentorRepository.save(m).getId());
     }
 

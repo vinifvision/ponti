@@ -1,16 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PerfilLogadoService } from '../../auth/perfil-logado.service';
 import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
+import { validarWhatsapp } from '../../auth/validacao-cadastro';
 import { MentorService } from '../../mentores/mentor.service';
-import { Mentor, Startup } from '../../models';
+import { ContatoPrivado, Mentor, Startup } from '../../models';
 import { NOMES_NIVEIS } from '../../shared/maturidade';
 import { StartupService } from '../../startups/startup.service';
 import { iniciais } from '../../shared/texto.utils';
+import { formatarWhatsapp } from '../../shared/whatsapp.utils';
 import { EditorCertificacoesComponent } from '../../shared/editor-certificacoes/editor-certificacoes.component';
 import { SeletorTemasComponent } from '../../shared/seletor-temas/seletor-temas.component';
 import { DialogoConfirmacaoComponent } from '../../shared/dialogo-confirmacao/dialogo-confirmacao.component';
@@ -51,6 +53,9 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
   // Temas escolhidos (mentor: em que ajuda; startup: do que precisa)
   temasMentor = signal<string[]>([]);
   necessidadesStartup = signal<string[]>([]);
+  // Contato privado: vem de GET .../contato (o perfil público não traz o WhatsApp)
+  whatsapp = '';
+  compartilharWhatsapp = false;
 
   // Para o editor de certificações
   mentorId = this.sessao.mentorId();
@@ -67,9 +72,10 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
     const mentorId = this.sessao.mentorId();
     const startupId = this.sessao.startupId();
     if (mentorId !== null) {
-      this.mentorService.buscar(mentorId).subscribe({
-        next: (m) => {
+      forkJoin([this.mentorService.buscar(mentorId), this.mentorService.contato(mentorId)]).subscribe({
+        next: ([m, contato]) => {
           this.mentor = { ...m };
+          this.preencherContato(contato);
           this.temasMentor.set([...(m.temas ?? [])]);
           this.gratuita = Number(m.valorSessao ?? 0) === 0;
           this.situacaoSalva = this.situacaoAtual();
@@ -78,9 +84,10 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
         error: (e: HttpErrorResponse) => this.falhou(e),
       });
     } else if (startupId !== null) {
-      this.startupService.buscar(startupId).subscribe({
-        next: (s) => {
+      forkJoin([this.startupService.buscar(startupId), this.startupService.contato(startupId)]).subscribe({
+        next: ([s, contato]) => {
           this.startup = { ...s };
+          this.preencherContato(contato);
           this.suportaLinkedin.set('linkedinUrl' in s);
           this.necessidadesStartup.set([...(s.necessidades ?? [])]);
           this.situacaoSalva = this.situacaoAtual();
@@ -109,12 +116,23 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
       this.erro.set('Informe o nome.');
       return;
     }
+    // WhatsApp: obrigatório para o mentor, opcional para a startup
+    const erroWhatsapp = validarWhatsapp(this.whatsapp, this.ehMentor());
+    if (erroWhatsapp) {
+      this.erro.set(erroWhatsapp);
+      return;
+    }
     this.erro.set('');
     this.sucesso.set(false);
     this.salvando.set(true);
 
     const mentorId = this.sessao.mentorId();
     const startupId = this.sessao.startupId();
+    const contato = {
+      whatsapp: this.whatsapp.trim(),
+      // Sem número não há o que compartilhar
+      compartilharWhatsapp: !!this.whatsapp.trim() && this.compartilharWhatsapp,
+    };
     const pedido: Observable<{ nome: string; fotoUrl?: string | null }> =
       mentorId !== null
         ? this.mentorService.atualizarParcial(mentorId, {
@@ -129,6 +147,7 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
             linkedinUrl: this.mentor.linkedinUrl ?? '',
             videoUrl: this.mentor.videoUrl ?? '',
             temas: this.temasMentor(),
+            ...contato,
           })
         : this.startupService.atualizarParcial(startupId!, {
             nome: this.startup.nome,
@@ -142,6 +161,7 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
             estagioMaturidade: this.startup.estagioMaturidade ?? undefined,
             ...(this.suportaLinkedin() ? { linkedinUrl: this.startup.linkedinUrl ?? '' } : {}),
             necessidades: this.necessidadesStartup(),
+            ...contato,
           });
 
     pedido.subscribe({
@@ -162,8 +182,8 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
   private situacaoAtual(): string {
     return fotografar(
       this.ehMentor()
-        ? { mentor: this.mentor, gratuita: this.gratuita, temas: this.temasMentor() }
-        : { startup: this.startup, necessidades: this.necessidadesStartup() },
+        ? { mentor: this.mentor, gratuita: this.gratuita, temas: this.temasMentor(), whatsapp: this.whatsapp, compartilhar: this.compartilharWhatsapp }
+        : { startup: this.startup, necessidades: this.necessidadesStartup(), whatsapp: this.whatsapp, compartilhar: this.compartilharWhatsapp },
     );
   }
 
@@ -183,6 +203,11 @@ export class EditarPerfilComponent implements OnInit, ProtegeSaida {
     if (!this.temAlteracoes()) return;
     evento.preventDefault();
     evento.returnValue = '';
+  }
+
+  private preencherContato(contato: ContatoPrivado) {
+    this.whatsapp = formatarWhatsapp(contato.whatsapp);
+    this.compartilharWhatsapp = contato.compartilharWhatsapp;
   }
 
   private falhou(e: HttpErrorResponse) {
