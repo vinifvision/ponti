@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { CrudService } from '../crud.service';
-import { Certificacao, Startup } from '../models';
+import { Certificacao, ContatoParcial, ContatoPrivado, Startup } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class StartupService extends CrudService<Startup> {
@@ -22,8 +22,13 @@ export class StartupService extends CrudService<Startup> {
     return this.http.get<Certificacao[]>(`${this.url}/${startupId}/certificacoes`);
   }
 
-  // PATCH: muda só os campos enviados (tela "Meu perfil")
-  atualizarParcial(id: number, campos: Partial<Startup>): Observable<Startup> {
+  // GET /startups/{id}/contato -> WhatsApp e autorização (só o próprio dono pode ver)
+  contato(id: number): Observable<ContatoPrivado> {
+    return this.http.get<ContatoPrivado>(`${this.url}/${id}/contato`);
+  }
+
+  // PATCH: muda só os campos enviados (tela "Meu perfil"). O WhatsApp vai junto, mas nunca volta na resposta.
+  atualizarParcial(id: number, campos: Partial<Startup> & ContatoParcial): Observable<Startup> {
     return this.http.patch<Startup>(`${this.url}/${id}`, campos);
   }
 

@@ -2,6 +2,7 @@ package com.ponti.api.controller;
 
 import com.ponti.api.dto.AtualizacaoMentor;
 import com.ponti.api.dto.AvaliacaoPublica;
+import com.ponti.api.dto.ContatoPrivado;
 import com.ponti.api.dto.MentorRecomendado;
 import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.NovaCertificacao;
@@ -50,6 +51,14 @@ public class MentorController {
     @GetMapping("/{id}/avaliacoes")
     public List<AvaliacaoPublica> avaliacoes(@PathVariable Long id) {
         return avaliacaoService.doMentor(id);
+    }
+
+    // Contato privado do próprio mentor (tela "Editar perfil"). Ninguém mais acessa.
+    @GetMapping("/{id}/contato")
+    public ContatoPrivado contato(@PathVariable Long id) {
+        acesso.exigirMentor(id);
+        Mentor m = mentorService.buscarEntidade(id);
+        return new ContatoPrivado(m.getWhatsapp(), m.isCompartilharWhatsapp());
     }
 
     // Certificações e experiências do mentor, mais recentes primeiro (seção "Experiência" do perfil)
@@ -121,8 +130,9 @@ public class MentorController {
         Mentor atual = repository.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)"));
         body.setId(id);
-        // O WhatsApp não vem no JSON (@JsonIgnore); sem isto o PUT apagaria o número salvo
+        // O WhatsApp e a autorização não vêm no JSON (@JsonIgnore); sem isto o PUT os apagaria
         body.setWhatsapp(atual.getWhatsapp());
+        body.setCompartilharWhatsapp(atual.isCompartilharWhatsapp());
         return repository.save(body);
     }
 

@@ -69,6 +69,12 @@
       <app-seletor-temas rotulo="Em que a sua startup precisa de ajuda? *" [max]="3" [(selecionados)]="necessidades" [desabilitado]="contaCriada()" />
       <input name="email" type="email" placeholder="E-mail *" autocomplete="email" [(ngModel)]="email" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
       <input name="whatsapp" type="tel" inputmode="tel" placeholder="WhatsApp com DDD (opcional)" autocomplete="tel-national" maxlength="20" [(ngModel)]="whatsapp" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
+      @if (whatsapp.trim()) {
+        <label class="flex cursor-pointer items-start gap-3 px-4 text-base text-gray-700">
+          <input name="compartilharWhatsapp" type="checkbox" [(ngModel)]="compartilharWhatsapp" [disabled]="contaCriada()" class="mt-1 size-5 shrink-0 accent-auth-lilas" />
+          <span>Mostrar o WhatsApp para o mentor quando ele confirmar uma mentoria</span>
+        </label>
+      }
       <input name="senha" type="password" [placeholder]="'Senha (mínimo ' + senhaMinima + ' caracteres) *'" autocomplete="new-password" [(ngModel)]="senha" [disabled]="contaCriada()" class="w-full rounded-full border border-neutral-200 bg-neutral-200 px-8 py-4 text-lg text-gray-900 placeholder:text-neutral-400 focus:border-auth-lilas focus:outline-none focus:ring-2 focus:ring-auth-lilas/50" />
 
       @if (erro()) {

@@ -429,6 +429,34 @@ paths:
           description: Não encontrado
         "409":
           description: O convite já foi respondido
+  /mentores/{id}/contato:
+    get:
+      tags: [Mentores]
+      summary: WhatsApp e autorização de compartilhar. Só o próprio mentor
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Contato privado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContatoPrivado" }
+  /startups/{id}/contato:
+    get:
+      tags: [Startups]
+      summary: WhatsApp e autorização de compartilhar. Só a própria startup
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Contato privado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContatoPrivado" }
   /mentores/{id}/certificacoes:
     parameters:
       - name: id
@@ -1071,6 +1099,8 @@ components:
         fotoUrl: { type: string, maxLength: 500 }
         videoUrl: { type: string, maxLength: 500 }
         linkedinUrl: { type: string, maxLength: 500 }
+        whatsapp: { type: string, description: "Troca o WhatsApp (DDD + número). Não pode ser apagado: \"\" dá 400." }
+        compartilharWhatsapp: { type: boolean, description: Mostrar o WhatsApp às startups nas mentorias confirmadas }
     AtualizacaoStartup:
       type: object
       description: Todos os campos são opcionais
@@ -1090,6 +1120,8 @@ components:
         estado: { type: string, maxLength: 2 }
         site: { type: string, maxLength: 500 }
         estagioMaturidade: { type: integer, minimum: 1, maximum: 9 }
+        whatsapp: { type: string, description: 'WhatsApp (DDD + número); "" apaga' }
+        compartilharWhatsapp: { type: boolean, description: Mostrar o WhatsApp aos mentores nas mentorias confirmadas }
     Certificacao:
       type: object
       required: [titulo]
@@ -1230,6 +1262,15 @@ components:
         nome: { type: string }
         fotoUrl: { type: string, nullable: true }
         descricao: { type: string, nullable: true, description: Segmento da startup ou área do mentor }
+        whatsapp:
+          type: string
+          nullable: true
+          description: "Só com a mentoria CONFIRMADA e se esta parte autorizou compartilhar (ex.: 5581999998888)"
+    ContatoPrivado:
+      type: object
+      properties:
+        whatsapp: { type: string, nullable: true, example: "5581999998888" }
+        compartilharWhatsapp: { type: boolean }
     Convite:
       type: object
       required: [startupId, mentorId]
@@ -1301,6 +1342,7 @@ components:
           type: string
           description: Opcional. WhatsApp (Brasil), com DDD; mesmo formato do mentor. Privado, nunca volta nas respostas.
           example: "(81) 3333-4444"
+        compartilharWhatsapp: { type: boolean, default: false, description: Autoriza mostrar o WhatsApp à outra parte nas mentorias confirmadas }
     CadastroMentor:
       type: object
       required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, whatsapp, valorSessao, duracaoSessaoMinutos]
@@ -1348,6 +1390,7 @@ components:
           type: string
           description: WhatsApp (Brasil), com DDD. Aceita "(81) 99999-8888"; é gravado como "5581999998888". Privado, nunca volta nas respostas.
           example: "(81) 99999-8888"
+        compartilharWhatsapp: { type: boolean, default: false, description: Autoriza mostrar o WhatsApp à outra parte nas mentorias confirmadas }
         certificacoes:
           type: array
           maxItems: 20

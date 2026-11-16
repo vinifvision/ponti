@@ -169,6 +169,20 @@ export interface ParteAgendamento {
   nome: string;
   fotoUrl?: string | null;
   descricao?: string | null; // segmento da startup ou área do mentor
+  // Só vem com a mentoria CONFIRMADA e se esta parte autorizou compartilhar (ex.: "5581999998888")
+  whatsapp?: string | null;
+}
+
+// Campos de contato aceitos no PATCH de mentor e startup
+export interface ContatoParcial {
+  whatsapp?: string;
+  compartilharWhatsapp?: boolean;
+}
+
+// GET /mentores/{id}/contato e /startups/{id}/contato: só o próprio dono recebe
+export interface ContatoPrivado {
+  whatsapp: string | null;
+  compartilharWhatsapp: boolean;
 }
 
 export interface Agendamento {

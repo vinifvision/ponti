@@ -28,6 +28,8 @@ public record CadastroMentor(
         // Obrigatório para o mentor. Aceita "(81) 99999-8888"; é gravado como "5581999998888".
         @NotBlank @Pattern(regexp = Whatsapp.FORMATO, message = "WhatsApp inválido: informe DDD + número")
         String whatsapp,
+        // Autoriza mostrar o WhatsApp à outra parte quando a mentoria for confirmada (padrão: não)
+        Boolean compartilharWhatsapp,
 
         // Etapa 2: perfil profissional
         @NotBlank @Size(max = 255) String areaAtuacao,

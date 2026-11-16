@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 // Agendamento com os dados da startup e do mentor, para as telas de Mentorias dos dois lados.
 // O link da reunião só aparece quando a sessão está CONFIRMADA.
+// O WhatsApp de cada lado também: só com a sessão CONFIRMADA e se o dono autorizou compartilhar.
 // "realizada" = confirmada e o horário já terminou (aí a startup pode avaliar).
 public record AgendamentoDetalhe(
         Long id,
@@ -25,8 +26,9 @@ public record AgendamentoDetalhe(
         Pagamento pagamento,
         AvaliacaoDada avaliacao) {
 
-    // Resumo de cada lado: nome, foto e uma linha de descrição (segmento ou área de atuação)
-    public record Parte(Long id, String nome, String fotoUrl, String descricao) {
+    // Resumo de cada lado: nome, foto, uma linha de descrição (segmento ou área de atuação)
+    // e o WhatsApp (null se a sessão não está confirmada ou se o dono não autorizou)
+    public record Parte(Long id, String nome, String fotoUrl, String descricao, String whatsapp) {
     }
 
     // Dados do comprovante. pixCopiaECola só vem enquanto o Pix está aguardando pagamento.

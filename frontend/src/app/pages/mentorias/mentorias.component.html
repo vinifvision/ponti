@@ -200,6 +200,17 @@
                   Entrar na reunião
                 </a>
               }
+              @if (whatsapp(a); as zap) {
+                <a
+                  [href]="zap.link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="rounded-lg border border-green-600 px-4 py-2 font-medium text-green-700 transition hover:bg-green-50"
+                  [attr.aria-label]="'Conversar no WhatsApp: ' + zap.texto"
+                >
+                  WhatsApp {{ zap.texto }}
+                </a>
+              }
               @if (podeCancelar(a)) {
                 <button
                   type="button"

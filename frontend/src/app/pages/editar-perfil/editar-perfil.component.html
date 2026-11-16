@@ -45,6 +45,22 @@
         </div>
       </div>
 
+      <!-- Contato privado: nunca aparece no perfil público -->
+      <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">
+        <legend class="px-1 text-lg font-semibold">Informações de contato</legend>
+        <label class="grid gap-1 sm:max-w-sm">
+          <span class="text-sm font-medium text-gray-700">WhatsApp com DDD{{ ehMentor() ? '' : ' (opcional)' }}</span>
+          <input name="whatsapp" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" [(ngModel)]="whatsapp" class="campo" placeholder="(81) 99999-8888" />
+        </label>
+        <label class="flex cursor-pointer items-start gap-3" [class.opacity-50]="!whatsapp.trim()">
+          <input type="checkbox" name="compartilharWhatsapp" [(ngModel)]="compartilharWhatsapp" [disabled]="!whatsapp.trim()" class="mt-1 size-5 shrink-0 accent-ponti-roxo" />
+          <span>
+            {{ ehMentor() ? 'Mostrar meu WhatsApp para a startup quando eu confirmar uma mentoria' : 'Mostrar o WhatsApp para o mentor quando ele confirmar uma mentoria' }}
+            <span class="block text-sm text-gray-500">O número nunca aparece no seu perfil público, só no card da mentoria confirmada.</span>
+          </span>
+        </label>
+      </fieldset>
+
       @if (ehMentor()) {
         <!-- Mentor: sobre e experiência -->
         <fieldset class="grid gap-4 rounded-xl border border-gray-200 bg-white p-6">

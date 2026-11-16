@@ -55,6 +55,7 @@ public class CadastroService {
         startup.setFotoUrl(dados.fotoUrl());
         startup.setSite(dados.site());
         startup.setWhatsapp(dados.whatsapp());
+        startup.setCompartilharWhatsapp(dados.compartilharWhatsapp());
         startup.setNecessidades(dados.necessidades());
         // estagioMaturidade fica vazio: é preenchido depois, pelo formulário de maturidade
 
@@ -77,6 +78,7 @@ public class CadastroService {
         mentor.setVideoUrl(dados.videoUrl());
         mentor.setLinkedinUrl(dados.linkedinUrl());
         mentor.setWhatsapp(dados.whatsapp());
+        mentor.setCompartilharWhatsapp(dados.compartilharWhatsapp());
         mentor.setValorSessao(dados.valorSessao());
         mentor.setDuracaoSessaoMinutos(dados.duracaoSessaoMinutos());
 

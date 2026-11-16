@@ -15,6 +15,8 @@ export interface CadastroStartup {
   senha: string;
   // Opcional para a startup
   whatsapp?: string;
+  // Mostrar o WhatsApp ao mentor quando a mentoria for confirmada
+  compartilharWhatsapp?: boolean;
   // Temas em que a startup precisa de ajuda (1 a 3)
   necessidades?: string[];
 }
@@ -26,6 +28,8 @@ export interface CadastroMentor {
   senha: string;
   // Obrigatório para o mentor
   whatsapp: string;
+  // Mostrar o WhatsApp à startup quando a mentoria for confirmada
+  compartilharWhatsapp?: boolean;
   // Etapa 2: perfil profissional
   areaAtuacao: string;
   ecossistemas?: string;

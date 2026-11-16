@@ -10,6 +10,7 @@ import { Agendamento, ConviteDetalhe, StatusAgendamento } from '../../models';
 import { dataHoraCompleta, hora, jaPassou } from '../../shared/data.utils';
 import { descreverMaturidade } from '../../shared/maturidade.utils';
 import { formatarDuracao, formatarValorSessao, linkSeguro } from '../../shared/mentoria.utils';
+import { formatarWhatsapp, linkWhatsapp } from '../../shared/whatsapp.utils';
 import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { iniciais } from '../../shared/texto.utils';
 
@@ -247,6 +248,13 @@ export class MentoriasComponent implements OnInit {
 
   link(a: Agendamento): string | null {
     return linkSeguro(a.linkReuniao);
+  }
+
+  // WhatsApp da outra parte: o backend só manda com a mentoria confirmada e se ela autorizou
+  whatsapp(a: Agendamento): { link: string; texto: string } | null {
+    const numero = this.outraParte(a)?.whatsapp;
+    const link = linkWhatsapp(numero);
+    return link ? { link, texto: formatarWhatsapp(numero) } : null;
   }
 
   podeCancelar(a: Agendamento): boolean {

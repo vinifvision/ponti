@@ -28,6 +28,8 @@ public record CadastroStartup(
         // Opcional para a startup. Se vier, segue o mesmo formato do mentor.
         @Pattern(regexp = Whatsapp.FORMATO, message = "WhatsApp inválido: informe DDD + número")
         String whatsapp,
+        // Autoriza mostrar o WhatsApp à outra parte quando a mentoria for confirmada (padrão: não)
+        Boolean compartilharWhatsapp,
         // Temas em que a startup precisa de ajuda (até 3); alimentam o match com os mentores
         @Size(max = 3) Set<Tema> necessidades) {
 

@@ -64,6 +64,11 @@ public class Mentor {
     @Column(length = 13)
     private String whatsapp;
 
+    // Autorização do dono para mostrar o WhatsApp à startup nas mentorias CONFIRMADAS.
+    // Começa desligada (null = não autorizou).
+    @JsonIgnore
+    private Boolean compartilharWhatsapp;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
@@ -90,4 +95,9 @@ public class Mentor {
     public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
     public String getWhatsapp() { return whatsapp; }
     public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
+    public boolean isCompartilharWhatsapp() { return Boolean.TRUE.equals(compartilharWhatsapp); }
+    public void setCompartilharWhatsapp(Boolean compartilharWhatsapp) { this.compartilharWhatsapp = compartilharWhatsapp; }
+
+    // O número que pode ser mostrado à outra parte de uma mentoria confirmada (ou null)
+    public String whatsappCompartilhado() { return isCompartilharWhatsapp() ? whatsapp : null; }
 }

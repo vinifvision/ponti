@@ -62,6 +62,8 @@ export class CadastroStartupComponent {
   email = '';
   // Opcional para a startup
   whatsapp = '';
+  // A startup decide se o WhatsApp aparece para o mentor nas mentorias confirmadas (começa desmarcado)
+  compartilharWhatsapp = false;
   senha = '';
   necessidades = signal<string[]>([]);
 
@@ -130,7 +132,8 @@ export class CadastroStartupComponent {
     this.erro.set('');
 
     const whatsapp = this.whatsapp.trim() || undefined;
-    this.auth.cadastrarStartup({ ...campos, whatsapp, necessidades: this.necessidades() }).subscribe({
+    const compartilharWhatsapp = !!whatsapp && this.compartilharWhatsapp;
+    this.auth.cadastrarStartup({ ...campos, whatsapp, compartilharWhatsapp, necessidades: this.necessidades() }).subscribe({
       // Conta criada e login feito: agora grava o nível do questionário
       next: () => {
         this.contaCriada.set(true);

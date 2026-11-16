@@ -43,6 +43,11 @@ public class Startup {
     @Column(length = 13)
     private String whatsapp;
 
+    // Autorização do dono para mostrar o WhatsApp ao mentor nas mentorias CONFIRMADAS.
+    // Começa desligada (null = não autorizou).
+    @JsonIgnore
+    private Boolean compartilharWhatsapp;
+
     // Temas em que a startup precisa de ajuda (até 3). É a base do match com os mentores.
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
@@ -76,6 +81,11 @@ public class Startup {
     public void setSite(String site) { this.site = site; }
     public String getWhatsapp() { return whatsapp; }
     public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
+    public boolean isCompartilharWhatsapp() { return Boolean.TRUE.equals(compartilharWhatsapp); }
+    public void setCompartilharWhatsapp(Boolean compartilharWhatsapp) { this.compartilharWhatsapp = compartilharWhatsapp; }
+
+    // O número que pode ser mostrado à outra parte de uma mentoria confirmada (ou null)
+    public String whatsappCompartilhado() { return isCompartilharWhatsapp() ? whatsapp : null; }
     public Set<Tema> getNecessidades() { return necessidades; }
     public void setNecessidades(Set<Tema> necessidades) { this.necessidades = necessidades == null ? new LinkedHashSet<>() : new LinkedHashSet<>(necessidades); }
     public Integer getEstagioMaturidade() { return estagioMaturidade; }

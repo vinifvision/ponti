@@ -39,6 +39,8 @@ export class CadastroMentorComponent {
   nome = '';
   email = '';
   whatsapp = '';
+  // A pessoa decide se o WhatsApp aparece para a startup nas mentorias confirmadas (começa desmarcado)
+  compartilharWhatsapp = false;
   senha = '';
 
   // Etapa 2: perfil profissional
@@ -131,6 +133,7 @@ export class CadastroMentorComponent {
         nome: this.nome.trim(),
         email: this.email.trim(),
         whatsapp: this.whatsapp.trim(),
+        compartilharWhatsapp: this.compartilharWhatsapp,
         senha: this.senha,
         areaAtuacao: this.areaAtuacao().join(', '),
         ecossistemas: this.opcional(this.ecossistemas().join(', ')),
