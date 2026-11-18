@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Locale;
 
 // Credenciais de acesso. Cada usuário é dono de um perfil: uma Startup OU um Mentor
@@ -34,9 +36,25 @@ public class Usuario {
     private Long startupId;
     private Long mentorId;
 
+    // Último acesso à plataforma (login ou GET /auth/me). Nulo = desconhecido (registros antigos).
+    @JsonIgnore
+    private Instant ultimoAcessoEm;
+
+    // Grava no máximo uma vez por hora, para não escrever no banco a cada requisição
+    static final Duration INTERVALO_REGISTRO_ACESSO = Duration.ofHours(1);
+
     // Remove espaços nas pontas e passa para minúsculas: " Ana@Email.com " vira "ana@email.com"
     public static String normalizarEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    // Registra o acesso em "agora". Devolve true se mudou (aí quem chamou precisa salvar).
+    public boolean registrarAcesso(Instant agora) {
+        if (ultimoAcessoEm != null && agora.isBefore(ultimoAcessoEm.plus(INTERVALO_REGISTRO_ACESSO))) {
+            return false;
+        }
+        ultimoAcessoEm = agora;
+        return true;
     }
 
     public Long getId() { return id; }
@@ -51,4 +69,6 @@ public class Usuario {
     public void setStartupId(Long startupId) { this.startupId = startupId; }
     public Long getMentorId() { return mentorId; }
     public void setMentorId(Long mentorId) { this.mentorId = mentorId; }
+    public Instant getUltimoAcessoEm() { return ultimoAcessoEm; }
+    public void setUltimoAcessoEm(Instant ultimoAcessoEm) { this.ultimoAcessoEm = ultimoAcessoEm; }
 }

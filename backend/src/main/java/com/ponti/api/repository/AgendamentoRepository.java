@@ -2,6 +2,7 @@ package com.ponti.api.repository;
 
 import com.ponti.api.model.Agendamento;
 import com.ponti.api.model.StatusAgendamento;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -36,6 +37,26 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             group by a.mentorId
             """)
     List<Object[]> realizadasPorMentor(@Param("agora") LocalDateTime agora);
+
+    // ---- Ranking de mentores (IndicadoresMentorService) ----
+
+    // Sessões de todos os mentores que ocupam horário dentro de um período
+    @Query("""
+            select a from Agendamento a
+            where a.status in :status and a.inicio < :ate and a.fim > :de
+            """)
+    List<Agendamento> ocupandoHorarioDeTodos(@Param("status") Collection<StatusAgendamento> status,
+                                             @Param("de") LocalDateTime de,
+                                             @Param("ate") LocalDateTime ate);
+
+    // Pedidos já respondidos (confirmados ou recusados), dos mais recentes para os mais antigos
+    List<Agendamento> findByRespondidoEmNotNullOrderByRespondidoEmDesc();
+
+    // Pedidos feitos a partir de uma data (base da confiabilidade)
+    List<Agendamento> findByCriadoEmGreaterThanEqual(Instant desde);
+
+    // Pedidos da startup com um status (ex.: os RECUSADOS, para a regra "recusou esta startup")
+    List<Agendamento> findByStartupIdAndStatus(Long startupId, StatusAgendamento status);
 
     // Usado ao excluir a conta (ver ContaService)
     void deleteByStartupId(Long startupId);

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -69,6 +70,9 @@ public class Mentor {
     @JsonIgnore
     private Boolean compartilharWhatsapp;
 
+    // Data do cadastro (base do bônus de mentor novo no ranking). Nulo nos registros antigos.
+    private Instant criadoEm;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
@@ -97,6 +101,8 @@ public class Mentor {
     public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
     public boolean isCompartilharWhatsapp() { return Boolean.TRUE.equals(compartilharWhatsapp); }
     public void setCompartilharWhatsapp(Boolean compartilharWhatsapp) { this.compartilharWhatsapp = compartilharWhatsapp; }
+    public Instant getCriadoEm() { return criadoEm; }
+    public void setCriadoEm(Instant criadoEm) { this.criadoEm = criadoEm; }
 
     // O número que pode ser mostrado à outra parte de uma mentoria confirmada (ou null)
     public String whatsappCompartilhado() { return isCompartilharWhatsapp() ? whatsapp : null; }

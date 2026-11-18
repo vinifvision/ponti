@@ -2,6 +2,8 @@ package com.ponti.api.service;
 
 import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.UsuarioRepository;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,13 +18,15 @@ public class LoginService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Clock relogio;
 
     // Hash de uma senha qualquer, usado quando o e-mail não existe (ver autenticar)
     private final String hashFicticio;
 
-    public LoginService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public LoginService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, Clock relogio) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.relogio = relogio;
         this.hashFicticio = passwordEncoder.encode("senha-ficticia-para-comparacao");
     }
 
@@ -37,6 +41,15 @@ public class LoginService {
         if (usuario.isEmpty() || !senhaConfere) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, CREDENCIAIS_INVALIDAS);
         }
+        registrarAcesso(usuario.get());
         return usuario.get();
+    }
+
+    // Guarda o último acesso (usado pelo ranking de mentores). O Usuario decide se já passou
+    // 1 hora desde o anterior; só então gravamos, para não escrever no banco a cada requisição.
+    public void registrarAcesso(Usuario usuario) {
+        if (usuario.registrarAcesso(Instant.now(relogio))) {
+            usuarioRepository.save(usuario);
+        }
     }
 }

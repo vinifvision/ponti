@@ -1,5 +1,6 @@
 package com.ponti.api.service;
 
+import com.ponti.api.config.RankingPropriedades;
 import com.ponti.api.dto.MentorRecomendado;
 import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.StartupRecomendada;
@@ -8,11 +9,14 @@ import com.ponti.api.model.Startup;
 import com.ponti.api.model.Tema;
 import com.ponti.api.repository.StartupRepository;
 import java.text.Normalizer;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -35,30 +39,51 @@ public class MatchService {
 
     private final MentorService mentorService;
     private final StartupRepository startupRepository;
+    private final IndicadoresMentorService indicadoresMentorService;
+    private final RankingPropriedades parametrosRanking;
+    private final Clock relogio;
 
-    public MatchService(MentorService mentorService, StartupRepository startupRepository) {
+    public MatchService(MentorService mentorService, StartupRepository startupRepository,
+                        IndicadoresMentorService indicadoresMentorService, RankingPropriedades parametrosRanking,
+                        Clock relogio) {
         this.mentorService = mentorService;
         this.startupRepository = startupRepository;
+        this.indicadoresMentorService = indicadoresMentorService;
+        this.parametrosRanking = parametrosRanking;
+        this.relogio = relogio;
     }
 
     // Resultado do cálculo: a nota (0 a 100) e os motivos em português
     public record Resultado(int pontos, List<String> motivos) {
     }
 
-    // Mentores para a startup logada, do mais compatível para o menos
+    // Mentores para a startup logada, na ordem de recomendação (ver RankingMentores): a compatibilidade
+    // pesa mais, mas agenda, reputação, responsividade, perfil e atividade também contam.
+    // A porcentagem de compatibilidade continua no card, com os motivos do match seguidos dos de ordenação.
     public List<MentorRecomendado> mentoresParaStartup(Long startupId) {
         Startup startup = startupRepository.findById(startupId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Startup não encontrado(a)"));
-        return mentorService.listar().stream()
-                .map(m -> {
-                    Resultado r = calcular(startup.getNecessidades(), startup.getSegmento(),
-                            m.temas(), m.ecossistemas(), true);
-                    return new MentorRecomendado(m, r.pontos(), r.motivos());
+
+        Map<Long, MentorResposta> mentores = new HashMap<>();
+        Map<Long, Resultado> matches = new HashMap<>();
+        for (MentorResposta m : mentorService.listar()) {
+            mentores.put(m.id(), m);
+            matches.put(m.id(), calcular(startup.getNecessidades(), startup.getSegmento(), m.temas(), m.ecossistemas(), true));
+        }
+        Map<Long, Integer> compatibilidades = new HashMap<>();
+        matches.forEach((id, r) -> compatibilidades.put(id, r.pontos()));
+
+        IndicadoresMentorService.Coleta coleta = indicadoresMentorService.coletar(startupId, compatibilidades);
+        return RankingMentores.ordenar(coleta.indicadores(), coleta.mediaGeral(), startupId, parametrosRanking, relogio)
+                .stream()
+                .filter(c -> mentores.containsKey(c.indicadores().mentorId()))
+                .map(c -> {
+                    Long id = c.indicadores().mentorId();
+                    Resultado r = matches.get(id);
+                    List<String> motivos = new ArrayList<>(r.motivos());
+                    motivos.addAll(c.nota().motivos());
+                    return new MentorRecomendado(mentores.get(id), r.pontos(), motivos);
                 })
-                .sorted(Comparator.comparingInt(MentorRecomendado::compatibilidade).reversed()
-                        .thenComparing((MentorRecomendado r) -> r.mentor().notaMedia() == null ? 0.0 : r.mentor().notaMedia(),
-                                Comparator.reverseOrder())
-                        .thenComparing(r -> r.mentor().nome()))
                 .toList();
     }
 

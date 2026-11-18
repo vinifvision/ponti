@@ -368,6 +368,35 @@ class AgendaTest {
         }
 
         @Test
+        void confirmarERecusarGuardamAHoraDaResposta() throws Exception {
+            Long confirmado = agendar(terca.atTime(9, 0));
+            Long recusado = agendar(terca.atTime(10, 0));
+            assertThat(agendamentoRepository.findById(confirmado).orElseThrow().getRespondidoEm()).isNull();
+
+            enviarJson(post("/agendamentos/" + confirmado + "/confirmar").with(Login.comoMentor(mentorId)),
+                    Map.of("linkReuniao", "https://meet.google.com/x")).andExpect(status().isOk());
+            mockMvc.perform(post("/agendamentos/" + recusado + "/recusar").with(Login.comoMentor(mentorId)))
+                    .andExpect(status().isOk());
+
+            assertThat(agendamentoRepository.findById(confirmado).orElseThrow().getRespondidoEm()).isNotNull();
+            assertThat(agendamentoRepository.findById(recusado).orElseThrow().getRespondidoEm()).isNotNull();
+        }
+
+        @Test
+        void cancelamentoGuardaQuemCancelou() throws Exception {
+            Long pelaStartup = agendar(terca.atTime(9, 0));
+            Long peloMentor = agendar(terca.atTime(10, 0));
+
+            mockMvc.perform(post("/agendamentos/" + pelaStartup + "/cancelar").with(Login.comoStartup(startupId)))
+                    .andExpect(status().isOk());
+            mockMvc.perform(post("/agendamentos/" + peloMentor + "/cancelar").with(Login.comoMentor(mentorId)))
+                    .andExpect(status().isOk());
+
+            assertThat(agendamentoRepository.findById(pelaStartup).orElseThrow().getCanceladoPor()).isEqualTo(TipoUsuario.STARTUP);
+            assertThat(agendamentoRepository.findById(peloMentor).orElseThrow().getCanceladoPor()).isEqualTo(TipoUsuario.MENTOR);
+        }
+
+        @Test
         void agendamentoInexistenteDa404() throws Exception {
             mockMvc.perform(post("/agendamentos/999999/recusar").with(Login.comoMentor(mentorId))).andExpect(status().isNotFound());
         }

@@ -198,6 +198,7 @@ class AuthControllerTest {
 
             assertThat(usuario.getTipo()).isEqualTo(TipoUsuario.MENTOR);
             assertThat(mentor.getNome()).isEqualTo("Maria Souza");
+            assertThat(mentor.getCriadoEm()).isNotNull(); // data do cadastro, base do bônus de mentor novo
             assertThat(mentor.getAreasAtuacao()).isEqualTo("Produto, Validação de MVP");
             assertThat(mentor.getAnosExperiencia()).isEqualTo(10);
             assertThat(mentor.getBio()).isEqualTo("Ex-fundadora com 10 anos de experiência em startups.");
