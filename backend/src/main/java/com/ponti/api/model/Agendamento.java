@@ -52,6 +52,14 @@ public class Agendamento {
     @Column(nullable = false)
     private Instant criadoEm = Instant.now();
 
+    // Quando o mentor confirmou ou recusou (base do tempo de resposta no ranking).
+    // Nulo em pedidos ainda sem resposta e nos registros anteriores a este campo.
+    private Instant respondidoEm;
+
+    // Quem cancelou (startup ou mentor). Nulo se não foi cancelado ou se é um registro antigo.
+    @Enumerated(EnumType.STRING)
+    private TipoUsuario canceladoPor;
+
     // ---- Pagamento (simulado) ----
 
     // Código da transação, mostrado no comprovante (ex.: PNT-7K2M9QX4)
@@ -98,6 +106,10 @@ public class Agendamento {
     public void setMensagem(String mensagem) { this.mensagem = mensagem; }
     public Instant getCriadoEm() { return criadoEm; }
     public void setCriadoEm(Instant criadoEm) { this.criadoEm = criadoEm; }
+    public Instant getRespondidoEm() { return respondidoEm; }
+    public void setRespondidoEm(Instant respondidoEm) { this.respondidoEm = respondidoEm; }
+    public TipoUsuario getCanceladoPor() { return canceladoPor; }
+    public void setCanceladoPor(TipoUsuario canceladoPor) { this.canceladoPor = canceladoPor; }
     public String getCodigoTransacao() { return codigoTransacao; }
     public void setCodigoTransacao(String codigoTransacao) { this.codigoTransacao = codigoTransacao; }
     public String getPixCopiaECola() { return pixCopiaECola; }

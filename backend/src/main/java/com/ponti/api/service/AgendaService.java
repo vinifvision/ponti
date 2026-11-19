@@ -22,6 +22,7 @@ import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -140,7 +141,15 @@ public class AgendaService {
         List<Agendamento> ocupados = agendamentoRepository.ocupandoHorario(
                 mentorId, OCUPAM_HORARIO, de.atStartOfDay(), ate.plusDays(1).atStartOfDay());
 
-        List<LocalDateTime> livres = new ArrayList<>();
+        return blocosOferecidos(faixas, duracao, de, ate).stream()
+                .filter(inicio -> inicio.isAfter(agora) && !conflita(inicio, inicio.plusMinutes(duracao), ocupados))
+                .toList();
+    }
+
+    // Todos os blocos (início de cada sessão) que a disponibilidade semanal gera entre as datas,
+    // livres ou não, em ordem. Também usado pelo ranking para medir as horas oferecidas.
+    static List<LocalDateTime> blocosOferecidos(List<Disponibilidade> faixas, int duracao, LocalDate de, LocalDate ate) {
+        List<LocalDateTime> blocos = new ArrayList<>();
         for (LocalDate dia = de; !dia.isAfter(ate); dia = dia.plusDays(1)) {
             for (Disponibilidade faixa : faixas) {
                 if (faixa.getDiaSemana() != dia.getDayOfWeek()) {
@@ -149,19 +158,16 @@ public class AgendaService {
                 LocalDateTime inicio = dia.atTime(faixa.getHoraInicio());
                 LocalDateTime limite = dia.atTime(faixa.getHoraFim());
                 while (!inicio.plusMinutes(duracao).isAfter(limite)) {
-                    LocalDateTime fim = inicio.plusMinutes(duracao);
-                    if (inicio.isAfter(agora) && !conflita(inicio, fim, ocupados)) {
-                        livres.add(inicio);
-                    }
-                    inicio = fim;
+                    blocos.add(inicio);
+                    inicio = inicio.plusMinutes(duracao);
                 }
             }
         }
-        livres.sort(Comparator.naturalOrder());
-        return livres;
+        blocos.sort(Comparator.naturalOrder());
+        return blocos;
     }
 
-    private boolean conflita(LocalDateTime inicio, LocalDateTime fim, List<Agendamento> ocupados) {
+    static boolean conflita(LocalDateTime inicio, LocalDateTime fim, List<Agendamento> ocupados) {
         return ocupados.stream().anyMatch(a -> inicio.isBefore(a.getFim()) && fim.isAfter(a.getInicio()));
     }
 
@@ -198,6 +204,8 @@ public class AgendaService {
         agendamento.setValor(valor);
         agendamento.setStatus(StatusAgendamento.PENDENTE);
         agendamento.setMensagem(pedido.mensagem());
+        // Pelo relógio da plataforma: junto com respondidoEm, mede o tempo de resposta do mentor
+        agendamento.setCriadoEm(Instant.now(relogio));
         if (gratuita) {
             agendamento.setStatusPagamento(StatusPagamento.GRATUITA);
         } else {
@@ -235,6 +243,7 @@ public class AgendaService {
         }
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
         agendamento.setLinkReuniao(linkReuniao.trim());
+        agendamento.setRespondidoEm(Instant.now(relogio));
         return agendamentoRepository.save(agendamento);
     }
 
@@ -244,13 +253,15 @@ public class AgendaService {
         Agendamento agendamento = buscar(id);
         exigirStatus(agendamento, StatusAgendamento.PENDENTE, "Só pedidos pendentes podem ser recusados");
         agendamento.setStatus(StatusAgendamento.RECUSADO);
+        agendamento.setRespondidoEm(Instant.now(relogio));
         reembolsarSePago(agendamento);
         return agendamentoRepository.save(agendamento);
     }
 
-    // Qualquer lado cancela uma sessão pendente ou confirmada que ainda não aconteceu
+    // Qualquer lado cancela uma sessão pendente ou confirmada que ainda não aconteceu.
+    // "quem" fica registrado: cancelamentos do mentor pesam na confiabilidade dele no ranking.
     @Transactional
-    public Agendamento cancelar(Long id) {
+    public Agendamento cancelar(Long id, TipoUsuario quem) {
         Agendamento agendamento = buscar(id);
         if (agendamento.getStatus() != StatusAgendamento.PENDENTE && agendamento.getStatus() != StatusAgendamento.CONFIRMADO) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Essa mentoria não pode mais ser cancelada");
@@ -259,6 +270,7 @@ public class AgendaService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Essa mentoria já começou ou já aconteceu");
         }
         agendamento.setStatus(StatusAgendamento.CANCELADO);
+        agendamento.setCanceladoPor(quem);
         reembolsarSePago(agendamento);
         return agendamentoRepository.save(agendamento);
     }
@@ -340,7 +352,7 @@ public class AgendaService {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)"));
     }
 
-    private int duracao(Mentor mentor) {
+    static int duracao(Mentor mentor) {
         Integer minutos = mentor.getDuracaoSessaoMinutos();
         return minutos == null ? DURACAO_PADRAO_MINUTOS : minutos;
     }

@@ -12,6 +12,8 @@ import com.ponti.api.repository.CertificacaoRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.repository.UsuarioRepository;
+import java.time.Clock;
+import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,17 +30,20 @@ public class CadastroService {
     private final MentorRepository mentorRepository;
     private final CertificacaoRepository certificacaoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Clock relogio;
 
     public CadastroService(UsuarioRepository usuarioRepository,
                            StartupRepository startupRepository,
                            MentorRepository mentorRepository,
                            CertificacaoRepository certificacaoRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           Clock relogio) {
         this.usuarioRepository = usuarioRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.certificacaoRepository = certificacaoRepository;
         this.passwordEncoder = passwordEncoder;
+        this.relogio = relogio;
     }
 
     @Transactional
@@ -81,6 +86,7 @@ public class CadastroService {
         mentor.setCompartilharWhatsapp(dados.compartilharWhatsapp());
         mentor.setValorSessao(dados.valorSessao());
         mentor.setDuracaoSessaoMinutos(dados.duracaoSessaoMinutos());
+        mentor.setCriadoEm(Instant.now(relogio));
 
         Long mentorId = mentorRepository.save(mentor).getId();
         if (dados.certificacoes() != null) {

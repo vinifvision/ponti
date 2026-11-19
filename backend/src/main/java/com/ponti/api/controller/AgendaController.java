@@ -114,7 +114,7 @@ public class AgendaController {
     @PostMapping("/agendamentos/{id}/cancelar")
     public AgendamentoDetalhe cancelar(@PathVariable Long id) {
         Agendamento agendamento = agendaService.buscar(id);
-        acesso.exigirParticipante(agendamento.getStartupId(), agendamento.getMentorId());
-        return agendaService.detalhar(agendaService.cancelar(id));
+        UsuarioLogado logado = acesso.exigirParticipante(agendamento.getStartupId(), agendamento.getMentorId());
+        return agendaService.detalhar(agendaService.cancelar(id, logado.tipo()));
     }
 }

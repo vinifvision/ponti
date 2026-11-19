@@ -23,6 +23,8 @@ import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.repository.UsuarioRepository;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -100,6 +102,7 @@ public class DadosDemonstracao implements CommandLineRunner {
         criarStartups();
         definirTemas();
         criarHistorico();
+        prepararRanking();
         log.info("Dados de demonstração carregados: {} mentores, {} startups, {} mentorias",
                 mentorRepository.count(), startupRepository.count(), agendamentoRepository.count());
     }
@@ -290,6 +293,58 @@ public class DadosDemonstracao implements CommandLineRunner {
         avaliar(passada("saudeagora", "roberto", 48, "15:00", null, null), 4, null);
     }
 
+    // ---------------------------------------------------------------- ranking
+
+    // Dados que alimentam a ordenação de mentores (data de cadastro, último acesso, recusas e
+    // cancelamentos), variados de propósito para a demonstração mostrar cada regra funcionando:
+    //   - Patrícia é "nova na Ponti" (cadastro há 20 dias e só 2 mentorias): ganha o bônus de mentor novo;
+    //   - Diego não acessa há 40 dias: vai para o fim da lista;
+    //   - Fernanda recusou um pedido da PetCare há 5 dias: vai para o fim da lista só para a PetCare;
+    //   - Beatriz cancelou uma sessão: perde um pouco de confiabilidade;
+    //   - Marcos demora para responder e Rafael responde em tempo médio (ver tempoDeResposta).
+    private void prepararRanking() {
+        Instant agora = Instant.now(relogio);
+        Map<String, Integer> cadastroHaDias = Map.of("patricia", 20);
+        Map<String, Integer> acessoHaDias = Map.of("diego", 40, "marcos", 9, "lucas", 3, "anapaula", 5);
+        int i = 0;
+        for (String chave : mentores.keySet().stream().sorted().toList()) {
+            Mentor m = mentores.get(chave);
+            m.setCriadoEm(agora.minus(Duration.ofDays(cadastroHaDias.getOrDefault(chave, 200 + 37 * i++))));
+            mentorRepository.save(m);
+            usuarioRepository.findByEmail(chave + "@exemplo.com").ifPresent(u -> {
+                u.setUltimoAcessoEm(agora.minus(Duration.ofDays(acessoHaDias.getOrDefault(chave, 1))));
+                usuarioRepository.save(u);
+            });
+        }
+
+        // Fernanda recusou um pedido da PetCare (feito há 6 dias, respondido 1 dia depois) e reembolsou
+        Agendamento recusado = sessao("petcare", "fernanda",
+                hoje.minusDays(4).atTime(LocalTime.parse("10:00")), StatusAgendamento.RECUSADO, MetodoPagamento.CARTAO,
+                "Dúvidas sobre o contrato com as clínicas parceiras.");
+        recusado.setCriadoEm(agora.minus(Duration.ofDays(6)));
+        recusado.setRespondidoEm(agora.minus(Duration.ofDays(5)));
+        recusado.setStatusPagamento(StatusPagamento.REEMBOLSADO);
+        agendamentoRepository.save(recusado);
+
+        // Beatriz cancelou uma sessão que já estava confirmada com a FinFácil
+        Agendamento cancelado = futura("finfacil", "beatriz", DayOfWeek.FRIDAY, "15:00", StatusAgendamento.CONFIRMADO,
+                MetodoPagamento.PIX, "Plano de conteúdo para Instagram.");
+        cancelado.setStatus(StatusAgendamento.CANCELADO);
+        cancelado.setCanceladoPor(TipoUsuario.MENTOR);
+        cancelado.setLinkReuniao(null);
+        cancelado.setStatusPagamento(StatusPagamento.REEMBOLSADO);
+        agendamentoRepository.save(cancelado);
+    }
+
+    // Quanto tempo cada mentor de demonstração leva para responder um pedido
+    private static Duration tempoDeResposta(String mentorChave) {
+        return switch (mentorChave) {
+            case "marcos" -> Duration.ofHours(60);
+            case "rafael" -> Duration.ofHours(20);
+            default -> Duration.ofHours(4);
+        };
+    }
+
     // ---------------------------------------------------------------- apoio
 
     private void mentor(String chave, String nome, String bio, String areas, String ecossistemas,
@@ -397,6 +452,7 @@ public class DadosDemonstracao implements CommandLineRunner {
         }
         if (status == StatusAgendamento.CONFIRMADO) {
             a.setLinkReuniao("https://meet.google.com/pnt-" + (100 + sequencia) + "-demo");
+            a.setRespondidoEm(a.getCriadoEm().plus(tempoDeResposta(mentorChave)));
         }
         return agendamentoRepository.save(a);
     }

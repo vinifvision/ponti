@@ -1,5 +1,6 @@
 package com.ponti.api.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,7 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.ponti.api.config.DadosIniciais;
+import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.UsuarioRepository;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -103,6 +107,17 @@ class LoginTest {
         }
 
         @Test
+        void loginGuardaOUltimoAcesso() throws Exception {
+            Usuario usuario = usuarioRepository.findByEmail(EMAIL).orElseThrow();
+            usuario.setUltimoAcessoEm(null);
+            usuarioRepository.save(usuario);
+
+            login(EMAIL, SENHA).andExpect(status().isOk());
+
+            assertThat(usuarioRepository.findByEmail(EMAIL).orElseThrow().getUltimoAcessoEm()).isNotNull();
+        }
+
+        @Test
         void senhaErradaDa401() throws Exception {
             login(EMAIL, "senhaErrada")
                     .andExpect(status().isUnauthorized())
@@ -148,6 +163,26 @@ class LoginTest {
                     .andExpect(jsonPath("$.email").value(EMAIL))
                     .andExpect(jsonPath("$.tipo").value("STARTUP"))
                     .andExpect(jsonPath("$.nome").value("PetCare Digital"));
+        }
+
+        @Test
+        void quemSouEuAtualizaOUltimoAcessoNoMaximoUmaVezPorHora() throws Exception {
+            String token = tokenValido();
+            Usuario usuario = usuarioRepository.findByEmail(EMAIL).orElseThrow();
+
+            // Acesso de 2 horas atrás: o /auth/me grava o novo
+            Instant antigo = Instant.now().minus(Duration.ofHours(2));
+            usuario.setUltimoAcessoEm(antigo);
+            usuarioRepository.save(usuario);
+            eu("Bearer " + token).andExpect(status().isOk());
+            assertThat(usuarioRepository.findByEmail(EMAIL).orElseThrow().getUltimoAcessoEm()).isAfter(antigo);
+
+            // Acesso de 10 minutos atrás: não grava de novo
+            Instant recente = Instant.now().minus(Duration.ofMinutes(10));
+            usuario.setUltimoAcessoEm(recente);
+            usuarioRepository.save(usuario);
+            eu("Bearer " + token).andExpect(status().isOk());
+            assertThat(usuarioRepository.findByEmail(EMAIL).orElseThrow().getUltimoAcessoEm()).isEqualTo(recente);
         }
 
         @Test

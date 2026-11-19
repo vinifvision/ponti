@@ -78,9 +78,10 @@ public class AuthController {
         Long usuarioId = jwtService.validar(authorization.substring(PREFIXO_BEARER.length()));
 
         // O token pode ser válido mas o usuário ter sido apagado depois
-        return usuarioRepository.findById(usuarioId)
-                .map(this::resumo)
+        Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido ou expirado"));
+        loginService.registrarAcesso(usuario);
+        return resumo(usuario);
     }
 
     // Monta a resposta com o nome do perfil (startup ou mentor) dono da conta
