@@ -1,7 +1,6 @@
 import { FAIXAS_PRECO } from './preco.utils';
 import type { OpcaoFiltro } from './filtro-select/filtro-select.component';
-import type { Mentor, Startup } from '../models';
-import { separarLista } from './texto.utils';
+import type { Startup } from '../models';
 
 // Opções dos filtros de busca. Ficam aqui porque a navbar (painel de filtros da busca)
 // e as telas "Encontrar mentores" / "Encontrar startups" mostram as mesmas listas.
@@ -14,8 +13,12 @@ export const OPCOES_EXPERIENCIA: OpcaoFiltro[] = [
 
 export const OPCOES_PRECO: OpcaoFiltro[] = FAIXAS_PRECO;
 
+// "Recomendados" é a ordem padrão do servidor: a compatibilidade pesa mais, mas agenda livre, reputação e
+// responsividade também contam. A porcentagem de compatibilidade continua no card.
+export const ROTULO_RECOMENDADOS = 'Recomendados';
+
 export const OPCOES_ORDENACAO_MENTORES: OpcaoFiltro[] = [
-  { valor: 'compatibilidade', rotulo: 'Mais compatíveis' },
+  { valor: 'recomendados', rotulo: ROTULO_RECOMENDADOS },
   { valor: 'nome', rotulo: 'Nome (A-Z)' },
   { valor: 'menor-valor', rotulo: 'Menor valor por sessão' },
   { valor: 'maior-valor', rotulo: 'Maior valor por sessão' },
@@ -33,12 +36,6 @@ export const OPCOES_ORDENACAO_STARTUPS: OpcaoFiltro[] = [
   { valor: 'mais-madura', rotulo: 'Mais madura primeiro' },
   { valor: 'menos-madura', rotulo: 'Menos madura primeiro' },
 ];
-
-// Áreas que aparecem no filtro "Área de atuação" (vêm do campo ecossistemas dos mentores)
-export function opcoesDeArea(mentores: Pick<Mentor, 'ecossistemas'>[]): OpcaoFiltro[] {
-  const areas = new Set(mentores.flatMap((m) => separarLista(m.ecossistemas)));
-  return [...areas].sort().map((area) => ({ valor: area, rotulo: area }));
-}
 
 // Segmentos que aparecem no filtro "Segmento" das startups
 export function opcoesDeSegmento(startups: Pick<Startup, 'segmento'>[]): OpcaoFiltro[] {

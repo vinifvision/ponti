@@ -23,6 +23,7 @@ import {
   OPCOES_ORDENACAO_MENTORES,
   OPCOES_ORDENACAO_STARTUPS,
   OPCOES_PRECO,
+  ROTULO_RECOMENDADOS,
   opcoesDeSegmento,
 } from '../../shared/busca-opcoes';
 import { OpcaoFiltro, FiltroSelectComponent } from '../../shared/filtro-select/filtro-select.component';
@@ -133,7 +134,7 @@ export class TopbarComponent {
           { rotulo: 'Área de atuação', placeholder: 'Todas', limpavel: true, opcoes: this.busca.opcoesArea(), aplicado: this.busca.area },
           { rotulo: 'Experiência', placeholder: 'Todas', limpavel: true, opcoes: OPCOES_EXPERIENCIA, aplicado: this.busca.experiencia },
           { rotulo: 'Faixa de preço', placeholder: 'Qualquer valor', limpavel: true, opcoes: OPCOES_PRECO, aplicado: this.busca.faixaPreco },
-          { rotulo: 'Ordenar', placeholder: 'Mais compatíveis', limpavel: false, opcoes: OPCOES_ORDENACAO_MENTORES, aplicado: this.busca.ordenacaoMentores },
+          { rotulo: 'Ordenar', placeholder: ROTULO_RECOMENDADOS, limpavel: false, opcoes: OPCOES_ORDENACAO_MENTORES, aplicado: this.busca.ordenacaoMentores },
         ],
   );
 
