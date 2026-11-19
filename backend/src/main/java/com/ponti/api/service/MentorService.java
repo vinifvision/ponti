@@ -2,6 +2,7 @@ package com.ponti.api.service;
 
 import com.ponti.api.dto.AtualizacaoMentor;
 import com.ponti.api.dto.MentorResposta;
+import com.ponti.api.dto.Pagina;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.repository.AgendamentoRepository;
 import com.ponti.api.repository.AvaliacaoRepository;
@@ -10,9 +11,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +45,25 @@ public class MentorService {
     public List<MentorResposta> listar() {
         Reputacao r = reputacao();
         return mentorRepository.findAll().stream().map(r::aplicar).toList();
+    }
+
+    // Busca geral (GET /mentores, para quem não é startup): mesmos filtros e paginação da busca da startup,
+    // em ordem alfabética. Sem match não existe ordem de recomendação.
+    public Pagina<MentorResposta> pesquisar(BuscaMentores.Filtro filtro) {
+        if (filtro.ordenacao() == BuscaMentores.Ordenacao.RECOMENDADOS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A ordenação recomendados é só para startups, em /mentores/recomendados");
+        }
+        Set<Long> comHorario = indicadores.comHorarioNaSemana();
+        List<MentorResposta> porNome = new ArrayList<>(listar());
+        porNome.sort(BuscaMentores.porCampo(BuscaMentores.Ordenacao.NOME, (MentorResposta m) -> m)
+                .thenComparing(MentorResposta::id));
+        return BuscaMentores.buscar(porNome, filtro, m -> filtro.aceita(m, comHorario.contains(m.id())), m -> m);
+    }
+
+    // Todas as áreas que os mentores atendem (opções do filtro "Área de atuação")
+    public List<String> areas() {
+        return BuscaMentores.areas(mentorRepository.findAll().stream().map(Mentor::getEcossistemas).toList());
     }
 
     public MentorResposta buscar(Long id) {

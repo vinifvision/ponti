@@ -175,6 +175,17 @@ public class IndicadoresMentorService {
 
     // ================================================================ busca
 
+    // Mentores com horário livre nos próximos 7 dias (filtro "comHorarioEm7Dias" da busca geral)
+    @Transactional(readOnly = true)
+    public Set<Long> comHorarioNaSemana() {
+        Map<Long, MentorIndicadores> tabela = indicadoresRepository.findAll().stream()
+                .collect(Collectors.toMap(MentorIndicadores::getMentorId, Function.identity()));
+        return mentorRepository.findAll().stream()
+                .filter(m -> (tabela.containsKey(m.getId()) ? tabela.get(m.getId()) : calcularUm(m)).isTemHorario7d())
+                .map(Mentor::getId)
+                .collect(Collectors.toSet());
+    }
+
     // Os indicadores de todos os mentores, vistos pela startup que busca, e a média geral da plataforma
     public record Coleta(List<Indicadores> indicadores, double mediaGeral) {
     }

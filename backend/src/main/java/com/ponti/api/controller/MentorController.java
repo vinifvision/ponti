@@ -6,6 +6,7 @@ import com.ponti.api.dto.ContatoPrivado;
 import com.ponti.api.dto.MentorRecomendado;
 import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.NovaCertificacao;
+import com.ponti.api.dto.Pagina;
 import com.ponti.api.model.Certificacao;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.repository.CertificacaoRepository;
@@ -13,6 +14,7 @@ import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.seguranca.Acesso;
 import com.ponti.api.seguranca.UsuarioLogado;
 import com.ponti.api.service.AvaliacaoService;
+import com.ponti.api.service.BuscaMentores;
 import com.ponti.api.service.ContaService;
 import com.ponti.api.service.MatchService;
 import com.ponti.api.service.MentorService;
@@ -98,21 +100,49 @@ public class MentorController {
         }
     }
 
-    // Mentores ordenados pela compatibilidade com a startup logada (temas que ela precisa e setor).
-    // Só startups usam esta lista; o mentor logado recebe 403.
+    // Busca da startup logada: mentores na ordem de recomendação (ver RankingMentores), com filtros e
+    // paginação (ver BuscaMentores). Só startups usam esta lista; o mentor logado recebe 403.
     @GetMapping("/recomendados")
-    public List<MentorRecomendado> recomendados() {
+    public Pagina<MentorRecomendado> recomendados(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String area,
+            @RequestParam(required = false) String experiencia,
+            @RequestParam(required = false) String faixaPreco,
+            @RequestParam(required = false) Boolean comHorarioEm7Dias,
+            @RequestParam(required = false) String ordenacao,
+            @RequestParam(required = false) Integer pagina,
+            @RequestParam(required = false) Integer tamanho) {
         UsuarioLogado logado = acesso.atual();
         if (logado.startupId() == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, Acesso.SEM_PERMISSAO);
         }
-        return matchService.mentoresParaStartup(logado.startupId());
+        BuscaMentores.Filtro filtro = BuscaMentores.Filtro.de(q, area, experiencia, faixaPreco, comHorarioEm7Dias,
+                ordenacao, pagina, tamanho, BuscaMentores.Ordenacao.RECOMENDADOS);
+        return matchService.buscarParaStartup(logado.startupId(), filtro);
     }
 
-    // READ (todos), já com a reputação de cada mentor (nota média e mentorias realizadas)
+    // Busca geral (quem não é startup): mesmos filtros e paginação, em ordem alfabética. Cada mentor já
+    // vem com a reputação (nota média e mentorias realizadas).
     @GetMapping
-    public List<MentorResposta> listar() {
-        return mentorService.listar();
+    public Pagina<MentorResposta> listar(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String area,
+            @RequestParam(required = false) String experiencia,
+            @RequestParam(required = false) String faixaPreco,
+            @RequestParam(required = false) Boolean comHorarioEm7Dias,
+            @RequestParam(required = false) String ordenacao,
+            @RequestParam(required = false) Integer pagina,
+            @RequestParam(required = false) Integer tamanho) {
+        BuscaMentores.Filtro filtro = BuscaMentores.Filtro.de(q, area, experiencia, faixaPreco, comHorarioEm7Dias,
+                ordenacao, pagina, tamanho, BuscaMentores.Ordenacao.NOME);
+        return mentorService.pesquisar(filtro);
+    }
+
+    // Todas as áreas atendidas pelos mentores, para as opções do filtro "Área de atuação".
+    // Com a paginação, a tela não tem mais todos os mentores para montar essa lista sozinha.
+    @GetMapping("/areas")
+    public List<String> areas() {
+        return mentorService.areas();
     }
 
     // READ (um)

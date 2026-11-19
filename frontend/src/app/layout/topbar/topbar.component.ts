@@ -23,7 +23,6 @@ import {
   OPCOES_ORDENACAO_MENTORES,
   OPCOES_ORDENACAO_STARTUPS,
   OPCOES_PRECO,
-  opcoesDeArea,
   opcoesDeSegmento,
 } from '../../shared/busca-opcoes';
 import { OpcaoFiltro, FiltroSelectComponent } from '../../shared/filtro-select/filtro-select.component';
@@ -240,8 +239,8 @@ export class TopbarComponent {
     } else {
       if (this.busca.opcoesArea().length > 0) return;
       this.carregandoOpcoes = true;
-      this.mentorService.recomendados().subscribe({
-        next: (lista) => this.busca.opcoesArea.set(opcoesDeArea(lista)),
+      this.mentorService.areas().subscribe({
+        next: (areas) => this.busca.opcoesArea.set(areas.map((area) => ({ valor: area, rotulo: area }))),
         error: () => {},
         complete: () => (this.carregandoOpcoes = false),
       });

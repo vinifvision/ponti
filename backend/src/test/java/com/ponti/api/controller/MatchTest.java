@@ -87,12 +87,12 @@ class MatchTest {
 
         mockMvc.perform(get("/mentores/recomendados").with(Login.comoStartup(s.getId())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].mentor.nome").value("Mentor Perfeito"))
-                .andExpect(jsonPath("$[0].compatibilidade").value(100))
-                .andExpect(jsonPath("$[0].motivos[0]").value(org.hamcrest.Matchers.startsWith("Ajuda com")))
-                .andExpect(jsonPath("$[1].mentor.nome").value("Mentor Parcial"))
-                .andExpect(jsonPath("$[1].compatibilidade").value(50)) // 37,5 dos temas + 12,5 do setor, arredondado
-                .andExpect(jsonPath("$[?(@.mentor.nome=='Mentor Fora')].compatibilidade").value(0));
+                .andExpect(jsonPath("$.itens[0].mentor.nome").value("Mentor Perfeito"))
+                .andExpect(jsonPath("$.itens[0].compatibilidade").value(100))
+                .andExpect(jsonPath("$.itens[0].motivos[0]").value(org.hamcrest.Matchers.startsWith("Ajuda com")))
+                .andExpect(jsonPath("$.itens[1].mentor.nome").value("Mentor Parcial"))
+                .andExpect(jsonPath("$.itens[1].compatibilidade").value(50)) // 37,5 dos temas + 12,5 do setor, arredondado
+                .andExpect(jsonPath("$.itens[?(@.mentor.nome=='Mentor Fora')].compatibilidade").value(0));
     }
 
     @Test
@@ -103,11 +103,11 @@ class MatchTest {
 
         mockMvc.perform(get("/mentores/recomendados").with(Login.comoStartup(s.getId())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].mentor.nome").value("Parcial Com Agenda"))
-                .andExpect(jsonPath("$[0].motivos").value(org.hamcrest.Matchers.hasItem("Tem horários esta semana")))
+                .andExpect(jsonPath("$.itens[0].mentor.nome").value("Parcial Com Agenda"))
+                .andExpect(jsonPath("$.itens[0].motivos").value(org.hamcrest.Matchers.hasItem("Tem horários esta semana")))
                 // Continua na lista, com a compatibilidade dele; só deixa de disputar o topo
-                .andExpect(jsonPath("$[-1:].mentor.nome").value("Perfeito Sem Agenda"))
-                .andExpect(jsonPath("$[-1:].compatibilidade").value(100));
+                .andExpect(jsonPath("$.itens[-1:].mentor.nome").value("Perfeito Sem Agenda"))
+                .andExpect(jsonPath("$.itens[-1:].compatibilidade").value(100));
     }
 
     @Test
@@ -128,10 +128,10 @@ class MatchTest {
         agendamentoRepository.save(a);
 
         mockMvc.perform(get("/mentores/recomendados").with(Login.comoStartup(recusada.getId())))
-                .andExpect(jsonPath("$[0].mentor.nome").value(org.hamcrest.Matchers.not("Mentor Que Recusou")))
-                .andExpect(jsonPath("$[-1:].mentor.nome").value("Mentor Que Recusou"));
+                .andExpect(jsonPath("$.itens[0].mentor.nome").value(org.hamcrest.Matchers.not("Mentor Que Recusou")))
+                .andExpect(jsonPath("$.itens[-1:].mentor.nome").value("Mentor Que Recusou"));
         mockMvc.perform(get("/mentores/recomendados").with(Login.comoStartup(outra.getId())))
-                .andExpect(jsonPath("$[0].mentor.nome").value("Mentor Que Recusou"));
+                .andExpect(jsonPath("$.itens[0].mentor.nome").value("Mentor Que Recusou"));
     }
 
     @Test
