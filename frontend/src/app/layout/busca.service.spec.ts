@@ -26,6 +26,16 @@ describe('BuscaService', () => {
     expect(busca.ativa()).toBeTrue();
   });
 
+  it('o filtro "com horário nesta semana" conta como busca e é limpo com os outros', () => {
+    busca.comHorarioEm7Dias.set(true);
+    expect(busca.ativa()).toBeTrue();
+
+    busca.limparBusca();
+
+    expect(busca.comHorarioEm7Dias()).toBeFalse();
+    expect(busca.ativa()).toBeFalse();
+  });
+
   it('limparBusca tira texto e filtros e mantém a ordenação', () => {
     busca.termo.set('carlos');
     busca.area.set('Fintechs');

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { CrudService } from '../crud.service';
@@ -7,19 +7,53 @@ import { AvaliacaoPublica, Certificacao, ContatoParcial, ContatoPrivado, Mentor,
 // Maior página que a API aceita em GET /mentores e /mentores/recomendados
 const TAMANHO_MAXIMO = 50;
 
+// Filtros da busca de mentores: os parâmetros de GET /mentores/recomendados ("" ou false = sem filtro)
+export interface FiltrosMentores {
+  q: string;
+  area: string;
+  experiencia: string;
+  faixaPreco: string;
+  comHorarioEm7Dias: boolean;
+  ordenacao: string;
+}
+
+// Como o backend manda cada item ({ mentor, compatibilidade, motivos })
+interface MentorRecomendado {
+  mentor: Mentor;
+  compatibilidade: number;
+  motivos: string[];
+}
+
+// Vira um Mentor com a compatibilidade e os motivos, que é o que os cards usam
+function paraMentor(r: MentorRecomendado): Mentor {
+  return { ...r.mentor, compatibilidade: r.compatibilidade, motivos: r.motivos };
+}
+
 @Injectable({ providedIn: 'root' })
 export class MentorService extends CrudService<Mentor> {
   constructor(http: HttpClient) {
     super(http, 'mentores');
   }
 
-  // GET /mentores/recomendados -> mentores na ordem de recomendação para a startup logada.
-  // O backend devolve páginas de { mentor, compatibilidade, motivos }; aqui vira um Mentor com esses dois campos a mais.
-  // Busca todas as páginas porque a tela "Encontrar mentores" ainda filtra e ordena no navegador
-  // (a etapa 6 da busca troca isso pelos filtros e pela paginação do servidor).
+  // GET /mentores/recomendados com filtros e paginação: uma página da busca da startup logada, na ordem
+  // escolhida. Filtros vazios não vão na URL. Usado pela tela "Encontrar mentores".
+  buscarRecomendados(filtros: FiltrosMentores, pagina: number, tamanho: number): Observable<Pagina<Mentor>> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanho', tamanho);
+    const valores: Record<string, string | boolean> = { ...filtros, q: filtros.q.trim() };
+    for (const [nome, valor] of Object.entries(valores)) {
+      if (valor !== '' && valor !== false) {
+        params = params.set(nome, String(valor));
+      }
+    }
+    return this.http
+      .get<Pagina<MentorRecomendado>>(`${this.url}/recomendados`, { params })
+      .pipe(map((p) => ({ ...p, itens: p.itens.map(paraMentor) })));
+  }
+
+  // GET /mentores/recomendados, todas as páginas: a lista inteira na ordem de recomendação.
+  // Usado onde se precisa da compatibilidade de um mentor específico (ex.: card no perfil do mentor).
   recomendados(): Observable<Mentor[]> {
-    return this.todasAsPaginas<{ mentor: Mentor; compatibilidade: number; motivos: string[] }>(`${this.url}/recomendados`)
-      .pipe(map((lista) => lista.map((r) => ({ ...r.mentor, compatibilidade: r.compatibilidade, motivos: r.motivos }))));
+    return this.todasAsPaginas<MentorRecomendado>(`${this.url}/recomendados`).pipe(map((lista) => lista.map(paraMentor)));
   }
 
   // GET /mentores (paginado, em ordem de nome): todas as páginas, como a lista simples de antes

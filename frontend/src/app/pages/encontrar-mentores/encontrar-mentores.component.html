@@ -1,7 +1,9 @@
 <section class="pt-6">
   <h1 class="text-balance text-3xl font-medium sm:text-4xl">Mentores recomendados</h1>
 
-  <p class="mt-2 max-w-3xl text-gray-600">Ordenados pela compatibilidade com o que a sua startup precisa.</p>
+  <p class="mt-2 max-w-3xl text-gray-600">
+    Primeiro quem combina com o que a sua startup precisa e tem agenda para atender.
+  </p>
 
   @if (semTemas()) {
     <p class="mt-4 max-w-3xl rounded-lg border border-ponti-amarelo bg-ponti-amarelo/10 p-4 text-gray-800" role="status">
@@ -32,22 +34,36 @@
       [limpavel]="true"
       [(valor)]="faixaPreco"
     />
-    <app-filtro-select rotulo="Ordenar" placeholder="Mais compatíveis" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
+    <app-filtro-select rotulo="Ordenar" [placeholder]="rotuloRecomendados" [opcoes]="opcoesOrdenacao" [(valor)]="ordenacao" />
   </div>
 
+  <label class="mt-4 inline-flex cursor-pointer items-center gap-2 text-gray-700">
+    <input
+      type="checkbox"
+      class="size-5 accent-ponti-roxo"
+      [checked]="comHorarioEm7Dias()"
+      (change)="comHorarioEm7Dias.set($any($event.target).checked)"
+    />
+    Só quem tem horário livre nesta semana
+  </label>
 
-  <div class="mt-8">
-    @if (carregando()) {
+
+  <div class="mt-8" [attr.aria-busy]="carregando()">
+    @if (carregando() && mentores().length === 0) {
       <p class="text-gray-500" role="status">Carregando mentores...</p>
     } @else if (erro()) {
       <p class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
-    } @else if (mentoresFiltrados().length === 0) {
+    } @else if (mentores().length === 0) {
       <p class="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500">
         Nenhum mentor encontrado com esses filtros.
       </p>
     } @else {
-      <ul class="flex max-w-[67rem] flex-col gap-8">
-        @for (mentor of mentoresFiltrados(); track mentor.id) {
+      <p class="mb-4 text-sm text-gray-600" role="status">
+        {{ totalItens() }} {{ totalItens() === 1 ? 'mentor encontrado' : 'mentores encontrados' }}
+      </p>
+
+      <ul class="flex max-w-[67rem] flex-col gap-8 transition-opacity" [class.opacity-50]="carregando()">
+        @for (mentor of mentores(); track mentor.id) {
           <li class="relative" (mouseenter)="focar(mentor)" (mouseleave)="desfocarSe(mentor)">
             <app-mentor-card
               class="block w-full"
@@ -64,6 +80,28 @@
           </li>
         }
       </ul>
-    } 
-</div>
+
+      @if (totalPaginas() > 1) {
+        <nav class="mt-8 flex max-w-[67rem] items-center justify-between gap-4" aria-label="Páginas de mentores">
+          <button
+            type="button"
+            class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="!temAnterior() || carregando()"
+            (click)="irParaPagina(pagina() - 1)"
+          >
+            Anterior
+          </button>
+          <span class="text-sm text-gray-600">Página {{ pagina() + 1 }} de {{ totalPaginas() }}</span>
+          <button
+            type="button"
+            class="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="!temProxima() || carregando()"
+            (click)="irParaPagina(pagina() + 1)"
+          >
+            Próxima
+          </button>
+        </nav>
+      }
+    }
+  </div>
 </section>

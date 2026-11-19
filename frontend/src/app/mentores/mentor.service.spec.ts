@@ -2,8 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../api.config';
-import { Mentor } from '../models';
-import { MentorService } from './mentor.service';
+import { Mentor, Pagina } from '../models';
+import { FiltrosMentores, MentorService } from './mentor.service';
 
 // A API devolve os mentores em páginas. Enquanto a tela "Encontrar mentores" filtra no navegador,
 // o serviço busca todas as páginas e entrega uma lista só, como antes da paginação.
@@ -45,6 +45,30 @@ describe('MentorService', () => {
       .flush({ itens: [item(1)], pagina: 0, tamanho: 50, totalItens: 1, totalPaginas: 1 });
 
     expect(resultado.length).toBe(1);
+  });
+
+  it('buscarRecomendados manda só os filtros preenchidos e a página', () => {
+    let pagina: Pagina<Mentor> | undefined;
+    const filtros: FiltrosMentores = {
+      q: '  saude ',
+      area: '',
+      experiencia: 'senior',
+      faixaPreco: '',
+      comHorarioEm7Dias: true,
+      ordenacao: '',
+    };
+    service.buscarRecomendados(filtros, 2, 12).subscribe((p) => (pagina = p));
+
+    const req = http.expectOne((r) => r.url === `${API_URL}/mentores/recomendados`);
+    expect(req.request.params.keys().sort()).toEqual(['comHorarioEm7Dias', 'experiencia', 'pagina', 'q', 'tamanho']);
+    expect(req.request.params.get('q')).toBe('saude');
+    expect(req.request.params.get('pagina')).toBe('2');
+    expect(req.request.params.get('comHorarioEm7Dias')).toBe('true');
+    req.flush({ itens: [item(7)], pagina: 2, tamanho: 12, totalItens: 25, totalPaginas: 3 });
+
+    expect(pagina?.totalItens).toBe(25);
+    expect(pagina?.itens[0].id).toBe(7);
+    expect(pagina?.itens[0].compatibilidade).toBe(80);
   });
 
   it('areas lê a lista de áreas do servidor', () => {

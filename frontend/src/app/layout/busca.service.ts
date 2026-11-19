@@ -11,6 +11,8 @@ export class BuscaService {
   readonly area = signal('');
   readonly experiencia = signal('');
   readonly faixaPreco = signal('');
+  // Só mentores com horário livre nos próximos 7 dias
+  readonly comHorarioEm7Dias = signal(false);
   readonly ordenacaoMentores = signal('');
 
   // Mentor procurando startups
@@ -26,7 +28,8 @@ export class BuscaService {
   readonly ativa = computed(
     () =>
       this.termo().trim() !== '' ||
-      [this.area(), this.experiencia(), this.faixaPreco(), this.segmento(), this.maturidade()].some((v) => v !== ''),
+      [this.area(), this.experiencia(), this.faixaPreco(), this.segmento(), this.maturidade()].some((v) => v !== '') ||
+      this.comHorarioEm7Dias(),
   );
 
   // Cancela a busca: tira o texto e os filtros e a lista volta a mostrar tudo (a ordenação fica como está)
@@ -35,6 +38,7 @@ export class BuscaService {
     this.area.set('');
     this.experiencia.set('');
     this.faixaPreco.set('');
+    this.comHorarioEm7Dias.set(false);
     this.segmento.set('');
     this.maturidade.set('');
   }
