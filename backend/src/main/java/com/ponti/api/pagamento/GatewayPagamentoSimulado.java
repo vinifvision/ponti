@@ -5,6 +5,7 @@ import com.ponti.api.model.Agendamento;
 import com.ponti.api.model.StatusAgendamento;
 import com.ponti.api.model.StatusPagamento;
 import com.ponti.api.repository.AgendamentoRepository;
+import com.ponti.api.service.IndicadoresMentorService;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
@@ -38,15 +39,18 @@ public class GatewayPagamentoSimulado {
     public static final String FINAL_CARTAO_RECUSADO = "0002";
 
     private final AgendamentoRepository agendamentoRepository;
+    private final IndicadoresMentorService indicadores;
     private final Clock relogio;
     private final SecureRandom aleatorio = new SecureRandom();
     private final Duration aprovacaoPix;
     private final Duration validadePix;
 
-    public GatewayPagamentoSimulado(AgendamentoRepository agendamentoRepository, Clock relogio,
+    public GatewayPagamentoSimulado(AgendamentoRepository agendamentoRepository,
+                                    IndicadoresMentorService indicadores, Clock relogio,
                                     @Value("${ponti.pagamento.pix-aprovacao-segundos:6}") long aprovacaoSegundos,
                                     @Value("${ponti.pagamento.pix-validade-minutos:15}") long validadeMinutos) {
         this.agendamentoRepository = agendamentoRepository;
+        this.indicadores = indicadores;
         this.relogio = relogio;
         this.aprovacaoPix = Duration.ofSeconds(aprovacaoSegundos);
         this.validadePix = Duration.ofMinutes(validadeMinutos);
@@ -76,6 +80,8 @@ public class GatewayPagamentoSimulado {
                 a.setStatusPagamento(StatusPagamento.EXPIRADO);
                 a.setStatus(StatusAgendamento.CANCELADO);
                 a.setPixCopiaECola(null);
+                agendamentoRepository.save(a);
+                indicadores.recalcular(a.getMentorId()); // o horário voltou a ficar livre
                 log.info("Pix {} expirou; horário liberado", a.getCodigoTransacao());
             } else if (a.getPagamentoExpiraEm() != null
                     && !agora.isBefore(a.getPagamentoExpiraEm().minus(validadePix).plus(aprovacaoPix))) {
@@ -89,6 +95,7 @@ public class GatewayPagamentoSimulado {
         agendamento.setPagoEm(LocalDateTime.now(relogio));
         agendamento.setPixCopiaECola(null);
         agendamentoRepository.save(agendamento);
+        indicadores.recalcular(agendamento.getMentorId()); // pago: passa a contar na ocupação do mentor
         log.info("Pix {} confirmado (simulado)", agendamento.getCodigoTransacao());
     }
 

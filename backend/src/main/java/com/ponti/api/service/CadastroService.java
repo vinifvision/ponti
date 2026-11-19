@@ -30,6 +30,7 @@ public class CadastroService {
     private final MentorRepository mentorRepository;
     private final CertificacaoRepository certificacaoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IndicadoresMentorService indicadores;
     private final Clock relogio;
 
     public CadastroService(UsuarioRepository usuarioRepository,
@@ -37,12 +38,14 @@ public class CadastroService {
                            MentorRepository mentorRepository,
                            CertificacaoRepository certificacaoRepository,
                            PasswordEncoder passwordEncoder,
+                           IndicadoresMentorService indicadores,
                            Clock relogio) {
         this.usuarioRepository = usuarioRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.certificacaoRepository = certificacaoRepository;
         this.passwordEncoder = passwordEncoder;
+        this.indicadores = indicadores;
         this.relogio = relogio;
     }
 
@@ -98,6 +101,7 @@ public class CadastroService {
         }
 
         usuario.setMentorId(mentorId);
+        indicadores.recalcular(mentorId); // já entra no ranking com a linha de indicadores criada
         return usuarioRepository.save(usuario);
     }
 

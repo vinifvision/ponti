@@ -55,6 +55,11 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
     // Pedidos feitos a partir de uma data (base da confiabilidade)
     List<Agendamento> findByCriadoEmGreaterThanEqual(Instant desde);
 
+    // As mesmas consultas, para um mentor só (recálculo por evento)
+    List<Agendamento> findTop10ByMentorIdAndRespondidoEmNotNullOrderByRespondidoEmDesc(Long mentorId);
+    List<Agendamento> findByMentorIdAndCriadoEmGreaterThanEqual(Long mentorId, Instant desde);
+    long countByMentorIdAndStatusAndFimBefore(Long mentorId, StatusAgendamento status, LocalDateTime agora);
+
     // Pedidos da startup com um status (ex.: os RECUSADOS, para a regra "recusou esta startup")
     List<Agendamento> findByStartupIdAndStatus(Long startupId, StatusAgendamento status);
 

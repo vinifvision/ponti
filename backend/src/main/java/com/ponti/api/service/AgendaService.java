@@ -55,6 +55,7 @@ public class AgendaService {
     private final ConviteRepository conviteRepository;
     private final AvaliacaoRepository avaliacaoRepository;
     private final GatewayPagamentoSimulado gateway;
+    private final IndicadoresMentorService indicadores;
     private final Clock relogio;
 
     public AgendaService(DisponibilidadeRepository disponibilidadeRepository,
@@ -64,6 +65,7 @@ public class AgendaService {
                          ConviteRepository conviteRepository,
                          AvaliacaoRepository avaliacaoRepository,
                          GatewayPagamentoSimulado gateway,
+                         IndicadoresMentorService indicadores,
                          Clock relogio) {
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.agendamentoRepository = agendamentoRepository;
@@ -72,6 +74,7 @@ public class AgendaService {
         this.conviteRepository = conviteRepository;
         this.avaliacaoRepository = avaliacaoRepository;
         this.gateway = gateway;
+        this.indicadores = indicadores;
         this.relogio = relogio;
     }
 
@@ -103,6 +106,7 @@ public class AgendaService {
             d.setHoraFim(faixa.horaFim());
             disponibilidadeRepository.save(d);
         }
+        indicadores.recalcular(mentorId); // a agenda mudou: horários livres e ocupação do ranking
         return disponibilidade(mentorId);
     }
 
@@ -219,6 +223,7 @@ public class AgendaService {
         Agendamento salvo = agendamentoRepository.save(agendamento);
 
         aceitarSugestaoDoMentor(startup.getId(), mentor.getId());
+        indicadores.recalcular(mentor.getId()); // pedido criado (e, no cartão, já pago)
         return salvo;
     }
 
@@ -244,7 +249,7 @@ public class AgendaService {
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
         agendamento.setLinkReuniao(linkReuniao.trim());
         agendamento.setRespondidoEm(Instant.now(relogio));
-        return agendamentoRepository.save(agendamento);
+        return salvarERecalcular(agendamento);
     }
 
     // O mentor recusa o pedido; se foi pago, o valor é "reembolsado" (simulado)
@@ -255,7 +260,7 @@ public class AgendaService {
         agendamento.setStatus(StatusAgendamento.RECUSADO);
         agendamento.setRespondidoEm(Instant.now(relogio));
         reembolsarSePago(agendamento);
-        return agendamentoRepository.save(agendamento);
+        return salvarERecalcular(agendamento);
     }
 
     // Qualquer lado cancela uma sessão pendente ou confirmada que ainda não aconteceu.
@@ -272,7 +277,14 @@ public class AgendaService {
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         agendamento.setCanceladoPor(quem);
         reembolsarSePago(agendamento);
-        return agendamentoRepository.save(agendamento);
+        return salvarERecalcular(agendamento);
+    }
+
+    // Toda mudança de status do agendamento mexe nos indicadores do mentor no ranking
+    private Agendamento salvarERecalcular(Agendamento agendamento) {
+        Agendamento salvo = agendamentoRepository.save(agendamento);
+        indicadores.recalcular(salvo.getMentorId());
+        return salvo;
     }
 
     public List<AgendamentoDetalhe> listar(Long startupId, Long mentorId) {
