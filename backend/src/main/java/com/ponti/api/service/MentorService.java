@@ -26,13 +26,16 @@ public class MentorService {
     private final MentorRepository mentorRepository;
     private final AvaliacaoRepository avaliacaoRepository;
     private final AgendamentoRepository agendamentoRepository;
+    private final IndicadoresMentorService indicadores;
     private final Clock relogio;
 
     public MentorService(MentorRepository mentorRepository, AvaliacaoRepository avaliacaoRepository,
-                         AgendamentoRepository agendamentoRepository, Clock relogio) {
+                         AgendamentoRepository agendamentoRepository, IndicadoresMentorService indicadores,
+                         Clock relogio) {
         this.mentorRepository = mentorRepository;
         this.avaliacaoRepository = avaliacaoRepository;
         this.agendamentoRepository = agendamentoRepository;
+        this.indicadores = indicadores;
         this.relogio = relogio;
     }
 
@@ -62,7 +65,11 @@ public class MentorService {
         if (dados.linkedinUrl() != null) m.setLinkedinUrl(vazioViraNulo(dados.linkedinUrl()));
         if (dados.whatsapp() != null) m.setWhatsapp(dados.whatsapp());
         if (dados.compartilharWhatsapp() != null) m.setCompartilharWhatsapp(dados.compartilharWhatsapp());
-        return buscar(mentorRepository.save(m).getId());
+        mentorRepository.save(m);
+        if (dados.duracaoSessaoMinutos() != null) {
+            indicadores.recalcular(id); // outra duração gera outros blocos na agenda
+        }
+        return buscar(id);
     }
 
     public Mentor buscarEntidade(Long id) {

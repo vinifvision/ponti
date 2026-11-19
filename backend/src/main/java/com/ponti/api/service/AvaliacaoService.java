@@ -25,13 +25,16 @@ public class AvaliacaoService {
     private final StartupRepository startupRepository;
     private final MentorRepository mentorRepository;
     private final AgendaService agendaService;
+    private final IndicadoresMentorService indicadores;
 
     public AvaliacaoService(AvaliacaoRepository avaliacaoRepository, StartupRepository startupRepository,
-                            MentorRepository mentorRepository, AgendaService agendaService) {
+                            MentorRepository mentorRepository, AgendaService agendaService,
+                            IndicadoresMentorService indicadores) {
         this.avaliacaoRepository = avaliacaoRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.agendaService = agendaService;
+        this.indicadores = indicadores;
     }
 
     @Transactional
@@ -48,7 +51,9 @@ public class AvaliacaoService {
         avaliacao.setStartupId(agendamento.getStartupId());
         avaliacao.setNota(dados.nota());
         avaliacao.setComentario(dados.comentario() == null || dados.comentario().isBlank() ? null : dados.comentario().trim());
-        return avaliacaoRepository.save(avaliacao);
+        Avaliacao salva = avaliacaoRepository.save(avaliacao);
+        indicadores.recalcular(salva.getMentorId()); // nova nota: reputação do mentor no ranking
+        return salva;
     }
 
     public List<AvaliacaoPublica> doMentor(Long mentorId) {
