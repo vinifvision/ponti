@@ -54,22 +54,42 @@ paths:
   /mentores/recomendados:
     get:
       tags: [Match]
-      summary: Mentores ordenados pela compatibilidade com a startup logada
+      summary: Busca de mentores da startup logada, na ordem de recomendação, com filtros e paginação
       description: >
-        Só para startups (mentor recebe 403). A compatibilidade vai de 0 a 100: 75 pontos pelos temas que o
-        mentor cobre entre os que a startup precisa, mais 25 pelo setor (metade se o mentor atende todas as áreas).
-        Cada item traz os motivos escritos.
+        Só para startups (mentor recebe 403). A ordem padrão (`recomendados`) usa uma nota composta: a
+        compatibilidade pesa mais, mas agenda livre, reputação, responsividade, perfil completo e atividade
+        também contam, e mentores sem horário nos próximos 14 dias, inativos há mais de 30 dias ou que
+        recusaram esta startup nos últimos 30 dias vão para o fim da lista. A nota não é exibida.
+
+        A compatibilidade (0 a 100) continua em cada item: 75 pontos pelos temas que o mentor cobre entre os
+        que a startup precisa, mais 25 pelo setor (metade se o mentor atende todas as áreas). Os motivos
+        trazem os do match seguidos de até dois de ordenação ("Tem horários esta semana",
+        "Costuma responder em até 24h", "Bem avaliado", "Novo na Ponti").
+
+        Os filtros são aplicados antes da ordenação e da paginação: `totalItens` conta só quem passou neles.
+      parameters:
+        - $ref: "#/components/parameters/BuscaTexto"
+        - $ref: "#/components/parameters/BuscaArea"
+        - $ref: "#/components/parameters/BuscaExperiencia"
+        - $ref: "#/components/parameters/BuscaFaixaPreco"
+        - $ref: "#/components/parameters/BuscaComHorario"
+        - name: ordenacao
+          in: query
+          description: >
+            `recomendados` usa a nota de recomendação; as outras ordenam pelo campo, com a nota como desempate.
+            Nas ordenações por valor, mentor sem valor ("A combinar") conta como R$ 0.
+          schema: { type: string, enum: [recomendados, nome, menor-valor, maior-valor], default: recomendados }
+        - $ref: "#/components/parameters/Pagina"
+        - $ref: "#/components/parameters/TamanhoPagina"
       responses:
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
         "401": { $ref: "#/components/responses/SemLogin" }
         "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
-          description: Lista retornada com sucesso
+          description: Página de mentores recomendados
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/MentorRecomendado"
+              schema: { $ref: "#/components/schemas/PaginaMentorRecomendado" }
   /startups/recomendadas:
     get:
       tags: [Match]
@@ -175,18 +195,47 @@ paths:
   /mentores:
     get:
       tags: [Mentores]
-      summary: Lista mentores
+      summary: Busca geral de mentores (para quem não é startup), com filtros e paginação, em ordem de nome
+      description: >
+        Mesmos filtros e paginação de /mentores/recomendados. Sem startup não há compatibilidade, então a
+        ordem padrão é por nome e `ordenacao=recomendados` dá 400. Cada item já traz a reputação do mentor.
+      parameters:
+        - $ref: "#/components/parameters/BuscaTexto"
+        - $ref: "#/components/parameters/BuscaArea"
+        - $ref: "#/components/parameters/BuscaExperiencia"
+        - $ref: "#/components/parameters/BuscaFaixaPreco"
+        - $ref: "#/components/parameters/BuscaComHorario"
+        - name: ordenacao
+          in: query
+          description: Nas ordenações por valor, mentor sem valor ("A combinar") conta como R$ 0; empates ficam em ordem de nome.
+          schema: { type: string, enum: [nome, menor-valor, maior-valor], default: nome }
+        - $ref: "#/components/parameters/Pagina"
+        - $ref: "#/components/parameters/TamanhoPagina"
+      responses:
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: Página de mentores
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginaMentor" }
+  /mentores/areas:
+    get:
+      tags: [Mentores]
+      summary: Todas as áreas atendidas pelos mentores (opções do filtro "Área de atuação")
+      description: >
+        Junta os itens do campo `ecossistemas` de todos os mentores, sem repetir, em ordem alfabética.
+        Com a paginação, a tela não tem mais todos os mentores para montar essa lista sozinha.
       responses:
         "401": { $ref: "#/components/responses/SemLogin" }
-        "403": { $ref: "#/components/responses/SemPermissao" }
         "200":
-          description: Lista retornada com sucesso
+          description: Lista de áreas
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Mentor"
+                items: { type: string }
+                example: ["Agritechs", "Edtechs", "Fintechs", "Health-techs", "PetTech", "SaaS"]
   /mentores/{id}:
     parameters:
       - name: id
@@ -429,6 +478,34 @@ paths:
           description: Não encontrado
         "409":
           description: O convite já foi respondido
+  /mentores/{id}/contato:
+    get:
+      tags: [Mentores]
+      summary: WhatsApp e autorização de compartilhar. Só o próprio mentor
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Contato privado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContatoPrivado" }
+  /startups/{id}/contato:
+    get:
+      tags: [Startups]
+      summary: WhatsApp e autorização de compartilhar. Só a própria startup
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Contato privado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContatoPrivado" }
   /mentores/{id}/certificacoes:
     parameters:
       - name: id
@@ -882,7 +959,52 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  parameters:
+    BuscaTexto:
+      name: q
+      in: query
+      description: Texto contido em nome, bio, áreas de atuação ou ecossistemas (ignora maiúsculas e acentos)
+      schema: { type: string, example: saude }
+    BuscaArea:
+      name: area
+      in: query
+      description: Um dos itens de `ecossistemas` igual a este valor (ver GET /mentores/areas)
+      schema: { type: string, example: PetTech }
+    BuscaExperiencia:
+      name: experiencia
+      in: query
+      description: >
+        `iniciante` = até 2 anos; `intermediario` = de 3 a 5; `senior` = mais de 5.
+        Mentor sem anos de experiência não entra em nenhuma faixa.
+      schema: { type: string, enum: [iniciante, intermediario, senior] }
+    BuscaFaixaPreco:
+      name: faixaPreco
+      in: query
+      description: >
+        `gratuita` = R$ 0; `ate-100` = mais de R$ 0 até R$ 100; `100-200` = mais de R$ 100 até R$ 200;
+        `acima-200` = mais de R$ 200. Mentor sem valor ("A combinar") não entra em nenhuma faixa.
+      schema: { type: string, enum: [gratuita, ate-100, 100-200, acima-200] }
+    BuscaComHorario:
+      name: comHorarioEm7Dias
+      in: query
+      description: true = só mentores com horário livre nos próximos 7 dias
+      schema: { type: boolean, default: false }
+    Pagina:
+      name: pagina
+      in: query
+      description: Número da página, começando em 0
+      schema: { type: integer, minimum: 0, default: 0 }
+    TamanhoPagina:
+      name: tamanho
+      in: query
+      description: Itens por página
+      schema: { type: integer, minimum: 1, maximum: 50, default: 12 }
   responses:
+    ParametroInvalido:
+      description: Parâmetro de busca inválido (a mensagem lista os valores aceitos)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Erro" }
     SemLogin:
       description: Token ausente, inválido ou expirado
       content:
@@ -902,7 +1024,27 @@ components:
         motivos:
           type: array
           items: { type: string }
-          example: ["Ajuda com Validação de ideia e Pitch e captação (2 de 3 temas que você precisa)", "Conhece o setor PetTech"]
+          example: ["Ajuda com Validação de ideia e Pitch e captação (2 de 3 temas que você precisa)", "Conhece o setor PetTech", "Tem horários esta semana"]
+    PaginaMentorRecomendado:
+      type: object
+      properties:
+        itens:
+          type: array
+          items: { $ref: "#/components/schemas/MentorRecomendado" }
+        pagina: { type: integer, example: 0 }
+        tamanho: { type: integer, example: 12 }
+        totalItens: { type: integer, format: int64, example: 37, description: Total de mentores que passaram nos filtros }
+        totalPaginas: { type: integer, example: 4 }
+    PaginaMentor:
+      type: object
+      properties:
+        itens:
+          type: array
+          items: { $ref: "#/components/schemas/Mentor" }
+        pagina: { type: integer, example: 0 }
+        tamanho: { type: integer, example: 12 }
+        totalItens: { type: integer, format: int64, example: 37, description: Total de mentores que passaram nos filtros }
+        totalPaginas: { type: integer, example: 4 }
     StartupRecomendada:
       type: object
       properties:
@@ -1071,6 +1213,8 @@ components:
         fotoUrl: { type: string, maxLength: 500 }
         videoUrl: { type: string, maxLength: 500 }
         linkedinUrl: { type: string, maxLength: 500 }
+        whatsapp: { type: string, description: "Troca o WhatsApp (DDD + número). Não pode ser apagado: \"\" dá 400." }
+        compartilharWhatsapp: { type: boolean, description: Mostrar o WhatsApp às startups nas mentorias confirmadas }
     AtualizacaoStartup:
       type: object
       description: Todos os campos são opcionais
@@ -1090,6 +1234,8 @@ components:
         estado: { type: string, maxLength: 2 }
         site: { type: string, maxLength: 500 }
         estagioMaturidade: { type: integer, minimum: 1, maximum: 9 }
+        whatsapp: { type: string, description: 'WhatsApp (DDD + número); "" apaga' }
+        compartilharWhatsapp: { type: boolean, description: Mostrar o WhatsApp aos mentores nas mentorias confirmadas }
     Certificacao:
       type: object
       required: [titulo]
@@ -1230,6 +1376,15 @@ components:
         nome: { type: string }
         fotoUrl: { type: string, nullable: true }
         descricao: { type: string, nullable: true, description: Segmento da startup ou área do mentor }
+        whatsapp:
+          type: string
+          nullable: true
+          description: "Só com a mentoria CONFIRMADA e se esta parte autorizou compartilhar (ex.: 5581999998888)"
+    ContatoPrivado:
+      type: object
+      properties:
+        whatsapp: { type: string, nullable: true, example: "5581999998888" }
+        compartilharWhatsapp: { type: boolean }
     Convite:
       type: object
       required: [startupId, mentorId]
@@ -1297,9 +1452,14 @@ components:
         videoPitchUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
         fotoUrl: { type: string, maxLength: 500 }
         site: { type: string, maxLength: 500 }
+        whatsapp:
+          type: string
+          description: Opcional. WhatsApp (Brasil), com DDD; mesmo formato do mentor. Privado, nunca volta nas respostas.
+          example: "(81) 3333-4444"
+        compartilharWhatsapp: { type: boolean, default: false, description: Autoriza mostrar o WhatsApp à outra parte nas mentorias confirmadas }
     CadastroMentor:
       type: object
-      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, valorSessao, duracaoSessaoMinutos]
+      required: [nome, areaAtuacao, anosExperiencia, sobre, email, senha, whatsapp, valorSessao, duracaoSessaoMinutos]
       properties:
         temas:
           type: array
@@ -1340,6 +1500,11 @@ components:
         fotoUrl: { type: string, maxLength: 500 }
         videoUrl: { type: string, maxLength: 500, example: "https://www.youtube.com/watch?v=..." }
         linkedinUrl: { type: string, maxLength: 500 }
+        whatsapp:
+          type: string
+          description: WhatsApp (Brasil), com DDD. Aceita "(81) 99999-8888"; é gravado como "5581999998888". Privado, nunca volta nas respostas.
+          example: "(81) 99999-8888"
+        compartilharWhatsapp: { type: boolean, default: false, description: Autoriza mostrar o WhatsApp à outra parte nas mentorias confirmadas }
         certificacoes:
           type: array
           maxItems: 20

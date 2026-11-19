@@ -201,3 +201,12 @@ export interface Agendamento {
   pagamento?: PagamentoAgendamento | null;
   avaliacao?: { nota: number; comentario?: string | null } | null;
 }
+
+// Uma página de resultados da API (GET /mentores e GET /mentores/recomendados)
+export interface Pagina<T> {
+  itens: T[];
+  pagina: number;
+  tamanho: number;
+  totalItens: number;
+  totalPaginas: number;
+}

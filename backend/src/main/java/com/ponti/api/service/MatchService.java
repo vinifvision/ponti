@@ -2,6 +2,7 @@ package com.ponti.api.service;
 
 import com.ponti.api.config.RankingPropriedades;
 import com.ponti.api.dto.MentorRecomendado;
+import com.ponti.api.dto.Pagina;
 import com.ponti.api.dto.MentorResposta;
 import com.ponti.api.dto.StartupRecomendada;
 import com.ponti.api.model.Mentor;
@@ -57,10 +58,24 @@ public class MatchService {
     public record Resultado(int pontos, List<String> motivos) {
     }
 
-    // Mentores para a startup logada, na ordem de recomendação (ver RankingMentores): a compatibilidade
+    // Busca da startup logada (GET /mentores/recomendados): filtros, ordenação e paginação de BuscaMentores
+    // sobre a lista na ordem de recomendação. Os filtros valem antes da ordenação e da paginação, então
+    // totalItens conta só quem passou neles.
+    public Pagina<MentorRecomendado> buscarParaStartup(Long startupId, BuscaMentores.Filtro filtro) {
+        return BuscaMentores.buscar(ranquear(startupId), filtro,
+                        r -> filtro.aceita(r.item().mentor(), r.temHorario7d()),
+                        r -> r.item().mentor())
+                .mapear(Ranqueado::item);
+    }
+
+    // Um mentor na ordem de recomendação, com o indicador que o filtro "com horário em 7 dias" usa
+    record Ranqueado(MentorRecomendado item, boolean temHorario7d) {
+    }
+
+    // Mentores para a startup, na ordem de recomendação (ver RankingMentores): a compatibilidade
     // pesa mais, mas agenda, reputação, responsividade, perfil e atividade também contam.
     // A porcentagem de compatibilidade continua no card, com os motivos do match seguidos dos de ordenação.
-    public List<MentorRecomendado> mentoresParaStartup(Long startupId) {
+    List<Ranqueado> ranquear(Long startupId) {
         Startup startup = startupRepository.findById(startupId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Startup não encontrado(a)"));
 
@@ -82,7 +97,8 @@ public class MatchService {
                     Resultado r = matches.get(id);
                     List<String> motivos = new ArrayList<>(r.motivos());
                     motivos.addAll(c.nota().motivos());
-                    return new MentorRecomendado(mentores.get(id), r.pontos(), motivos);
+                    return new Ranqueado(new MentorRecomendado(mentores.get(id), r.pontos(), motivos),
+                            c.indicadores().temHorario7d());
                 })
                 .toList();
     }
