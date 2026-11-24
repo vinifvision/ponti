@@ -1,0 +1,91 @@
+@if (acompanhamento(); as a) {
+  <article class="flex flex-col gap-4 rounded-xl border p-6" [class]="classeCard()">
+    <div class="flex flex-wrap items-center gap-4">
+      @if (a.parceiro.fotoUrl) {
+        <img [src]="a.parceiro.fotoUrl" alt="" class="size-14 shrink-0 rounded-full border border-gray-200 object-cover" />
+      } @else {
+        <div
+          class="flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold"
+          [class]="a.status === 'ENCERRADO' ? 'bg-gray-200 text-gray-600' : 'bg-ponti-lilas/40 text-ponti-marinho'"
+          aria-hidden="true"
+        >
+          {{ iniciais() }}
+        </div>
+      }
+
+      <div class="min-w-0 flex-1">
+        <h3 class="text-xl font-bold">{{ a.parceiro.nome }}</h3>
+        @if (a.parceiro.subtitulo) {
+          <p class="text-gray-600">{{ a.parceiro.subtitulo }}</p>
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        @for (selo of selos(); track selo.texto) {
+          <app-selo [tom]="selo.tom">{{ selo.texto }}</app-selo>
+        }
+      </div>
+    </div>
+
+    <p class="text-lg leading-relaxed">{{ a.objetivo }}</p>
+
+    @switch (a.status) {
+      @case ('PROPOSTO') {
+        @if (a.metasSugeridas) {
+          <p class="text-gray-600">{{ metasSugeridas() }} pelo mentor</p>
+        }
+        <div class="flex flex-wrap items-center gap-3">
+          @if (!ehMentor()) {
+            <button
+              type="button"
+              (click)="aceitar.emit(a)"
+              class="cursor-pointer rounded-lg bg-ponti-roxo px-8 py-2.5 font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+            >
+              Aceitar
+            </button>
+            <button
+              type="button"
+              (click)="recusar.emit(a)"
+              class="cursor-pointer rounded-lg border border-gray-300 bg-white px-8 py-2.5 font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            >
+              Recusar
+            </button>
+          }
+          <a [routerLink]="rotaPerfil()" class="font-medium text-ponti-marinho hover:underline">{{ textoPerfil() }}</a>
+        </div>
+      }
+
+      @case ('ATIVO') {
+        <div>
+          <div class="mb-2 flex justify-between text-sm text-gray-600">
+            <span>Atividades aprovadas</span>
+            <span>{{ a.atividadesAprovadas }} de {{ a.atividadesTotal }}</span>
+          </div>
+          <app-barra-progresso [valor]="progressoAtividades()" rotulo="Atividades aprovadas" />
+        </div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-gray-600">
+          <span>Metas {{ a.metasCumpridas }} de {{ a.metasTotal }}</span>
+          @if (a.proximoPrazo) {
+            <span>Próxima entrega {{ dataCurta(a.proximoPrazo) }}</span>
+          }
+          <a
+            [routerLink]="['/acompanhamentos', a.id]"
+            class="ml-auto rounded-lg border border-ponti-lilas bg-white px-6 py-2.5 font-medium text-gray-800 transition-colors hover:bg-ponti-lilas/20"
+          >
+            Abrir acompanhamento
+          </a>
+        </div>
+      }
+
+      @case ('ENCERRADO') {
+        <p class="text-gray-600">
+          Encerrado em {{ dataCurta(a.dataFim) }} · {{ a.atividadesAprovadas }} de {{ a.atividadesTotal }} atividades aprovadas ·
+          {{ a.metasCumpridas }} de {{ a.metasTotal }} metas cumpridas
+        </p>
+        <div>
+          <a [routerLink]="['/acompanhamentos', a.id]" class="font-medium text-ponti-marinho hover:underline">Ver histórico</a>
+        </div>
+      }
+    }
+  </article>
+}

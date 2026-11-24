@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
+import { ModalPropostaComponent } from '../../acompanhamentos/componentes/modal-proposta.component';
 import { ConviteService } from '../../convites/convite.service';
 import { Certificacao, Convite, Startup } from '../../models';
 import { CompatibilidadeComponent } from '../../shared/compatibilidade/compatibilidade.component';
@@ -24,7 +25,7 @@ import { StartupService } from '../../startups/startup.service';
 @Component({
   selector: 'app-perfil-startup',
   standalone: true,
-  imports: [IconeComponent, RouterLink, TemasChipsComponent, CompatibilidadeComponent],
+  imports: [IconeComponent, RouterLink, TemasChipsComponent, CompatibilidadeComponent, ModalPropostaComponent],
   templateUrl: './perfil-startup.component.html',
 })
 export class PerfilStartupComponent implements OnInit {

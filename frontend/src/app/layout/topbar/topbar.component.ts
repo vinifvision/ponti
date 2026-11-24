@@ -111,12 +111,14 @@ export class TopbarComponent {
     this.sessao.tipo() === 'MENTOR'
       ? [
           { rotulo: 'Encontrar Startups', rota: '/encontrar-startups', icone: 'busca', relacionadas: ['/startups'] },
+          { rotulo: 'Acompanhamentos', rota: '/acompanhamentos', icone: 'lista-checagem' },
           { rotulo: 'Mentorias', rota: '/mentorias', icone: 'agenda' },
           { rotulo: 'Minha agenda', rota: '/agenda', icone: 'agenda-relogio' },
           { rotulo: 'Meu perfil', rota: '/perfil', icone: 'usuario' },
         ]
       : [
           { rotulo: 'Encontrar Mentores', rota: '/encontrar-mentores', icone: 'busca', relacionadas: ['/mentores'] },
+          { rotulo: 'Acompanhamentos', rota: '/acompanhamentos', icone: 'lista-checagem' },
           { rotulo: 'Mentorias', rota: '/mentorias', icone: 'agenda' },
           { rotulo: 'Meu perfil', rota: '/perfil', icone: 'usuario' },
         ],

@@ -1,0 +1,91 @@
+<section class="max-w-4xl pb-12 pt-6">
+  <h1 class="text-balance text-3xl font-medium sm:text-4xl">Acompanhamentos</h1>
+  <p class="mt-2 text-gray-500">
+    @if (ehMentor()) {
+      As startups que você acompanha, com o que precisa da sua atenção.
+    } @else {
+      Metas, atividades e relatórios de cada mentor que acompanha a sua startup.
+    }
+  </p>
+
+  @if (erro()) {
+    <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+  }
+
+  @if (carregando()) {
+    <p class="mt-8 text-gray-500" role="status">Carregando acompanhamentos...</p>
+  } @else if (vazio() && !erro()) {
+    <div class="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+      @if (ehMentor()) {
+        <p class="text-lg">Você ainda não tem acompanhamentos.</p>
+        <p class="mt-2 text-gray-500">
+          Para propor um, abra o perfil de uma startup e clique em "Propor acompanhamento".
+        </p>
+        <a routerLink="/encontrar-startups" class="mt-5 inline-block font-medium text-ponti-marinho hover:underline">Encontrar startups</a>
+      } @else {
+        <p class="text-lg">Você ainda não tem acompanhamentos.</p>
+        <p class="mt-2 text-gray-500">
+          Um mentor pode propor um acompanhamento depois de conhecer a sua startup. Você receberá a proposta aqui.
+        </p>
+        <a routerLink="/encontrar-mentores" class="mt-5 inline-block font-medium text-ponti-marinho hover:underline">Encontrar mentores</a>
+      }
+    </div>
+  } @else {
+    @if (mostrarPainel() && painel(); as p) {
+      <div class="mt-8">
+        <app-painel-progresso [painel]="p" />
+      </div>
+    }
+
+    @if (grupos().pendentes.length) {
+      <section class="mt-10" aria-labelledby="titulo-pendentes">
+        <h2 id="titulo-pendentes" class="flex items-center gap-3 text-2xl font-medium">
+          Propostas pendentes
+          <span class="rounded-full bg-ponti-roxo px-3 py-0.5 text-sm font-medium text-white">{{ grupos().pendentes.length }}</span>
+        </h2>
+        <ul class="mt-4 flex flex-col gap-4">
+          @for (a of grupos().pendentes; track a.id) {
+            <li>
+              <app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" (aceitar)="aceitar($event)" (recusar)="recusar($event)" />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (grupos().ativos.length) {
+      <section class="mt-10" aria-labelledby="titulo-ativos">
+        <h2 id="titulo-ativos" class="flex items-center gap-3 text-2xl font-medium">
+          Ativos
+          <span class="rounded-full bg-gray-200 px-3 py-0.5 text-sm font-medium text-gray-700">{{ grupos().ativos.length }}</span>
+        </h2>
+        <ul class="mt-4 flex flex-col gap-4">
+          @for (a of grupos().ativos; track a.id) {
+            <li><app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" /></li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (grupos().encerrados.length) {
+      <section class="mt-10" aria-labelledby="titulo-encerrados">
+        <h2 id="titulo-encerrados" class="flex items-center gap-3 text-2xl font-medium">
+          Encerrados
+          <span class="rounded-full bg-gray-200 px-3 py-0.5 text-sm font-medium text-gray-700">{{ grupos().encerrados.length }}</span>
+        </h2>
+        <ul class="mt-4 flex flex-col gap-4">
+          @for (a of grupos().encerrados; track a.id) {
+            <li><app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" /></li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  <app-dialogo-confirmacao
+    titulo="Recusar proposta?"
+    mensagem="O mentor será avisado e a proposta não poderá ser aceita depois."
+    textoConfirmar="Recusar proposta"
+    textoCancelar="Manter proposta"
+  />
+</section>

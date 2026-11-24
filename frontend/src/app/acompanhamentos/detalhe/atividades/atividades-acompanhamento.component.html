@@ -1,0 +1,61 @@
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-2xl font-medium">Atividades</h2>
+    @if (atividades().length) {
+      <p class="mt-1 text-gray-500">{{ aprovadas() }} de {{ atividades().length }} aprovadas</p>
+    }
+  </div>
+  @if (ehMentor() && !somenteLeitura()) {
+    <button
+      type="button"
+      (click)="novaAtividade()"
+      class="cursor-pointer rounded-lg bg-ponti-roxo px-8 py-2.5 font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+    >
+      Nova atividade
+    </button>
+  }
+</div>
+
+@if (carregando()) {
+  <p class="mt-8 text-gray-500" role="status">Carregando atividades...</p>
+} @else if (erro()) {
+  <p class="mt-8 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
+} @else if (!atividades().length) {
+  <div class="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+    @if (ehMentor() && !somenteLeitura()) {
+      <p class="text-lg">Ainda não há atividades neste acompanhamento.</p>
+      <p class="mt-2 text-gray-500">Crie a primeira atividade para a startup começar.</p>
+    } @else if (ehMentor()) {
+      <p class="text-lg">Nenhuma atividade foi criada.</p>
+    } @else {
+      <p class="text-lg">O mentor ainda não criou atividades.</p>
+      <p class="mt-2 text-gray-500">Quando ele criar, elas aparecem aqui, na ordem dos prazos.</p>
+    }
+  </div>
+} @else {
+  <ol class="mt-8 flex flex-col" role="list">
+    @for (a of ordenadas(); track a.id; let i = $index) {
+      <app-passo-atividade
+        [atividade]="a"
+        [numero]="i + 1"
+        [ehMentor]="ehMentor()"
+        [somenteLeitura]="somenteLeitura()"
+        [nomeStartup]="nomeStartup()"
+        (aprovar)="aprovar($event)"
+        (devolver)="devolver($event)"
+        (atualizada)="substituir($event)"
+      />
+    }
+  </ol>
+
+  <!-- Fim da linha do tempo -->
+  <div class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-5 sm:gap-x-8">
+    <div class="flex justify-center" aria-hidden="true"><span class="size-4 rounded-full bg-gray-200"></span></div>
+    <p class="text-sm text-gray-500">Fim das atividades</p>
+  </div>
+}
+
+@if (acompanhamento(); as ac) {
+  <app-modal-atividade [acompanhamentoId]="ac.id" (criada)="adicionar($event)" />
+}
+<app-modal-feedback (concluido)="substituir($event)" />

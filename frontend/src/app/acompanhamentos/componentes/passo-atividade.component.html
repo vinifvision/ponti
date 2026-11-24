@@ -1,0 +1,267 @@
+@if (atividade(); as a) {
+  <!-- Trilho da linha do tempo: bolinha numerada e a linha que desce até o próximo passo -->
+  <div class="flex flex-col items-center" aria-hidden="true">
+    <div class="flex size-12 shrink-0 items-center justify-center rounded-full text-xl font-bold" [class]="classeNo()">
+      @if (tom() === 'aprovada') {
+        <app-icone nome="check" [tamanho]="24" />
+      } @else {
+        {{ numero() }}
+      }
+    </div>
+    @if (linhaAbaixo()) {
+      <div class="mt-1 w-1 flex-1 rounded-full" [class]="classeLinha()"></div>
+    }
+  </div>
+
+  <article class="mb-12 rounded-xl border bg-white p-6 sm:mb-20" [class]="atrasada() ? 'border-red-200' : 'border-gray-200'">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <h3 class="text-xl font-bold">
+          <span class="sr-only">Passo {{ numero() }}: </span>{{ a.titulo }}
+        </h3>
+        <p class="mt-1 text-sm" [class]="atrasada() ? 'font-medium text-red-700' : 'text-gray-500'">{{ prazo() }}</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        @for (selo of selos(); track selo.texto) {
+          <app-selo [tom]="selo.tom">{{ selo.texto }}</app-selo>
+        }
+      </div>
+    </div>
+
+    @if (a.descricao) {
+      <p class="mt-4 max-w-prose whitespace-pre-line text-lg leading-relaxed">{{ a.descricao }}</p>
+    }
+
+    <!-- Materiais de apoio anexados pelo mentor -->
+    @if (a.anexos?.length) {
+      <ul class="mt-4 flex flex-wrap gap-3" aria-label="Materiais da atividade">
+        @for (an of a.anexos; track $index) {
+          <li class="max-w-full">
+            <app-chip-anexo [nome]="an.nome" [detalhe]="formatarTamanho(an.tamanho)" [url]="an.url" />
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Entregas da startup (cada reenvio é uma entrega nova) -->
+    @if (a.entregas.length) {
+      <ul class="mt-6 flex flex-col gap-5">
+        @for (e of a.entregas; track e.id; let i = $index) {
+          <li class="border-l-4 border-gray-200 pl-4">
+            <div class="flex items-center gap-3">
+              <div
+                class="flex size-9 shrink-0 items-center justify-center rounded-full bg-ponti-lilas/40 text-sm font-semibold text-ponti-marinho"
+                aria-hidden="true"
+              >
+                {{ iniciais(nomeStartup()) }}
+              </div>
+              <div class="min-w-0">
+                <p class="font-semibold">{{ nomeStartup() }}</p>
+                <p class="text-sm text-gray-600">
+                  Enviou {{ dataHoraCurta(e.enviadaEm) }}
+                  @if (entregaAtrasada(e)) {
+                    <span class="font-medium text-red-700"> · entregue com atraso</span>
+                  }
+                </p>
+              </div>
+            </div>
+
+            @if (e.texto) {
+              <p class="mt-3 max-w-prose whitespace-pre-line break-words">{{ e.texto }}</p>
+            }
+            @if (linkSeguro(e.link); as url) {
+              <a
+                [href]="url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-3 inline-flex max-w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-ponti-marinho hover:bg-gray-100"
+              >
+                <app-icone nome="link" [tamanho]="16" />
+                <span class="truncate">{{ rotuloLink(url) }}</span>
+                <span class="sr-only">(abre em outra aba)</span>
+              </a>
+            }
+            @if (anexosDe(e).length) {
+              <ul class="mt-3 flex flex-wrap gap-3" aria-label="Arquivos da entrega">
+                @for (an of anexosDe(e); track $index) {
+                  <li class="max-w-full">
+                    <app-chip-anexo [nome]="an.nome" [detalhe]="formatarTamanho(an.tamanho)" [url]="an.url" />
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (respostaDoMentor(i); as resposta) {
+              <div class="mt-4 rounded-lg px-4 py-3" [class]="resposta === 'APROVADA' ? 'bg-green-50' : 'bg-ponti-amarelo/15'">
+                <p class="text-sm font-semibold" [class]="resposta === 'APROVADA' ? 'text-green-800' : 'text-ponti-marinho'">
+                  {{ resposta === 'APROVADA' ? 'Aprovada pelo mentor' : 'Devolvida pelo mentor' }}
+                </p>
+                @if (e.feedback) {
+                  <p class="mt-1 whitespace-pre-line break-words">{{ e.feedback }}</p>
+                }
+              </div>
+            }
+
+            <div class="mt-4">
+              <app-comentarios-entrega
+                [atividadeId]="a.id"
+                [entregaId]="e.id"
+                [comentarios]="e.comentarios"
+                [podeComentar]="!somenteLeitura()"
+                (atualizada)="atualizada.emit($event)"
+              />
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Ações da startup: só em atividade ainda não entregue (pendente ou devolvida) -->
+    @if (podeEntregar() && !formAberto()) {
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <button
+            type="button"
+            (click)="anexarLink()"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1.5 font-semibold text-ponti-roxo transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-roxo"
+          >
+            <app-icone nome="link" [tamanho]="22" /> Anexar link
+          </button>
+          <button
+            type="button"
+            (click)="anexarArquivo()"
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1.5 font-semibold text-ponti-roxo transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-roxo"
+          >
+            <app-icone nome="mais" [tamanho]="22" /> Anexar arquivo
+          </button>
+        </div>
+        <button
+          type="button"
+          (click)="abrirForm()"
+          class="cursor-pointer rounded-lg bg-ponti-roxo px-8 py-2.5 font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+        >
+          {{ rotuloEntregar() }}
+        </button>
+      </div>
+    }
+
+    <!-- Atividade já entregue: a startup ainda pode desfazer o envio até o mentor avaliar -->
+    @if (podeDesfazer()) {
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <app-icone nome="check" [tamanho]="24" class="text-ponti-lilas" />
+        <button
+          type="button"
+          (click)="desfazerEnvio()"
+          [disabled]="enviando()"
+          class="cursor-pointer rounded-lg bg-ponti-lilas/40 px-8 py-2.5 font-medium text-ponti-marinho transition-colors hover:bg-ponti-lilas/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-marinho disabled:cursor-default disabled:opacity-60"
+        >
+          {{ enviando() ? 'Desfazendo...' : 'Desfazer envio' }}
+        </button>
+      </div>
+      @if (erro()) {
+        <p class="mt-3 text-right text-sm text-red-600" role="alert">{{ erro() }}</p>
+      }
+    }
+
+    @if (podeAvaliar()) {
+      <div class="mt-6 flex flex-wrap justify-end gap-3">
+        <button
+          type="button"
+          (click)="devolver.emit(a)"
+          class="cursor-pointer rounded-lg border border-gray-300 bg-white px-8 py-2.5 font-medium text-gray-800 transition-colors hover:bg-gray-50"
+        >
+          Devolver
+        </button>
+        <button
+          type="button"
+          (click)="aprovar.emit(a)"
+          class="cursor-pointer rounded-lg bg-ponti-roxo px-8 py-2.5 font-medium text-white transition-colors hover:bg-ponti-roxo/90"
+        >
+          Aprovar
+        </button>
+      </div>
+    }
+
+    @if (formAberto()) {
+      <div class="mt-6 flex flex-col gap-4 rounded-lg border border-ponti-lilas bg-ponti-lilas/10 p-4">
+        <label class="grid gap-1">
+          <span class="font-medium">O que você fez</span>
+          <textarea
+            rows="4"
+            maxlength="2000"
+            class="campo"
+            placeholder="Conte o que foi feito e o que aprendeu."
+            [ngModel]="texto()"
+            (ngModelChange)="texto.set($event)"
+          ></textarea>
+        </label>
+        <label class="grid gap-1">
+          <span class="font-medium">Link <span class="font-normal text-gray-500">(opcional)</span></span>
+          <input
+            type="url"
+            maxlength="500"
+            class="campo"
+            placeholder="https://..."
+            #campoLink
+            [ngModel]="link()"
+            (ngModelChange)="link.set($event)"
+          />
+        </label>
+
+        <div class="grid gap-2">
+          <span class="font-medium">Arquivos <span class="font-normal text-gray-500">(opcional, até {{ maximoArquivos }}, 10 MB cada)</span></span>
+          @if (arquivos().length) {
+            <ul class="flex flex-wrap gap-3" aria-label="Arquivos escolhidos">
+              @for (arq of arquivos(); track arq) {
+                <li class="max-w-full">
+                  <app-chip-anexo [nome]="arq.name" [detalhe]="formatarTamanho(arq.size)" [removivel]="true" (remover)="removerArquivo(arq)" />
+                </li>
+              }
+            </ul>
+          }
+          @if (arquivos().length < maximoArquivos) {
+            <div>
+              <button
+                type="button"
+                (click)="entradaArquivo.click()"
+                class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-ponti-lilas bg-white px-4 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-ponti-lilas/20"
+              >
+                <app-icone nome="mais" [tamanho]="16" /> Anexar arquivo
+              </button>
+            </div>
+          }
+        </div>
+        @if (erro()) {
+          <p class="text-sm text-red-600" role="alert">{{ erro() }}</p>
+        }
+        <div class="flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            (click)="cancelarForm()"
+            class="cursor-pointer rounded-lg border border-gray-300 bg-white px-6 py-2.5 font-medium text-gray-800 transition-colors hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="enviar()"
+            [disabled]="enviando()"
+            class="cursor-pointer rounded-lg bg-ponti-roxo px-8 py-2.5 font-medium text-white transition-colors hover:bg-ponti-roxo/90 disabled:cursor-default disabled:bg-gray-200 disabled:text-gray-600"
+          >
+            {{ enviando() ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+      </div>
+    }
+  </article>
+
+  <!-- Campo de arquivo escondido: os botões "Anexar arquivo" abrem a janela de escolha -->
+  <input #entradaArquivo type="file" multiple class="hidden" [accept]="aceitar" (change)="aoEscolherArquivos($event)" tabindex="-1" aria-hidden="true" />
+
+  <app-dialogo-confirmacao
+    titulo="Desfazer o envio?"
+    mensagem="O que você enviou nesta atividade sai da entrega e ela volta a ficar pendente. Dá para enviar de novo depois."
+    textoConfirmar="Desfazer envio"
+    textoCancelar="Manter envio"
+  />
+}
