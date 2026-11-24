@@ -7,20 +7,33 @@ import { AcompanhamentoService } from '../acompanhamento.service';
 import { PainelConsolidado, ResumoAcompanhamento } from '../acompanhamento.models';
 import { agruparPorStatus } from '../acompanhamento.utils';
 import { CardAcompanhamentoComponent } from '../componentes/card-acompanhamento.component';
+import { ModalNovoAcompanhamentoComponent } from '../componentes/modal-novo-acompanhamento.component';
 import { PainelProgressoComponent } from '../componentes/painel-progresso.component';
+import { IconeComponent } from '../../shared/icone/icone.component';
 
 // Tela 1 do módulo: acompanhamentos separados em propostas pendentes, ativos e encerrados.
 // A startup vê no topo o painel de progresso de todos os mentores; o mentor vê as startups dele.
+// O mentor também tem aqui o botão "Novo acompanhamento", no topo da tela (como o "Criar turma" do Google
+// Classroom): escolhe uma startup elegível e abre a proposta.
 @Component({
   selector: 'app-lista-acompanhamentos',
   standalone: true,
-  imports: [RouterLink, CardAcompanhamentoComponent, PainelProgressoComponent, DialogoConfirmacaoComponent],
+  imports: [
+    RouterLink,
+    CardAcompanhamentoComponent,
+    PainelProgressoComponent,
+    DialogoConfirmacaoComponent,
+    ModalNovoAcompanhamentoComponent,
+    IconeComponent,
+  ],
   templateUrl: './lista-acompanhamentos.component.html',
 })
 export class ListaAcompanhamentosComponent implements OnInit {
   private service = inject(AcompanhamentoService);
   private sessao = inject(SessaoService);
   private confirmarRecusa = viewChild.required(DialogoConfirmacaoComponent);
+  // Só existe na tela do mentor
+  private novoAcompanhamento = viewChild(ModalNovoAcompanhamentoComponent);
 
   ehMentor = computed(() => this.sessao.tipo() === 'MENTOR');
 
@@ -58,6 +71,15 @@ export class ListaAcompanhamentosComponent implements OnInit {
         this.carregando.set(false);
       },
     });
+  }
+
+  abrirNovoAcompanhamento() {
+    this.novoAcompanhamento()?.abrir();
+  }
+
+  // Depois de enviar uma proposta: busca a lista de novo, sem piscar "Carregando..."
+  propostaEnviada() {
+    this.carregar(false);
   }
 
   aceitar(a: ResumoAcompanhamento) {

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, input, signal, viewChild } from '@angular/core';
+import { Component, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
@@ -102,6 +102,8 @@ interface MetaEmEdicao {
 export class ModalPropostaComponent {
   startupId = input.required<number>();
   nomeStartup = input('a startup');
+  // Avisa quem abriu a janela que a proposta foi enviada (a lista usa para se atualizar)
+  enviada = output<void>();
 
   private service = inject(AcompanhamentoService);
   private router = inject(Router);
@@ -143,6 +145,7 @@ export class ModalPropostaComponent {
       next: () => {
         this.enviando.set(false);
         this.janela().fechar();
+        this.enviada.emit();
         this.router.navigateByUrl('/acompanhamentos');
       },
       error: (e: HttpErrorResponse) => {

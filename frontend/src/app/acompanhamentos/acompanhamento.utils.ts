@@ -138,6 +138,42 @@ export function ordenarPorPrazo(lista: Atividade[]): Atividade[] {
   return [...lista].sort((a, b) => a.prazo.localeCompare(b.prazo));
 }
 
+// ---------- Abas da página do acompanhamento ----------
+
+export type FiltroAtividades = 'todas' | 'pendentes' | 'atrasadas' | 'devolvidas';
+
+// Rótulo e endereço de cada aba, na ordem em que aparecem
+export const ABAS_ATIVIDADES: { rotulo: string; rota: FiltroAtividades }[] = [
+  { rotulo: 'Todas atividades', rota: 'todas' },
+  { rotulo: 'Pendentes', rota: 'pendentes' },
+  { rotulo: 'Atrasadas', rota: 'atrasadas' },
+  { rotulo: 'Devolvidas', rota: 'devolvidas' },
+];
+
+export function ehFiltroAtividades(valor: string): valor is FiltroAtividades {
+  return ABAS_ATIVIDADES.some((aba) => aba.rota === valor);
+}
+
+// Atividades de cada aba, sempre do prazo mais próximo ao mais distante:
+//   todas:      todas as atividades (a única aba que mostra a linha do tempo)
+//   pendentes:  ainda não entregues (status PENDENTE)
+//   atrasadas:  prazo vencido e a startup ainda precisa entregar ou reenviar (mesma regra do selo "Atrasada")
+//   devolvidas: o mentor devolveu para ajustes (status DEVOLVIDA)
+// Uma atividade pode estar em duas abas (ex.: pendente e atrasada).
+export function filtrarAtividades(lista: Atividade[], filtro: FiltroAtividades, agora: Date = new Date()): Atividade[] {
+  const ordenadas = ordenarPorPrazo(lista);
+  switch (filtro) {
+    case 'pendentes':
+      return ordenadas.filter((a) => a.status === 'PENDENTE');
+    case 'atrasadas':
+      return ordenadas.filter((a) => estaAtrasada(a, agora));
+    case 'devolvidas':
+      return ordenadas.filter((a) => a.status === 'DEVOLVIDA');
+    default:
+      return ordenadas;
+  }
+}
+
 // Números do card da lista, calculados a partir das atividades
 export function resumirAtividades(
   lista: Atividade[],

@@ -1,12 +1,27 @@
 <section class="max-w-4xl pb-12 pt-6">
-  <h1 class="text-balance text-3xl font-medium sm:text-4xl">Acompanhamentos</h1>
-  <p class="mt-2 text-gray-500">
+  <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+    <div class="min-w-0">
+      <h1 class="text-balance text-3xl font-medium sm:text-4xl">Acompanhamentos</h1>
+      <p class="mt-2 text-gray-500">
+        @if (ehMentor()) {
+          As startups que você acompanha, com o que precisa da sua atenção.
+        } @else {
+          Metas, atividades e relatórios de cada mentor que acompanha a sua startup.
+        }
+      </p>
+    </div>
+
+    <!-- Só o mentor: propor um novo acompanhamento a uma startup com quem já fez mentoria -->
     @if (ehMentor()) {
-      As startups que você acompanha, com o que precisa da sua atenção.
-    } @else {
-      Metas, atividades e relatórios de cada mentor que acompanha a sua startup.
+      <button
+        type="button"
+        (click)="abrirNovoAcompanhamento()"
+        class="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-lg bg-ponti-roxo px-6 py-2.5 font-medium text-white transition-colors hover:bg-ponti-roxo/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-roxo"
+      >
+        <app-icone nome="mais" [tamanho]="18" /> Novo acompanhamento
+      </button>
     }
-  </p>
+  </div>
 
   @if (erro()) {
     <p class="mt-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ erro() }}</p>
@@ -19,7 +34,7 @@
       @if (ehMentor()) {
         <p class="text-lg">Você ainda não tem acompanhamentos.</p>
         <p class="mt-2 text-gray-500">
-          Para propor um, abra o perfil de uma startup e clique em "Propor acompanhamento".
+          Para propor um, clique em "Novo acompanhamento" ou abra o perfil de uma startup e use "Propor acompanhamento".
         </p>
         <a routerLink="/encontrar-startups" class="mt-5 inline-block font-medium text-ponti-marinho hover:underline">Encontrar startups</a>
       } @else {
@@ -80,6 +95,10 @@
         </ul>
       </section>
     }
+  }
+
+  @if (ehMentor()) {
+    <app-modal-novo-acompanhamento (enviada)="propostaEnviada()" />
   }
 
   <app-dialogo-confirmacao

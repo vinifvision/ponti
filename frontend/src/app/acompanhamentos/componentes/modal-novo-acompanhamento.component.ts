@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, output, signal, viewChild } from '@angular/core';
 import { AgendaService } from '../../agenda/agenda.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { SessaoService } from '../../auth/sessao.service';
@@ -13,7 +13,8 @@ import { ModalPropostaComponent } from './modal-proposta.component';
 
 // Ação do mentor "Novo acompanhamento": mostra só as startups elegíveis (já tiveram mentoria com ele e ainda não
 // têm proposta nem acompanhamento em andamento). Ao escolher uma, abre a janela de proposta (objetivo e metas).
-// Uso: <app-modal-novo-acompanhamento #novo /> e novo.abrir() num botão.
+// Uso: <app-modal-novo-acompanhamento #novo (enviada)="..." /> e novo.abrir() num botão
+// (hoje, o botão "Novo acompanhamento" da tela principal de Acompanhamentos).
 @Component({
   selector: 'app-modal-novo-acompanhamento',
   standalone: true,
@@ -70,10 +71,18 @@ import { ModalPropostaComponent } from './modal-proposta.component';
       }
     </app-janela-modal>
 
-    <app-modal-proposta #proposta [startupId]="escolhida()?.id ?? 0" [nomeStartup]="escolhida()?.nome ?? 'a startup'" />
+    <app-modal-proposta
+      #proposta
+      [startupId]="escolhida()?.id ?? 0"
+      [nomeStartup]="escolhida()?.nome ?? 'a startup'"
+      (enviada)="enviada.emit()"
+    />
   `,
 })
 export class ModalNovoAcompanhamentoComponent {
+  // A proposta foi enviada (a tela de Acompanhamentos recarrega a lista)
+  enviada = output<void>();
+
   private agenda = inject(AgendaService);
   private service = inject(AcompanhamentoService);
   private sessao = inject(SessaoService);

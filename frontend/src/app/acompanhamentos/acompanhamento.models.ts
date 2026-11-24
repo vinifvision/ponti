@@ -10,6 +10,9 @@ export interface ParceiroAcompanhamento {
   subtitulo: string | null;
 }
 
+// Nome e foto para desenhar um avatar (a foto pode ser nula: aí aparecem as iniciais)
+export type PessoaAvatar = Pick<ParceiroAcompanhamento, 'nome' | 'fotoUrl'>;
+
 export interface ResumoAcompanhamento {
   id: number;
   status: StatusAcompanhamento;

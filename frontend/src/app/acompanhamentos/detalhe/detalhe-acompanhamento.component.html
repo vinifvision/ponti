@@ -42,29 +42,7 @@
           <app-selo [tom]="selo().tom">{{ selo().texto }}</app-selo>
         </div>
       </div>
-
-      <!-- Só o mentor: propor um novo acompanhamento a uma startup com quem já fez mentoria -->
-      @if (atual.ehMentor()) {
-        <button
-          type="button"
-          (click)="novoAcompanhamento().abrir()"
-          class="hidden shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-ponti-roxo bg-white px-5 py-2.5 font-medium text-ponti-roxo transition-colors hover:bg-ponti-roxo/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-roxo sm:inline-flex"
-        >
-          <app-icone nome="mais" [tamanho]="18" /> Novo acompanhamento
-        </button>
-      }
     </header>
-
-    @if (atual.ehMentor()) {
-      <button
-        type="button"
-        (click)="novoAcompanhamento().abrir()"
-        class="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-ponti-roxo bg-white px-5 py-2.5 font-medium text-ponti-roxo transition-colors hover:bg-ponti-roxo/10 sm:hidden"
-      >
-        <app-icone nome="mais" [tamanho]="18" /> Novo acompanhamento
-      </button>
-      <app-modal-novo-acompanhamento #novo />
-    }
 
     @if (aviso()) {
       <p class="mt-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700" role="status">{{ aviso() }}</p>

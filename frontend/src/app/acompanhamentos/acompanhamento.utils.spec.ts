@@ -1,7 +1,8 @@
 import { Atividade, ResumoAcompanhamento } from './acompanhamento.models';
 import {
-  agruparPorStatus, dataCurta, dataHoraCurta, diasDeAtraso, entregueComAtraso, estaAtrasada, ordenarPorPrazo,
-  percentual, plural, prazoCurto, resumirAtividades, selosDaAtividade, selosDoCard, textoPrazo, tomDoNo,
+  ABAS_ATIVIDADES, agruparPorStatus, dataCurta, dataHoraCurta, diasDeAtraso, ehFiltroAtividades, entregueComAtraso,
+  estaAtrasada, filtrarAtividades, ordenarPorPrazo, percentual, plural, prazoCurto, resumirAtividades, selosDaAtividade,
+  selosDoCard, textoPrazo, tomDoNo,
 } from './acompanhamento.utils';
 
 function resumo(extra: Partial<ResumoAcompanhamento>): ResumoAcompanhamento {
@@ -182,5 +183,44 @@ describe('ordenarPorPrazo e resumirAtividades', () => {
     expect(resumirAtividades([], false, AGORA)).toEqual({
       atividadesAprovadas: 0, atividadesTotal: 0, atividadesAtrasadas: 0, pendencias: 0, proximoPrazo: null,
     });
+  });
+});
+
+describe('abas de atividades', () => {
+  const lista = [
+    atividade({ id: 1, prazo: '2026-11-28T23:59:00', status: 'PENDENTE' }),
+    atividade({ id: 2, prazo: '2026-11-10T23:59:00', status: 'APROVADA' }),
+    atividade({ id: 3, prazo: '2026-11-18T23:59:00', status: 'PENDENTE' }), // atrasada
+    atividade({ id: 4, prazo: '2026-11-15T23:59:00', status: 'ENTREGUE' }),
+    atividade({ id: 5, prazo: '2026-11-23T23:59:00', status: 'DEVOLVIDA' }),
+    atividade({ id: 6, prazo: '2026-11-19T23:59:00', status: 'DEVOLVIDA' }), // devolvida e atrasada
+  ];
+  const ids = (filtro: Parameters<typeof filtrarAtividades>[1]) => filtrarAtividades(lista, filtro, AGORA).map((a) => a.id);
+
+  it('as abas são Todas atividades, Pendentes, Atrasadas e Devolvidas, nessa ordem', () => {
+    expect(ABAS_ATIVIDADES.map((a) => a.rotulo)).toEqual(['Todas atividades', 'Pendentes', 'Atrasadas', 'Devolvidas']);
+    expect(ABAS_ATIVIDADES.map((a) => a.rota)).toEqual(['todas', 'pendentes', 'atrasadas', 'devolvidas']);
+  });
+  it('só aceita os endereços das abas', () => {
+    expect(ehFiltroAtividades('pendentes')).toBe(true);
+    expect(ehFiltroAtividades('relatorios')).toBe(false);
+    expect(ehFiltroAtividades('')).toBe(false);
+  });
+  it('todas mostra tudo, do prazo mais próximo ao mais distante, sem mexer na lista original', () => {
+    expect(ids('todas')).toEqual([2, 4, 3, 6, 5, 1]);
+    expect(lista[0].id).toBe(1);
+  });
+  it('pendentes são as ainda não entregues', () => {
+    expect(ids('pendentes')).toEqual([3, 1]);
+  });
+  it('atrasadas seguem a mesma regra do selo Atrasada (pendente ou devolvida com prazo vencido)', () => {
+    expect(ids('atrasadas')).toEqual([3, 6]);
+  });
+  it('devolvidas são as que o mentor devolveu para ajustes', () => {
+    expect(ids('devolvidas')).toEqual([6, 5]);
+  });
+  it('devolve lista vazia quando nada se encaixa', () => {
+    expect(filtrarAtividades([], 'atrasadas', AGORA)).toEqual([]);
+    expect(filtrarAtividades([atividade({ status: 'APROVADA' })], 'pendentes', AGORA)).toEqual([]);
   });
 });

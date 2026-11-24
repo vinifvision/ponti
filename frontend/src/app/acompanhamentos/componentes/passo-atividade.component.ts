@@ -8,7 +8,7 @@ import { linkSeguro } from '../../shared/mentoria.utils';
 import { SeloComponent } from '../../shared/selo/selo.component';
 import { iniciais } from '../../shared/texto.utils';
 import { AcompanhamentoService } from '../acompanhamento.service';
-import { Anexo, Atividade, Entrega } from '../acompanhamento.models';
+import { Anexo, Atividade, Entrega, PessoaAvatar } from '../acompanhamento.models';
 import { ACCEPT_ARQUIVOS, MAX_ARQUIVOS, formatarTamanho, juntarArquivos } from '../anexos.utils';
 import {
   TomNo, dataHoraCurta, entregueComAtraso, estaAtrasada, selosDaAtividade, textoPrazo, tomDoNo,
@@ -25,14 +25,15 @@ const COR_NO: Record<TomNo, string> = {
 };
 
 // Um passo da linha do tempo: bolinha numerada + cartão da atividade com a(s) entrega(s) da startup,
-// a resposta do mentor e a conversa. O que aparece de botão depende de quem vê e do estado.
+// a resposta do mentor (com o avatar dele) e a conversa. O que aparece de botão depende de quem vê e do estado.
+// Com linhaDoTempo = false (abas Pendentes, Atrasadas e Devolvidas) mostra só o cartão, sem a bolinha nem a linha.
 // Atividade que a startup ainda não entregou (pendente ou devolvida) mostra "Anexar link", "Anexar arquivo" e o
 // botão de entregar; atividade já entregue mostra "Desfazer envio" enquanto o mentor não avaliar.
 @Component({
   selector: 'app-passo-atividade',
   standalone: true,
   imports: [FormsModule, IconeComponent, SeloComponent, ComentariosEntregaComponent, ChipAnexoComponent, DialogoConfirmacaoComponent],
-  host: { class: 'grid grid-cols-[3rem_minmax(0,1fr)] gap-x-5 sm:gap-x-8', role: 'listitem' },
+  host: { '[class]': 'classeHost()', role: 'listitem' },
   templateUrl: './passo-atividade.component.html',
 })
 export class PassoAtividadeComponent {
@@ -43,6 +44,10 @@ export class PassoAtividadeComponent {
   nomeStartup = input('Startup');
   // A linha continua para baixo enquanto houver algo depois deste passo
   linhaAbaixo = input(true);
+  // false = só o cartão da atividade (sem a bolinha numerada nem a linha do tempo)
+  linhaDoTempo = input(true);
+  // Quem aprova ou devolve: nome e foto para o avatar da resposta do mentor
+  mentor = input<PessoaAvatar>({ nome: 'Mentor', fotoUrl: null });
 
   aprovar = output<Atividade>();
   devolver = output<Atividade>();
@@ -53,6 +58,14 @@ export class PassoAtividadeComponent {
   readonly iniciais = iniciais;
   readonly dataHoraCurta = dataHoraCurta;
 
+  classeHost = computed(() =>
+    this.linhaDoTempo() ? 'grid grid-cols-[3rem_minmax(0,1fr)] gap-x-5 sm:gap-x-8' : 'block',
+  );
+  // Os cartões da linha do tempo têm bastante espaço embaixo para a linha descer; na lista simples, só um respiro
+  classeArtigo = computed(() => {
+    const borda = this.atrasada() ? 'border-red-200' : 'border-gray-200';
+    return `${borda} ${this.linhaDoTempo() ? 'mb-12 sm:mb-20' : 'mb-6'}`;
+  });
   tom = computed(() => tomDoNo(this.atividade()));
   classeNo = computed(() => COR_NO[this.tom()]);
   classeLinha = computed(() => (this.atividade().status === 'APROVADA' ? 'bg-ponti-roxo' : 'bg-gray-200'));

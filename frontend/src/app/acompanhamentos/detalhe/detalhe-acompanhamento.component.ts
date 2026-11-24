@@ -1,19 +1,17 @@
-import { Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import { SeloComponent } from '../../shared/selo/selo.component';
 import { iniciais } from '../../shared/texto.utils';
-import { dataCurta } from '../acompanhamento.utils';
-import { ModalNovoAcompanhamentoComponent } from '../componentes/modal-novo-acompanhamento.component';
+import { ABAS_ATIVIDADES, dataCurta } from '../acompanhamento.utils';
 import { AcompanhamentoAtualService } from './acompanhamento-atual.service';
 
 // Casca da página de um acompanhamento (Tela 3): cabeçalho, aviso de somente leitura e as subabas.
-// O mentor ainda tem aqui o botão "Novo acompanhamento" (escolhe uma startup elegível e abre a proposta).
 // Cada subaba é uma rota filha, então o botão voltar e o link compartilhável funcionam.
 @Component({
   selector: 'app-detalhe-acompanhamento',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconeComponent, SeloComponent, ModalNovoAcompanhamentoComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconeComponent, SeloComponent],
   providers: [AcompanhamentoAtualService],
   templateUrl: './detalhe-acompanhamento.component.html',
 })
@@ -22,16 +20,10 @@ export class DetalheAcompanhamentoComponent implements OnInit {
   id = input.required<string>();
 
   protected atual = inject(AcompanhamentoAtualService);
-  // Janela do mentor para propor um novo acompanhamento (só existe na tela do mentor)
-  protected novoAcompanhamento = viewChild.required<ModalNovoAcompanhamentoComponent>('novo');
 
   readonly iniciais = iniciais;
-  readonly abas = [
-    { rotulo: 'Visão geral', rota: 'visao-geral' },
-    { rotulo: 'Atividades', rota: 'atividades' },
-    { rotulo: 'Relatórios', rota: 'relatorios' },
-    { rotulo: 'Reuniões', rota: 'reunioes' },
-  ];
+  // Todas atividades, Pendentes, Atrasadas e Devolvidas (só a primeira mostra a linha do tempo)
+  readonly abas = ABAS_ATIVIDADES;
 
   abertura = computed(() => {
     const a = this.atual.acompanhamento();

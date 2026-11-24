@@ -1,23 +1,27 @@
 @if (atividade(); as a) {
-  <!-- Trilho da linha do tempo: bolinha numerada e a linha que desce até o próximo passo -->
-  <div class="flex flex-col items-center" aria-hidden="true">
-    <div class="flex size-12 shrink-0 items-center justify-center rounded-full text-xl font-bold" [class]="classeNo()">
-      @if (tom() === 'aprovada') {
-        <app-icone nome="check" [tamanho]="24" />
-      } @else {
-        {{ numero() }}
+  <!-- Trilho da linha do tempo: bolinha numerada e a linha que desce até o próximo passo (só na aba "Todas atividades") -->
+  @if (linhaDoTempo()) {
+    <div class="flex flex-col items-center" aria-hidden="true">
+      <div class="flex size-12 shrink-0 items-center justify-center rounded-full text-xl font-bold" [class]="classeNo()">
+        @if (tom() === 'aprovada') {
+          <app-icone nome="check" [tamanho]="24" />
+        } @else {
+          {{ numero() }}
+        }
+      </div>
+      @if (linhaAbaixo()) {
+        <div class="mt-1 w-1 flex-1 rounded-full" [class]="classeLinha()"></div>
       }
     </div>
-    @if (linhaAbaixo()) {
-      <div class="mt-1 w-1 flex-1 rounded-full" [class]="classeLinha()"></div>
-    }
-  </div>
+  }
 
-  <article class="mb-12 rounded-xl border bg-white p-6 sm:mb-20" [class]="atrasada() ? 'border-red-200' : 'border-gray-200'">
+  <article class="rounded-xl border bg-white p-6" [class]="classeArtigo()">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
         <h3 class="text-xl font-bold">
-          <span class="sr-only">Passo {{ numero() }}: </span>{{ a.titulo }}
+          @if (linhaDoTempo()) {
+            <span class="sr-only">Passo {{ numero() }}: </span>
+          }{{ a.titulo }}
         </h3>
         <p class="mt-1 text-sm" [class]="atrasada() ? 'font-medium text-red-700' : 'text-gray-500'">{{ prazo() }}</p>
       </div>
@@ -92,13 +96,27 @@
             }
 
             @if (respostaDoMentor(i); as resposta) {
-              <div class="mt-4 rounded-lg px-4 py-3" [class]="resposta === 'APROVADA' ? 'bg-green-50' : 'bg-ponti-amarelo/15'">
-                <p class="text-sm font-semibold" [class]="resposta === 'APROVADA' ? 'text-green-800' : 'text-ponti-marinho'">
-                  {{ resposta === 'APROVADA' ? 'Aprovada pelo mentor' : 'Devolvida pelo mentor' }}
-                </p>
-                @if (e.feedback) {
-                  <p class="mt-1 whitespace-pre-line break-words">{{ e.feedback }}</p>
+              <!-- Resposta do mentor ao aprovar ou devolver, com o avatar (foto ou iniciais) dele -->
+              <div class="mt-4 flex items-start gap-3 rounded-lg px-4 py-3" [class]="resposta === 'APROVADA' ? 'bg-green-50' : 'bg-ponti-amarelo/15'">
+                @if (mentor().fotoUrl) {
+                  <img [src]="mentor().fotoUrl" alt="" class="size-9 shrink-0 rounded-full border border-gray-200 object-cover" />
+                } @else {
+                  <div
+                    class="flex size-9 shrink-0 items-center justify-center rounded-full bg-ponti-lilas/40 text-sm font-semibold text-ponti-marinho"
+                    aria-hidden="true"
+                  >
+                    {{ iniciais(mentor().nome) }}
+                  </div>
                 }
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold" [class]="resposta === 'APROVADA' ? 'text-green-800' : 'text-ponti-marinho'">
+                    {{ resposta === 'APROVADA' ? 'Aprovada pelo mentor' : 'Devolvida pelo mentor' }}
+                    <span class="font-normal text-gray-600">· {{ mentor().nome }}</span>
+                  </p>
+                  @if (e.feedback) {
+                    <p class="mt-1 whitespace-pre-line break-words">{{ e.feedback }}</p>
+                  }
+                </div>
               </div>
             }
 
