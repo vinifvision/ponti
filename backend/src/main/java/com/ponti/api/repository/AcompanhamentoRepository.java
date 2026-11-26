@@ -15,6 +15,11 @@ public interface AcompanhamentoRepository extends JpaRepository<Acompanhamento, 
 
     List<Acompanhamento> findByMentorIdAndStatusInOrderByCriadoEmDesc(Long mentorId, Collection<StatusAcompanhamento> status);
 
+    // Todos os acompanhamentos de uma startup ou de um mentor (usado ao excluir a conta)
+    List<Acompanhamento> findByStartupId(Long startupId);
+
+    List<Acompanhamento> findByMentorId(Long mentorId);
+
     // Já existe proposta pendente ou acompanhamento ativo entre os dois?
     boolean existsByMentorIdAndStartupIdAndStatusIn(Long mentorId, Long startupId, Collection<StatusAcompanhamento> status);
 

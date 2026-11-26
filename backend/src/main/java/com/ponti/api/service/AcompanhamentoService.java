@@ -4,12 +4,16 @@ import com.ponti.api.dto.NovaProposta;
 import com.ponti.api.dto.ParceiroAcompanhamento;
 import com.ponti.api.dto.ResumoAcompanhamento;
 import com.ponti.api.model.Acompanhamento;
+import com.ponti.api.model.Atividade;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Meta;
 import com.ponti.api.model.StatusAcompanhamento;
+import com.ponti.api.model.StatusAtividade;
 import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.repository.AcompanhamentoRepository;
+import com.ponti.api.repository.AtividadeRepository;
+import com.ponti.api.repository.EntregaRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.MetaRepository;
 import com.ponti.api.repository.StartupRepository;
@@ -43,6 +47,8 @@ public class AcompanhamentoService {
 
     private final AcompanhamentoRepository repository;
     private final MetaRepository metaRepository;
+    private final AtividadeRepository atividadeRepository;
+    private final EntregaRepository entregaRepository;
     private final StartupRepository startupRepository;
     private final MentorRepository mentorRepository;
     private final Acesso acesso;
@@ -50,12 +56,16 @@ public class AcompanhamentoService {
 
     public AcompanhamentoService(AcompanhamentoRepository repository,
                                  MetaRepository metaRepository,
+                                 AtividadeRepository atividadeRepository,
+                                 EntregaRepository entregaRepository,
                                  StartupRepository startupRepository,
                                  MentorRepository mentorRepository,
                                  Acesso acesso,
                                  Clock relogio) {
         this.repository = repository;
         this.metaRepository = metaRepository;
+        this.atividadeRepository = atividadeRepository;
+        this.entregaRepository = entregaRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.acesso = acesso;
@@ -131,6 +141,29 @@ public class AcompanhamentoService {
         a.setStatus(StatusAcompanhamento.RECUSADO);
     }
 
+    // ----- exclusão de conta (LGPD) -----
+
+    // Apaga os acompanhamentos da pessoa e tudo o que está dentro deles (metas, atividades e entregas).
+    // Chamado por ContaService, dentro da mesma transação da exclusão da conta.
+    @Transactional
+    public void apagarDaStartup(Long startupId) {
+        repository.findByStartupId(startupId).forEach(this::apagar);
+    }
+
+    @Transactional
+    public void apagarDoMentor(Long mentorId) {
+        repository.findByMentorId(mentorId).forEach(this::apagar);
+    }
+
+    private void apagar(Acompanhamento a) {
+        for (Atividade atividade : atividadeRepository.findByAcompanhamentoIdOrderByPrazoAscIdAsc(a.getId())) {
+            entregaRepository.deleteByAtividadeId(atividade.getId());
+        }
+        atividadeRepository.deleteByAcompanhamentoId(a.getId());
+        metaRepository.deleteByAcompanhamentoId(a.getId());
+        repository.delete(a);
+    }
+
     // ----- apoio -----
 
     // Busca o acompanhamento e confere se quem está logado é um dos dois lados (senão: 404)
@@ -155,19 +188,35 @@ public class AcompanhamentoService {
         return a;
     }
 
+    // Monta o card. Os números são contados agora, a partir das metas e atividades guardadas no banco.
     ResumoAcompanhamento resumir(Acompanhamento a, UsuarioLogado logado) {
         List<Meta> metas = metaRepository.findByAcompanhamentoIdOrderByOrdemAsc(a.getId());
+        List<Atividade> atividades = atividadeRepository.findByAcompanhamentoIdOrderByPrazoAscIdAsc(a.getId());
+        LocalDateTime agora = LocalDateTime.now(relogio);
         boolean proposta = a.getStatus() == StatusAcompanhamento.PROPOSTO;
+        boolean ehMentor = logado.tipo() == TipoUsuario.MENTOR;
+
         int cumpridas = (int) metas.stream().filter(Meta::isCumprida).count();
-        // Parte 2: os números de atividades passam a ser contados a partir da tabela de atividades
+        int aprovadas = (int) atividades.stream().filter(x -> x.getStatus() == StatusAtividade.APROVADA).count();
+        int atrasadas = (int) atividades.stream().filter(x -> x.estaAtrasada(agora)).count();
+        // Mentor: entregas esperando a revisão dele. Startup: atividades que ela ainda precisa entregar.
+        int pendencias = (int) (ehMentor
+                ? atividades.stream().filter(x -> x.getStatus() == StatusAtividade.ENTREGUE).count()
+                : atividades.stream().filter(Atividade::aEntregar).count());
+        // Próximo prazo que ainda não venceu, entre as atividades a entregar (já vêm ordenadas por prazo)
+        LocalDate proximoPrazo = atividades.stream()
+                .filter(x -> x.aEntregar() && !x.getPrazo().isBefore(agora))
+                .map(x -> x.getPrazo().toLocalDate())
+                .findFirst().orElse(null);
+
         return new ResumoAcompanhamento(
                 a.getId(), a.getStatus(), a.getObjetivo(), a.getDataInicio(), a.getDataFim(),
                 parceiro(a, logado),
-                0, 0,
+                aprovadas, atividades.size(),
                 proposta ? 0 : cumpridas,
                 proposta ? 0 : metas.size(),
                 proposta ? metas.size() : null,
-                null, 0, 0);
+                proximoPrazo, atrasadas, pendencias);
     }
 
     private ParceiroAcompanhamento parceiro(Acompanhamento a, UsuarioLogado logado) {
