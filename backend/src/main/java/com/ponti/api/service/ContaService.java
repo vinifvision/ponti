@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 // Exclusão de conta: apaga o perfil e tudo que depende dele (login, agendamentos,
-// sugestões, certificações, agenda e avaliações), numa transação só, para não sobrar dado solto.
+// sugestões, certificações, agenda, avaliações e acompanhamentos), numa transação só, para não sobrar dado solto.
 @Service
 public class ContaService {
 
@@ -26,6 +26,7 @@ public class ContaService {
     private final CertificacaoRepository certificacaoRepository;
     private final DisponibilidadeRepository disponibilidadeRepository;
     private final AvaliacaoRepository avaliacaoRepository;
+    private final AcompanhamentoService acompanhamentoService;
 
     public ContaService(StartupRepository startupRepository,
                         MentorRepository mentorRepository,
@@ -34,7 +35,8 @@ public class ContaService {
                         ConviteRepository conviteRepository,
                         CertificacaoRepository certificacaoRepository,
                         DisponibilidadeRepository disponibilidadeRepository,
-                        AvaliacaoRepository avaliacaoRepository) {
+                        AvaliacaoRepository avaliacaoRepository,
+                        AcompanhamentoService acompanhamentoService) {
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.usuarioRepository = usuarioRepository;
@@ -43,6 +45,7 @@ public class ContaService {
         this.certificacaoRepository = certificacaoRepository;
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.avaliacaoRepository = avaliacaoRepository;
+        this.acompanhamentoService = acompanhamentoService;
     }
 
     @Transactional
@@ -50,6 +53,7 @@ public class ContaService {
         if (!startupRepository.existsById(startupId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Startup não encontrada");
         }
+        acompanhamentoService.apagarDaStartup(startupId);
         avaliacaoRepository.deleteByStartupId(startupId);
         agendamentoRepository.deleteByStartupId(startupId);
         conviteRepository.deleteByStartupId(startupId);
@@ -63,6 +67,7 @@ public class ContaService {
         if (!mentorRepository.existsById(mentorId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor não encontrado(a)");
         }
+        acompanhamentoService.apagarDoMentor(mentorId);
         avaliacaoRepository.deleteByMentorId(mentorId);
         agendamentoRepository.deleteByMentorId(mentorId);
         conviteRepository.deleteByMentorId(mentorId);
