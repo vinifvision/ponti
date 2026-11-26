@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 // Transforma todo erro da API no formato único de Problems (Problem Details), em português.
@@ -63,6 +64,18 @@ public class TratadorDeErros extends ResponseEntityExceptionHandler {
         ProblemDetail problema = Problemas.criar(HttpStatus.BAD_REQUEST,
                 "O corpo da requisição tem um formato inválido. Confira os tipos dos campos.", rota(request));
         return ResponseEntity.badRequest().body(problema);
+    }
+
+    // Arquivo maior que o limite (10 MB). O próprio servidor corta o envio antes de chegar nas regras
+    // do AnexoService, então a mensagem em português é montada aqui.
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@NonNull MaxUploadSizeExceededException ex,
+                                                                          @NonNull HttpHeaders headers,
+                                                                          @NonNull HttpStatusCode status,
+                                                                          @NonNull WebRequest request) {
+        ProblemDetail problema = Problemas.criar(HttpStatus.PAYLOAD_TOO_LARGE,
+                "Cada arquivo pode ter até 10 MB.", rota(request));
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(problema);
     }
 
     // Qualquer erro não previsto: registra no log e não expõe detalhes internos

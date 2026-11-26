@@ -12,7 +12,7 @@ info:
 
     **Erros:** todas as respostas de erro seguem o padrão Problem Details (RFC 9457),
     em português, no schema `Erro`. Erros de validação trazem a lista `campos`.
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://localhost:8080
     description: Servidor local
@@ -35,6 +35,12 @@ tags:
     description: Compatibilidade entre startups e mentores, calculada a partir dos temas e do setor.
   - name: Temas
     description: Assuntos usados no match entre startups e mentores.
+  - name: Acompanhamentos
+    description: >
+      Acompanhamento pós-mentoria. O mentor propõe (objetivo e metas) a uma startup com quem já teve
+      mentoria; a startup aceita; o mentor cria atividades com prazo; a startup entrega (texto, link e
+      arquivos); o mentor aprova ou devolve; os dois comentam. Só o mentor e a startup do acompanhamento
+      enxergam os dados (para os outros, 404).
 paths:
   /temas:
     get:
@@ -876,13 +882,336 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UsuarioResumo"
+  /acompanhamentos:
+    get:
+      tags: [Acompanhamentos]
+      summary: "Acompanhamentos de quem está logado (propostas, ativos e encerrados)"
+      description: >
+        A startup vê os acompanhamentos com os seus mentores; o mentor, os com as suas startups.
+        Propostas recusadas não aparecem. Os números de cada card são calculados a partir das
+        atividades e metas guardadas.
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: Lista de acompanhamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ResumoAcompanhamento" }
+    post:
+      tags: [Acompanhamentos]
+      summary: O mentor propõe um acompanhamento a uma startup
+      description: >
+        Só para startups com quem o mentor já teve uma mentoria realizada (confirmada e com o horário
+        já terminado) e sem outra proposta ou acompanhamento em andamento com ele.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NovaProposta" }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "201":
+          description: Proposta criada (status PROPOSTO)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResumoAcompanhamento" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /acompanhamentos/painel:
+    get:
+      tags: [Acompanhamentos]
+      summary: Painel consolidado (soma dos acompanhamentos ativos de quem está logado)
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: Painel
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PainelConsolidado" }
+  /acompanhamentos/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Acompanhamentos]
+      summary: Detalhe de um acompanhamento
+      description: "Só o mentor e a startup do acompanhamento enxergam; para os outros, 404."
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: Acompanhamento
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResumoAcompanhamento" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+  /acompanhamentos/{id}/aceitar:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Acompanhamentos]
+      summary: A startup aceita a proposta (vira ATIVO)
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "204": { description: "Proposta aceita" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /acompanhamentos/{id}/recusar:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Acompanhamentos]
+      summary: A startup recusa a proposta (sai da lista)
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "204": { description: "Proposta recusada" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /acompanhamentos/{id}/encerrar:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Acompanhamentos]
+      summary: "O mentor encerra o acompanhamento (depois disso, somente leitura)"
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Acompanhamento encerrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResumoAcompanhamento" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /acompanhamentos/{id}/metas:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Acompanhamentos]
+      summary: Metas do acompanhamento
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: "Metas, na ordem em que o mentor escreveu"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Meta" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+  /metas/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Acompanhamentos]
+      summary: O mentor marca (ou desmarca) uma meta como cumprida
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cumprida]
+              properties:
+                cumprida: { type: boolean, example: true }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Meta atualizada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meta" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /acompanhamentos/{id}/atividades:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Acompanhamentos]
+      summary: Atividades do acompanhamento (do prazo mais próximo ao mais distante)
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: "Atividades com entregas, comentários e anexos"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Atividade" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+    post:
+      tags: [Acompanhamentos]
+      summary: O mentor cria uma atividade (com ou sem materiais anexados)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NovaAtividade" }
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/NovaAtividade"
+                - type: object
+                  properties:
+                    arquivos: { $ref: "#/components/schemas/Arquivos" }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "201":
+          description: Atividade criada (status PENDENTE)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Atividade" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /atividades/{id}/entrega:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Acompanhamentos]
+      summary: "A startup entrega ou reenvia (texto, link e/ou arquivos)"
+      description: Só quando a atividade está PENDENTE ou DEVOLVIDA. Cada reenvio vira uma entrega nova (histórico).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NovaEntrega" }
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/NovaEntrega"
+                - type: object
+                  properties:
+                    arquivos: { $ref: "#/components/schemas/Arquivos" }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Atividade com a nova entrega (status ENTREGUE)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Atividade" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+    delete:
+      tags: [Acompanhamentos]
+      summary: A startup desfaz o último envio (só enquanto o mentor não avaliou)
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: "Atividade de volta a PENDENTE (ou DEVOLVIDA, se havia um envio anterior)"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Atividade" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /atividades/{id}/aprovar:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Acompanhamentos]
+      summary: O mentor aprova a última entrega (feedback opcional)
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AvaliacaoEntrega" }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Atividade APROVADA
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Atividade" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /atividades/{id}/devolver:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Acompanhamentos]
+      summary: O mentor devolve para ajustes (feedback obrigatório)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AvaliacaoEntrega" }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "200":
+          description: Atividade DEVOLVIDA
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Atividade" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
+  /atividades/{id}/entregas/{entregaId}/comentarios:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: entregaId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      tags: [Acompanhamentos]
+      summary: Comentário numa entrega (mentor ou startup)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texto]
+              properties:
+                texto: { type: string, maxLength: 1000, example: "Podemos conversar sobre o roteiro na próxima reunião?" }
+      responses:
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "200":
+          description: Atividade com a conversa atualizada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Atividade" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "404": { $ref: "#/components/responses/NaoEncontrado" }
+        "409": { $ref: "#/components/responses/Conflito" }
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
   responses:
+    NaoEncontrado:
+      description: "Não encontrado (ou a pessoa logada não participa deste acompanhamento)"
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Erro" }
+    Conflito:
+      description: "A ação não vale no estado atual (ex.: acompanhamento não está ativo, proposta já respondida)"
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Erro" }
+    Invalido:
+      description: "Dados inválidos (a mensagem explica o que corrigir)"
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Erro" }
     SemLogin:
       description: Token ausente, inválido ou expirado
       content:
@@ -1413,3 +1742,136 @@ components:
           example: "2026-10-22T10:35:08Z"
         usuario:
           $ref: "#/components/schemas/UsuarioResumo"
+    StatusAcompanhamento:
+      type: string
+      description: "PROPOSTO: esperando a startup; ATIVO: em andamento; RECUSADO: a startup recusou; ENCERRADO: somente leitura."
+      enum: [PROPOSTO, ATIVO, RECUSADO, ENCERRADO]
+    ParceiroAcompanhamento:
+      type: object
+      description: "A outra ponta do acompanhamento (o mentor, para a startup; a startup, para o mentor)."
+      properties:
+        id: { type: integer, format: int64, example: 3 }
+        nome: { type: string, example: "Juliana G." }
+        fotoUrl: { type: string, nullable: true, example: "/demo/mentores/juliana.svg" }
+        subtitulo: { type: string, nullable: true, example: "Nível 4, PetTech" }
+    ResumoAcompanhamento:
+      type: object
+      properties:
+        id: { type: integer, format: int64, example: 1 }
+        status: { $ref: "#/components/schemas/StatusAcompanhamento" }
+        objetivo: { type: string, example: "Validar a teleconsulta e fechar os 3 primeiros clientes piloto." }
+        dataInicio: { type: string, format: date, nullable: true, example: "2026-11-05" }
+        dataFim: { type: string, format: date, nullable: true }
+        parceiro: { $ref: "#/components/schemas/ParceiroAcompanhamento" }
+        atividadesAprovadas: { type: integer, example: 1 }
+        atividadesTotal: { type: integer, example: 5 }
+        metasCumpridas: { type: integer, example: 2 }
+        metasTotal: { type: integer, example: 4 }
+        metasSugeridas: { type: integer, nullable: true, description: "Só em propostas." }
+        proximoPrazo: { type: string, format: date, nullable: true }
+        atividadesAtrasadas: { type: integer, example: 1 }
+        pendencias: { type: integer, description: "Startup: atividades a entregar. Mentor: entregas a revisar.", example: 2 }
+    PainelConsolidado:
+      type: object
+      properties:
+        acompanhamentosAtivos: { type: integer, example: 2 }
+        atividadesAprovadas: { type: integer, example: 3 }
+        atividadesTotal: { type: integer, example: 8 }
+        entregasNoPrazo:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 100
+          description: "Das atividades já entregues, % com o primeiro envio dentro do prazo. null sem nenhuma entrega."
+          example: 75
+        metasCumpridas: { type: integer, example: 3 }
+        metasTotal: { type: integer, example: 7 }
+    NovaProposta:
+      type: object
+      required: [startupId, objetivo]
+      properties:
+        startupId: { type: integer, format: int64, example: 2 }
+        objetivo: { type: string, maxLength: 500, example: "Validar o MVP e fechar os 3 primeiros clientes piloto." }
+        metas:
+          type: array
+          maxItems: 5
+          items: { type: string, maxLength: 200 }
+          example: ["Fechar 3 clientes piloto", "Definir o preço"]
+    Meta:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        titulo: { type: string, example: "Fechar 3 clientes piloto" }
+        cumprida: { type: boolean }
+        cumpridaEm: { type: string, format: date-time, nullable: true }
+    StatusAtividade:
+      type: string
+      description: "\"Atrasada\" não é status: vem no campo atrasada, calculado pelo prazo."
+      enum: [PENDENTE, ENTREGUE, APROVADA, DEVOLVIDA]
+    Anexo:
+      type: object
+      properties:
+        nome: { type: string, example: "Modelo de roteiro.pdf" }
+        tamanho: { type: integer, format: int64, example: 512000 }
+        url: { type: string, nullable: true, description: "Link assinado para baixar, válido por 1 hora." }
+    Comentario:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        autor: { type: string, enum: [MENTOR, STARTUP] }
+        nomeAutor: { type: string, example: "Juliana G." }
+        texto: { type: string }
+        criadoEm: { type: string, example: "2026-11-20T09:00:00" }
+    Entrega:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        texto: { type: string }
+        link: { type: string, nullable: true, example: "https://notion.so/exemplo" }
+        anexos:
+          type: array
+          items: { $ref: "#/components/schemas/Anexo" }
+        enviadaEm: { type: string, example: "2026-11-19T15:30:00" }
+        feedback: { type: string, nullable: true }
+        comentarios:
+          type: array
+          items: { $ref: "#/components/schemas/Comentario" }
+    Atividade:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        acompanhamentoId: { type: integer, format: int64 }
+        titulo: { type: string, example: "Mapear e agendar 10 entrevistas" }
+        descricao: { type: string }
+        prazo: { type: string, description: "Data e hora de Recife, sem fuso., example: \"2026-11-30T23:59:00\"" }
+        anexos:
+          type: array
+          items: { $ref: "#/components/schemas/Anexo" }
+        status: { $ref: "#/components/schemas/StatusAtividade" }
+        atrasada: { type: boolean, description: "O prazo passou e a startup ainda precisa entregar." }
+        entregas:
+          type: array
+          description: "Histórico de envios, do primeiro ao último."
+          items: { $ref: "#/components/schemas/Entrega" }
+    NovaAtividade:
+      type: object
+      required: [titulo, prazo]
+      properties:
+        titulo: { type: string, maxLength: 200 }
+        descricao: { type: string, maxLength: 2000 }
+        prazo: { type: string, description: "Precisa ser no futuro., example: \"2026-12-10T23:59:00\"" }
+    NovaEntrega:
+      type: object
+      description: "Precisa de pelo menos um entre texto, link e arquivos."
+      properties:
+        texto: { type: string, maxLength: 4000 }
+        link: { type: string, maxLength: 500, description: "Só http:// ou https://." }
+    AvaliacaoEntrega:
+      type: object
+      properties:
+        feedback: { type: string, maxLength: 2000 }
+    Arquivos:
+      type: array
+      description: "Até 5 arquivos de até 10 MB: pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, png, jpg, jpeg, zip."
+      maxItems: 5
+      items: { type: string, format: binary }
