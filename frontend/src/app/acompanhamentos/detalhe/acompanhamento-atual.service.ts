@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { SessaoService } from '../../auth/sessao.service';
 import { AcompanhamentoService } from '../acompanhamento.service';
-import { Meta, ResumoAcompanhamento } from '../acompanhamento.models';
+import { Atividade, Meta, ResumoAcompanhamento } from '../acompanhamento.models';
 
 // O acompanhamento aberto na página. É fornecido pela casca da página (não é global): a casca carrega
 // uma vez e todas as subabas perguntam aqui quem está vendo e se pode editar.
@@ -14,6 +14,10 @@ export class AcompanhamentoAtualService {
 
   readonly acompanhamento = signal<ResumoAcompanhamento | null>(null);
   readonly metas = signal<Meta[]>([]);
+  // As atividades ficam aqui (e não na subaba) para a casca da página poder mostrar a bolinha de aviso nas abas
+  readonly atividades = signal<Atividade[]>([]);
+  readonly carregandoAtividades = signal(true);
+  readonly erroAtividades = signal('');
   readonly carregando = signal(true);
   readonly erro = signal('');
 
@@ -29,6 +33,7 @@ export class AcompanhamentoAtualService {
         this.acompanhamento.set(a);
         this.carregando.set(false);
         this.carregarMetas(id);
+        this.carregarAtividades(id);
       },
       error: (e: HttpErrorResponse) => {
         this.erro.set(
@@ -46,6 +51,29 @@ export class AcompanhamentoAtualService {
         // Falha silenciosa: o resumo continua exibindo os totais agregados
       },
     });
+  }
+
+  carregarAtividades(id: number) {
+    this.carregandoAtividades.set(true);
+    this.erroAtividades.set('');
+    this.api.atividades(id).subscribe({
+      next: (lista) => {
+        this.atividades.set(lista);
+        this.carregandoAtividades.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.erroAtividades.set(mensagemDeErro(e, 'Não foi possível carregar as atividades.'));
+        this.carregandoAtividades.set(false);
+      },
+    });
+  }
+
+  adicionarAtividade(a: Atividade) {
+    this.atividades.update((lista) => [...lista, a]);
+  }
+
+  substituirAtividade(a: Atividade) {
+    this.atividades.update((lista) => lista.map((x) => (x.id === a.id ? a : x)));
   }
 
   atualizarResumo(resumo: ResumoAcompanhamento) {

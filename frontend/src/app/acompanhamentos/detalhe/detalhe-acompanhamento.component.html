@@ -121,9 +121,12 @@
               [routerLink]="aba.rota"
               routerLinkActive="border-ponti-roxo text-ponti-roxo"
               ariaCurrentWhenActive="page"
-              class="inline-block border-b-2 border-transparent py-3 text-lg font-medium text-gray-600 transition-colors hover:text-ponti-marinho focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-marinho"
+              class="inline-flex items-center gap-2 border-b-2 border-transparent py-3 text-lg font-medium text-gray-600 transition-colors hover:text-ponti-marinho focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-marinho"
             >
               {{ aba.rotulo }}
+              @if (notificacoes()[aba.rota]) {
+                <app-bolinha-notificacao [rotulo]="textoNotificacao[aba.rota]" />
+              }
             </a>
           </li>
         }

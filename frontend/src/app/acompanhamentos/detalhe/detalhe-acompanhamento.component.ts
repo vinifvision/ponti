@@ -2,13 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
+import { BolinhaNotificacaoComponent } from '../../shared/bolinha-notificacao/bolinha-notificacao.component';
 import { DialogoConfirmacaoComponent } from '../../shared/dialogo-confirmacao/dialogo-confirmacao.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 import { SeloComponent } from '../../shared/selo/selo.component';
 import { iniciais } from '../../shared/texto.utils';
 import { Meta } from '../acompanhamento.models';
 import { AcompanhamentoService } from '../acompanhamento.service';
-import { ABAS_ATIVIDADES, dataCurta } from '../acompanhamento.utils';
+import { ABAS_ATIVIDADES, FiltroAtividades, dataCurta, notificacoesDasAbas } from '../acompanhamento.utils';
 import { AcompanhamentoAtualService } from './acompanhamento-atual.service';
 
 // Casca da página de um acompanhamento (Tela 3): cabeçalho, metas, encerramento, aviso de somente leitura e as subabas.
@@ -16,7 +17,15 @@ import { AcompanhamentoAtualService } from './acompanhamento-atual.service';
 @Component({
   selector: 'app-detalhe-acompanhamento',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconeComponent, SeloComponent, DialogoConfirmacaoComponent],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    IconeComponent,
+    SeloComponent,
+    DialogoConfirmacaoComponent,
+    BolinhaNotificacaoComponent,
+  ],
   providers: [AcompanhamentoAtualService],
   templateUrl: './detalhe-acompanhamento.component.html',
 })
@@ -39,6 +48,17 @@ export class DetalheAcompanhamentoComponent implements OnInit {
   readonly iniciais = iniciais;
   // Todas atividades, Pendentes, Atrasadas e Devolvidas (só a primeira mostra a linha do tempo)
   readonly abas = ABAS_ATIVIDADES;
+
+  // Abas com algo esperando a pessoa ganham a bolinha de aviso (veja notificacoesDasAbas)
+  notificacoes = computed(() =>
+    notificacoesDasAbas(this.atual.atividades(), this.atual.ehMentor(), this.atual.somenteLeitura()),
+  );
+  readonly textoNotificacao: Record<FiltroAtividades, string> = {
+    todas: 'Há entregas para revisar',
+    pendentes: 'Há atividades pendentes',
+    atrasadas: 'Há atividades atrasadas',
+    devolvidas: 'Há atividades devolvidas',
+  };
 
   abertura = computed(() => {
     const a = this.atual.acompanhamento();
