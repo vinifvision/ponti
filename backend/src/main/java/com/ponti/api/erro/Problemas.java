@@ -32,6 +32,7 @@ public final class Problemas {
             case METHOD_NOT_ALLOWED -> "Operação não permitida";
             case PAYMENT_REQUIRED -> "Pagamento recusado";
             case UNPROCESSABLE_ENTITY -> "Não foi possível concluir";
+            case PAYLOAD_TOO_LARGE -> "Arquivo grande demais";
             default -> status.is5xxServerError() ? "Erro interno" : status.getReasonPhrase();
         };
     }

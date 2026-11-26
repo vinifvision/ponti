@@ -23,7 +23,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 // Segurança da API:
 //  - sem sessão: cada requisição se identifica pelo token JWT (cabeçalho Authorization);
-//  - rotas públicas: login, cadastro, /auth/me (que confere o token sozinho) e a documentação;
+//  - rotas públicas: login, cadastro, /auth/me (que confere o token sozinho), a documentação
+//    e o download de anexos no PC (/arquivos-locais, protegido pela assinatura do link);
 //  - todo o resto exige login (401). As regras de dono ficam na classe Acesso (403).
 @Configuration
 public class SegurancaConfig {
@@ -54,6 +55,8 @@ public class SegurancaConfig {
                     rotas.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     rotas.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/cadastro/startup", "/auth/cadastro/mentor").permitAll();
                     rotas.requestMatchers(HttpMethod.GET, "/auth/me", "/temas").permitAll();
+                    // Download de anexo no PC: protegido pela assinatura do link (o <a href> não leva o token)
+                    rotas.requestMatchers(HttpMethod.GET, "/arquivos-locais").permitAll();
                     rotas.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll();
                     if (consoleH2) {
                         rotas.requestMatchers("/h2-console/**").permitAll();
