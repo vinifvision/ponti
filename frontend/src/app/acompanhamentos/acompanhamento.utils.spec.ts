@@ -120,6 +120,10 @@ describe('atraso', () => {
     expect(diasDeAtraso(atividade({ prazo: '2026-11-17T12:00:00' }), AGORA)).toBe(3);
     expect(diasDeAtraso(atividade({ prazo: '2026-11-25T12:00:00' }), AGORA)).toBe(0);
   });
+  it('respeita o campo atrasada calculado pelo servidor quando não há data de referência explícita', () => {
+    expect(estaAtrasada(atividade({ prazo: '2099-11-19T23:59:00', status: 'PENDENTE', atrasada: true }))).toBe(true);
+    expect(estaAtrasada(atividade({ prazo: '2000-11-19T23:59:00', status: 'PENDENTE', atrasada: false }))).toBe(false);
+  });
   it('entrega depois do prazo é entrega com atraso', () => {
     const a = atividade({ prazo: '2026-11-19T23:59:00' });
     const entrega = (enviadaEm: string) => ({ id: 1, texto: '', link: null, enviadaEm, feedback: null, comentarios: [] });

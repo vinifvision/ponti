@@ -43,6 +43,13 @@ export interface PainelConsolidado {
   metasTotal: number;
 }
 
+export interface Meta {
+  id: number;
+  titulo: string;
+  cumprida: boolean;
+  cumpridaEm: string | null;
+}
+
 export type StatusAtividade = 'PENDENTE' | 'ENTREGUE' | 'APROVADA' | 'DEVOLVIDA';
 export type PapelAutor = 'MENTOR' | 'STARTUP';
 
@@ -75,7 +82,7 @@ export interface Entrega {
   comentarios: Comentario[];
 }
 
-// Item do plano criado pelo mentor. "Atrasada" não é status: é calculado pelo prazo.
+// Item do plano criado pelo mentor. "Atrasada" vem calculado pelo servidor (fallback local no mock/testes).
 export interface Atividade {
   id: number;
   acompanhamentoId: number;
@@ -86,6 +93,7 @@ export interface Atividade {
   // Materiais de apoio que o mentor anexou ao criar a atividade
   anexos?: Anexo[];
   status: StatusAtividade;
+  atrasada?: boolean;
   entregas: Entrega[];
 }
 

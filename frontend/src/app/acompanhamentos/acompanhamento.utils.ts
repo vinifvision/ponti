@@ -75,9 +75,11 @@ export function selosDoCard(a: ResumoAcompanhamento, ehMentor: boolean): SeloCar
 
 export type TomNo = 'aprovada' | 'atrasada' | 'devolvida' | 'entregue' | 'pendente';
 
-// "Atrasada" não é status: vale quando o prazo passou e a startup ainda precisa entregar (ou reenviar)
-export function estaAtrasada(a: Atividade, agora: Date = new Date()): boolean {
-  return (a.status === 'PENDENTE' || a.status === 'DEVOLVIDA') && lerDataHora(a.prazo) < agora;
+// Usa o campo `atrasada` calculado pelo servidor quando presente; caso contrário calcula pelo prazo (mock/testes).
+export function estaAtrasada(a: Atividade, agora?: Date): boolean {
+  if (agora === undefined && typeof a.atrasada === 'boolean') return a.atrasada;
+  const ref = agora ?? new Date();
+  return (a.status === 'PENDENTE' || a.status === 'DEVOLVIDA') && lerDataHora(a.prazo) < ref;
 }
 
 export function diasDeAtraso(a: Atividade, agora: Date = new Date()): number {

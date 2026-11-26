@@ -15,13 +15,11 @@ import { IconeComponent } from '../../shared/icone/icone.component';
       <a
         [href]="href"
         [attr.download]="nome()"
-        target="_blank"
-        rel="noopener noreferrer"
         class="inline-flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-ponti-marinho transition-colors hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ponti-marinho"
         [class.rounded-r-none]="removivel()"
       >
         <ng-container *ngTemplateOutlet="conteudo" />
-        <span class="sr-only">(abre em outra aba)</span>
+        <span class="sr-only">(baixar arquivo)</span>
       </a>
     } @else {
       <span

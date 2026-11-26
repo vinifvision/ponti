@@ -6,6 +6,7 @@ import { SessaoService } from '../auth/sessao.service';
 import { BancoMock, ErroMock } from './acompanhamento.mock';
 import {
   Atividade,
+  Meta,
   NovaAtividade,
   NovaEntrega,
   NovaProposta,
@@ -18,9 +19,7 @@ export class AcompanhamentoService {
   private http = inject(HttpClient);
   private sessao = inject(SessaoService);
 
-  // TEMPORÁRIO!!: enquanto o backend do módulo não existe, as chamadas usam o BancoMock (dados de
-  // mentira em memória, em acompanhamento.mock.ts). Trocar para false quando a API estiver no ar.
-  private readonly usarMock = true;
+  private readonly usarMock = false;
   private banco: BancoMock | null = null;
   private bancoDe: number | null = null;
 
@@ -68,6 +67,27 @@ export class AcompanhamentoService {
     return this.usarMock
       ? this.simular((b) => b.detalhe(id))
       : this.http.get<ResumoAcompanhamento>(`${API_URL}/acompanhamentos/${id}`);
+  }
+
+  // POST /acompanhamentos/{id}/encerrar (só o mentor)
+  encerrar(id: number): Observable<ResumoAcompanhamento> {
+    return this.usarMock
+      ? this.simular((b) => b.encerrar(id))
+      : this.http.post<ResumoAcompanhamento>(`${API_URL}/acompanhamentos/${id}/encerrar`, {});
+  }
+
+  // GET /acompanhamentos/{id}/metas
+  metas(id: number): Observable<Meta[]> {
+    return this.usarMock
+      ? this.simular((b) => b.metas(id))
+      : this.http.get<Meta[]>(`${API_URL}/acompanhamentos/${id}/metas`);
+  }
+
+  // PATCH /metas/{id} (só o mentor marca/desmarca)
+  atualizarMeta(metaId: number, cumprida: boolean): Observable<Meta> {
+    return this.usarMock
+      ? this.simular((b) => b.atualizarMeta(metaId, cumprida))
+      : this.http.patch<Meta>(`${API_URL}/metas/${metaId}`, { cumprida });
   }
 
   // GET /acompanhamentos/{id}/atividades

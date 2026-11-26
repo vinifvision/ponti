@@ -4,6 +4,7 @@ import {
   Atividade,
   Comentario,
   Entrega,
+  Meta,
   NovaAtividade,
   NovaEntrega,
   NovaProposta,
@@ -32,6 +33,7 @@ export class ErroMock extends Error {
 
 interface Registro {
   resumo: ResumoAcompanhamento;
+  metas: Meta[];
   // null: usa os números fixos do resumo (propostas e itens sem detalhe)
   atividades: Atividade[] | null;
 }
@@ -160,18 +162,44 @@ function sementes(tipo: TipoMock, agora: Date, meuNome: string): Registro[] {
   const n2 = nomes(p2.nome);
   const n3 = nomes(p3.nome);
 
+  const meta = (id: number, titulo: string, cumprida: boolean, dias = -10): Meta => ({
+    id, titulo, cumprida, cumpridaEm: cumprida ? `${quando(agora, dias, '14:00')}Z` : null,
+  });
+
   return [
     { resumo: fixo(base + 1, 'PROPOSTO',
         mentor ? 'Preparar a startup para a primeira rodada de testes com clínicas.' : 'Validar o MVP e fechar os 3 primeiros clientes piloto.',
-        p1, { metasSugeridas: mentor ? 2 : 3 }), atividades: null },
+        p1, { metasSugeridas: mentor ? 2 : 3 }),
+      metas: (mentor
+        ? ['Estruturar o protocolo clínico de validação', 'Mapear 5 clínicas parceiras']
+        : ['Validar hipótese de dor com 10 clientes', 'Construir protótipo navegável', 'Fechar 3 clientes piloto']
+      ).map((t, i) => meta((base + 1) * 10 + i + 1, t, false)),
+      atividades: null },
     { resumo: fixo(base + 2, 'ATIVO', 'Estruturar o discovery e validar a proposta de valor.', p2,
         { dataInicio: quando(agora, -70).slice(0, 10), metasCumpridas: 2, metasTotal: 4 }),
+      metas: [
+        meta((base + 2) * 10 + 1, 'Conduzir 10 entrevistas de descoberta', true, -40),
+        meta((base + 2) * 10 + 2, 'Definir proposta de valor por segmento', true, -25),
+        meta((base + 2) * 10 + 3, 'Validar hipóteses críticas com clientes', false),
+        meta((base + 2) * 10 + 4, 'Apresentar plano de validação final', false),
+      ],
       atividades: planoPrincipal(base + 2, agora, n2.startup, n2.mentor) },
     { resumo: fixo(base + 3, 'ATIVO', mentor ? 'Definir o modelo de negócio e o primeiro piloto.' : 'Organizar o regulatório e preparar a primeira auditoria.', p3,
         { dataInicio: quando(agora, -45).slice(0, 10), metasCumpridas: 1, metasTotal: 3 }),
+      metas: [
+        meta((base + 3) * 10 + 1, 'Levantar normas regulatórias aplicáveis', true, -20),
+        meta((base + 3) * 10 + 2, 'Estruturar checklist de auditoria', false),
+        meta((base + 3) * 10 + 3, 'Realizar simulação de auditoria', false),
+      ],
       atividades: planoSecundario(base + 3, agora, n3.startup) },
     { resumo: fixo(base + 4, 'ENCERRADO', mentor ? 'Preparar o pitch para a rodada de investimento anjo.' : 'Montar o plano de negócios e o primeiro modelo financeiro.', p4,
         { dataInicio: quando(agora, -150).slice(0, 10), dataFim: quando(agora, -20).slice(0, 10), atividadesAprovadas: 3, atividadesTotal: 3, metasCumpridas: 4, metasTotal: 4 }),
+      metas: [
+        meta((base + 4) * 10 + 1, 'Modelar fontes de receita', true, -90),
+        meta((base + 4) * 10 + 2, 'Projetar estrutura de custos fixos', true, -70),
+        meta((base + 4) * 10 + 3, 'Consolidar fluxo de caixa de 12 meses', true, -50),
+        meta((base + 4) * 10 + 4, 'Revisar deck para investidores anjo', true, -30),
+      ],
       atividades: planoEncerrado(base + 4, agora) },
   ];
 }
@@ -198,6 +226,10 @@ export class BancoMock {
 
   private resumir(r: Registro): ResumoAcompanhamento {
     const resumo = copiar(r.resumo);
+    if (resumo.status !== 'PROPOSTO' && r.metas.length) {
+      resumo.metasTotal = r.metas.length;
+      resumo.metasCumpridas = r.metas.filter((m) => m.cumprida).length;
+    }
     return r.atividades ? { ...resumo, ...resumirAtividades(r.atividades, this.ehMentor, this.agora()) } : resumo;
   }
 
@@ -259,6 +291,32 @@ export class BancoMock {
     return copiar(ordenarPorPrazo(this.registro(id).atividades ?? []));
   }
 
+  metas(id: number): Meta[] {
+    return copiar(this.registro(id).metas);
+  }
+
+  atualizarMeta(metaId: number, cumprida: boolean): Meta {
+    this.exigir('MENTOR');
+    for (const r of this.registros) {
+      const m = r.metas.find((x) => x.id === metaId);
+      if (m) {
+        if (r.resumo.status !== 'ATIVO') throw new ErroMock(409, 'Este acompanhamento não está ativo.');
+        m.cumprida = cumprida;
+        m.cumpridaEm = cumprida ? `${this.agoraIso()}Z` : null;
+        return copiar(m);
+      }
+    }
+    throw new ErroMock(404, 'Meta não encontrada.');
+  }
+
+  encerrar(id: number): ResumoAcompanhamento {
+    this.exigir('MENTOR');
+    const r = this.registroAtivo(id);
+    r.resumo.status = 'ENCERRADO';
+    r.resumo.dataFim = dataIso(this.agora());
+    return this.resumir(r);
+  }
+
   // ----- propostas -----
 
   propor(nova: NovaProposta): ResumoAcompanhamento {
@@ -272,6 +330,7 @@ export class BancoMock {
       resumo: fixo(this.novoId(), 'PROPOSTO', nova.objetivo.trim(),
         { id: nova.startupId, nome: nova.nomeStartup ?? `Startup ${nova.startupId}`, fotoUrl: null, subtitulo: null },
         { metasSugeridas: metas.length }),
+      metas: metas.map((titulo) => ({ id: this.novoId(), titulo, cumprida: false, cumpridaEm: null })),
       atividades: null,
     };
     this.registros.unshift(registro);
