@@ -58,6 +58,7 @@ public class AcompanhamentoService {
     private final ComentarioRepository comentarioRepository;
     private final StartupRepository startupRepository;
     private final MentorRepository mentorRepository;
+    private final AnexoService anexoService;
     private final Acesso acesso;
     private final Clock relogio;
 
@@ -68,6 +69,7 @@ public class AcompanhamentoService {
                                  ComentarioRepository comentarioRepository,
                                  StartupRepository startupRepository,
                                  MentorRepository mentorRepository,
+                                 AnexoService anexoService,
                                  Acesso acesso,
                                  Clock relogio) {
         this.repository = repository;
@@ -77,6 +79,7 @@ public class AcompanhamentoService {
         this.comentarioRepository = comentarioRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
+        this.anexoService = anexoService;
         this.acesso = acesso;
         this.relogio = relogio;
     }
@@ -221,7 +224,7 @@ public class AcompanhamentoService {
 
     // ----- exclusão de conta (LGPD) -----
 
-    // Apaga os acompanhamentos da pessoa e tudo o que está dentro deles (metas, atividades, entregas e comentários).
+    // Apaga os acompanhamentos da pessoa e tudo o que está dentro deles (metas, atividades, entregas, comentários e arquivos anexados).
     // Chamado por ContaService, dentro da mesma transação da exclusão da conta.
     @Transactional
     public void apagarDaStartup(Long startupId) {
@@ -234,6 +237,7 @@ public class AcompanhamentoService {
     }
 
     private void apagar(Acompanhamento a) {
+        anexoService.apagarDoAcompanhamento(a.getId());
         for (Atividade atividade : atividadeRepository.findByAcompanhamentoIdOrderByPrazoAscIdAsc(a.getId())) {
             for (Entrega e : entregaRepository.findByAtividadeIdOrderByIdAsc(atividade.getId())) {
                 comentarioRepository.deleteByEntregaId(e.getId());

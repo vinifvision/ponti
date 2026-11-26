@@ -28,6 +28,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 // Atividades e entregas de um acompanhamento. Permissões:
@@ -48,6 +49,7 @@ public class AtividadeService {
     private final MentorRepository mentorRepository;
     private final StartupRepository startupRepository;
     private final AcompanhamentoService acompanhamentoService;
+    private final AnexoService anexoService;
     private final Acesso acesso;
     private final Clock relogio;
 
@@ -58,6 +60,7 @@ public class AtividadeService {
                             MentorRepository mentorRepository,
                             StartupRepository startupRepository,
                             AcompanhamentoService acompanhamentoService,
+                            AnexoService anexoService,
                             Acesso acesso,
                             Clock relogio) {
         this.repository = repository;
@@ -67,6 +70,7 @@ public class AtividadeService {
         this.mentorRepository = mentorRepository;
         this.startupRepository = startupRepository;
         this.acompanhamentoService = acompanhamentoService;
+        this.anexoService = anexoService;
         this.acesso = acesso;
         this.relogio = relogio;
     }
@@ -81,7 +85,7 @@ public class AtividadeService {
     }
 
     @Transactional
-    public AtividadeResposta criar(Long acompanhamentoId, NovaAtividade nova) {
+    public AtividadeResposta criar(Long acompanhamentoId, NovaAtividade nova, List<MultipartFile> arquivos) {
         UsuarioLogado logado = acesso.atual();
         Acompanhamento ac = acompanhamentoService.doParticipante(acompanhamentoId, logado);
         exigir(logado, TipoUsuario.MENTOR);
@@ -94,11 +98,15 @@ public class AtividadeService {
         a.setTitulo(nova.titulo().trim());
         a.setDescricao(nova.descricao() == null ? "" : nova.descricao().trim());
         a.setPrazo(nova.prazo());
-        return resposta(repository.save(a), agora());
+        List<MultipartFile> anexos = AnexoService.naoVazios(arquivos);
+        anexoService.validar(anexos);
+        a = repository.save(a);
+        anexoService.salvarDaAtividade(acompanhamentoId, a.getId(), anexos);
+        return resposta(a, agora());
     }
 
     @Transactional
-    public AtividadeResposta entregar(Long atividadeId, NovaEntrega nova) {
+    public AtividadeResposta entregar(Long atividadeId, NovaEntrega nova, List<MultipartFile> arquivos) {
         UsuarioLogado logado = acesso.atual();
         Atividade a = daAtividadeAtiva(atividadeId, logado);
         exigir(logado, TipoUsuario.STARTUP);
@@ -107,7 +115,8 @@ public class AtividadeService {
         }
         String texto = limpar(nova.texto());
         String link = limpar(nova.link());
-        if (texto == null && link == null) {
+        List<MultipartFile> anexos = AnexoService.naoVazios(arquivos);
+        if (texto == null && link == null && anexos.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escreva um texto, informe um link ou anexe um arquivo.");
         }
         // Só links da web: bloqueia endereços como "javascript:", que poderiam rodar código no navegador de quem clica
@@ -119,7 +128,9 @@ public class AtividadeService {
         e.setTexto(texto == null ? "" : texto);
         e.setLink(link);
         e.setEnviadaEm(agora());
-        entregaRepository.save(e);
+        anexoService.validar(anexos);
+        e = entregaRepository.save(e);
+        anexoService.salvarDaEntrega(a.getAcompanhamentoId(), e.getId(), anexos);
         a.setStatus(StatusAtividade.ENTREGUE);
         return resposta(a, agora());
     }
@@ -137,6 +148,7 @@ public class AtividadeService {
         List<Entrega> entregas = entregaRepository.findByAtividadeIdOrderByIdAsc(atividadeId);
         Entrega ultima = entregas.get(entregas.size() - 1);
         comentarioRepository.deleteByEntregaId(ultima.getId());
+        anexoService.apagarDaEntrega(ultima.getId());
         entregaRepository.delete(ultima);
         a.setStatus(entregas.size() > 1 ? StatusAtividade.DEVOLVIDA : StatusAtividade.PENDENTE);
         return resposta(a, agora());
@@ -221,11 +233,11 @@ public class AtividadeService {
     AtividadeResposta resposta(Atividade a, LocalDateTime agora) {
         Nomes nomes = nomes(a.getAcompanhamentoId());
         List<EntregaResposta> entregas = entregaRepository.findByAtividadeIdOrderByIdAsc(a.getId()).stream()
-                .map(e -> new EntregaResposta(e.getId(), e.getTexto(), e.getLink(), List.of(), e.getEnviadaEm(),
+                .map(e -> new EntregaResposta(e.getId(), e.getTexto(), e.getLink(), anexoService.daEntrega(e.getId()), e.getEnviadaEm(),
                         e.getFeedback(), comentarios(e.getId(), nomes)))
                 .toList();
         return new AtividadeResposta(a.getId(), a.getAcompanhamentoId(), a.getTitulo(), a.getDescricao(), a.getPrazo(),
-                List.of(), a.getStatus(), a.estaAtrasada(agora), entregas);
+                anexoService.daAtividade(a.getId()), a.getStatus(), a.estaAtrasada(agora), entregas);
     }
 
     private List<ComentarioResposta> comentarios(Long entregaId, Nomes nomes) {
