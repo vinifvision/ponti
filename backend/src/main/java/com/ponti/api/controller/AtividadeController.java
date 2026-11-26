@@ -4,6 +4,7 @@ import com.ponti.api.dto.AtividadeResposta;
 import com.ponti.api.dto.AvaliacaoEntrega;
 import com.ponti.api.dto.NovaAtividade;
 import com.ponti.api.dto.NovaEntrega;
+import com.ponti.api.dto.NovoComentario;
 import com.ponti.api.service.AtividadeService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -48,6 +49,13 @@ public class AtividadeController {
     @PostMapping("/atividades/{id}/aprovar")
     public AtividadeResposta aprovar(@PathVariable Long id, @Valid @RequestBody(required = false) AvaliacaoEntrega avaliacao) {
         return service.aprovar(id, avaliacao);
+    }
+
+    // Os dois lados comentam numa entrega
+    @PostMapping("/atividades/{id}/entregas/{entregaId}/comentarios")
+    public AtividadeResposta comentar(@PathVariable Long id, @PathVariable Long entregaId,
+                                      @Valid @RequestBody NovoComentario novo) {
+        return service.comentar(id, entregaId, novo);
     }
 
     @PostMapping("/atividades/{id}/devolver")

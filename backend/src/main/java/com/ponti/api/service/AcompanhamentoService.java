@@ -1,10 +1,14 @@
 package com.ponti.api.service;
 
+import com.ponti.api.dto.AtualizacaoMeta;
+import com.ponti.api.dto.MetaResposta;
 import com.ponti.api.dto.NovaProposta;
+import com.ponti.api.dto.PainelConsolidado;
 import com.ponti.api.dto.ParceiroAcompanhamento;
 import com.ponti.api.dto.ResumoAcompanhamento;
 import com.ponti.api.model.Acompanhamento;
 import com.ponti.api.model.Atividade;
+import com.ponti.api.model.Entrega;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Meta;
 import com.ponti.api.model.StatusAcompanhamento;
@@ -13,6 +17,7 @@ import com.ponti.api.model.Startup;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.repository.AcompanhamentoRepository;
 import com.ponti.api.repository.AtividadeRepository;
+import com.ponti.api.repository.ComentarioRepository;
 import com.ponti.api.repository.EntregaRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.MetaRepository;
@@ -20,6 +25,7 @@ import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.seguranca.Acesso;
 import com.ponti.api.seguranca.UsuarioLogado;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -49,6 +55,7 @@ public class AcompanhamentoService {
     private final MetaRepository metaRepository;
     private final AtividadeRepository atividadeRepository;
     private final EntregaRepository entregaRepository;
+    private final ComentarioRepository comentarioRepository;
     private final StartupRepository startupRepository;
     private final MentorRepository mentorRepository;
     private final Acesso acesso;
@@ -58,6 +65,7 @@ public class AcompanhamentoService {
                                  MetaRepository metaRepository,
                                  AtividadeRepository atividadeRepository,
                                  EntregaRepository entregaRepository,
+                                 ComentarioRepository comentarioRepository,
                                  StartupRepository startupRepository,
                                  MentorRepository mentorRepository,
                                  Acesso acesso,
@@ -66,6 +74,7 @@ public class AcompanhamentoService {
         this.metaRepository = metaRepository;
         this.atividadeRepository = atividadeRepository;
         this.entregaRepository = entregaRepository;
+        this.comentarioRepository = comentarioRepository;
         this.startupRepository = startupRepository;
         this.mentorRepository = mentorRepository;
         this.acesso = acesso;
@@ -87,6 +96,75 @@ public class AcompanhamentoService {
     public ResumoAcompanhamento detalhe(Long id) {
         UsuarioLogado logado = acesso.atual();
         return resumir(doParticipante(id, logado), logado);
+    }
+
+    // Painel do topo da lista: soma dos acompanhamentos ativos de quem está logado
+    @Transactional(readOnly = true)
+    public PainelConsolidado painel() {
+        UsuarioLogado logado = acesso.atual();
+        Set<StatusAcompanhamento> ativos = EnumSet.of(StatusAcompanhamento.ATIVO);
+        List<Acompanhamento> lista = logado.tipo() == TipoUsuario.MENTOR
+                ? repository.findByMentorIdAndStatusInOrderByCriadoEmDesc(logado.mentorId(), ativos)
+                : repository.findByStartupIdAndStatusInOrderByCriadoEmDesc(logado.startupId(), ativos);
+
+        int aprovadas = 0, total = 0, cumpridas = 0, metasTotal = 0, entregues = 0, noPrazo = 0;
+        for (Acompanhamento a : lista) {
+            for (Atividade atividade : atividadeRepository.findByAcompanhamentoIdOrderByPrazoAscIdAsc(a.getId())) {
+                total++;
+                if (atividade.getStatus() == StatusAtividade.APROVADA) aprovadas++;
+                // "No prazo" olha o primeiro envio: reenviar depois de uma devolução não conta como atraso
+                List<Entrega> entregas = entregaRepository.findByAtividadeIdOrderByIdAsc(atividade.getId());
+                if (!entregas.isEmpty()) {
+                    entregues++;
+                    if (!entregas.get(0).getEnviadaEm().isAfter(atividade.getPrazo())) noPrazo++;
+                }
+            }
+            List<Meta> metas = metaRepository.findByAcompanhamentoIdOrderByOrdemAsc(a.getId());
+            metasTotal += metas.size();
+            cumpridas += (int) metas.stream().filter(Meta::isCumprida).count();
+        }
+        Integer percentual = entregues == 0 ? null : Math.round(noPrazo * 100f / entregues);
+        return new PainelConsolidado(lista.size(), aprovadas, total, percentual, cumpridas, metasTotal);
+    }
+
+    // ----- metas -----
+
+    @Transactional(readOnly = true)
+    public List<MetaResposta> metas(Long acompanhamentoId) {
+        doParticipante(acompanhamentoId, acesso.atual());
+        return metaRepository.findByAcompanhamentoIdOrderByOrdemAsc(acompanhamentoId).stream()
+                .map(AcompanhamentoService::metaResposta).toList();
+    }
+
+    // Só o mentor marca ou desmarca, e só com o acompanhamento ativo
+    @Transactional
+    public MetaResposta atualizarMeta(Long metaId, AtualizacaoMeta atualizacao) {
+        UsuarioLogado logado = acesso.atual();
+        Meta meta = metaRepository.findById(metaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Meta não encontrada."));
+        Acompanhamento a;
+        try {
+            a = doParticipante(meta.getAcompanhamentoId(), logado);
+        } catch (ResponseStatusException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Meta não encontrada.");
+        }
+        exigirMentorAtivo(a, logado);
+        meta.setCumprida(atualizacao.cumprida());
+        meta.setCumpridaEm(atualizacao.cumprida() ? Instant.now(relogio) : null);
+        return metaResposta(meta);
+    }
+
+    // ----- encerrar -----
+
+    // O mentor encerra; depois disso tudo vira somente leitura
+    @Transactional
+    public ResumoAcompanhamento encerrar(Long id) {
+        UsuarioLogado logado = acesso.atual();
+        Acompanhamento a = doParticipante(id, logado);
+        exigirMentorAtivo(a, logado);
+        a.setStatus(StatusAcompanhamento.ENCERRADO);
+        a.setDataFim(LocalDate.now(relogio));
+        return resumir(a, logado);
     }
 
     // ----- proposta -----
@@ -143,7 +221,7 @@ public class AcompanhamentoService {
 
     // ----- exclusão de conta (LGPD) -----
 
-    // Apaga os acompanhamentos da pessoa e tudo o que está dentro deles (metas, atividades e entregas).
+    // Apaga os acompanhamentos da pessoa e tudo o que está dentro deles (metas, atividades, entregas e comentários).
     // Chamado por ContaService, dentro da mesma transação da exclusão da conta.
     @Transactional
     public void apagarDaStartup(Long startupId) {
@@ -157,6 +235,9 @@ public class AcompanhamentoService {
 
     private void apagar(Acompanhamento a) {
         for (Atividade atividade : atividadeRepository.findByAcompanhamentoIdOrderByPrazoAscIdAsc(a.getId())) {
+            for (Entrega e : entregaRepository.findByAtividadeIdOrderByIdAsc(atividade.getId())) {
+                comentarioRepository.deleteByEntregaId(e.getId());
+            }
             entregaRepository.deleteByAtividadeId(atividade.getId());
         }
         atividadeRepository.deleteByAcompanhamentoId(a.getId());
@@ -174,6 +255,19 @@ public class AcompanhamentoService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, NAO_ENCONTRADO);
         }
         return a;
+    }
+
+    private static void exigirMentorAtivo(Acompanhamento a, UsuarioLogado logado) {
+        if (logado.tipo() != TipoUsuario.MENTOR) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, Acesso.SEM_PERMISSAO);
+        }
+        if (a.getStatus() != StatusAcompanhamento.ATIVO) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Este acompanhamento não está ativo.");
+        }
+    }
+
+    private static MetaResposta metaResposta(Meta m) {
+        return new MetaResposta(m.getId(), m.getTitulo(), m.isCumprida(), m.getCumpridaEm());
     }
 
     private Acompanhamento propostaDaStartupLogada(Long id) {

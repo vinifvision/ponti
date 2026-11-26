@@ -2,17 +2,24 @@ package com.ponti.api.service;
 
 import com.ponti.api.dto.AtividadeResposta;
 import com.ponti.api.dto.AvaliacaoEntrega;
+import com.ponti.api.dto.ComentarioResposta;
 import com.ponti.api.dto.EntregaResposta;
 import com.ponti.api.dto.NovaAtividade;
 import com.ponti.api.dto.NovaEntrega;
+import com.ponti.api.dto.NovoComentario;
 import com.ponti.api.model.Acompanhamento;
 import com.ponti.api.model.Atividade;
+import com.ponti.api.model.Comentario;
 import com.ponti.api.model.Entrega;
 import com.ponti.api.model.StatusAcompanhamento;
 import com.ponti.api.model.StatusAtividade;
 import com.ponti.api.model.TipoUsuario;
+import com.ponti.api.repository.AcompanhamentoRepository;
 import com.ponti.api.repository.AtividadeRepository;
+import com.ponti.api.repository.ComentarioRepository;
 import com.ponti.api.repository.EntregaRepository;
+import com.ponti.api.repository.MentorRepository;
+import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.seguranca.Acesso;
 import com.ponti.api.seguranca.UsuarioLogado;
 import java.time.Clock;
@@ -27,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 //  - ver: só o mentor e a startup do acompanhamento (para os outros, 404);
 //  - criar atividade, aprovar e devolver: só o mentor;
 //  - entregar e desfazer: só a startup;
+//  - comentar: os dois lados;
 //  - qualquer mudança: só com o acompanhamento ativo.
 @Service
 public class AtividadeService {
@@ -35,17 +43,29 @@ public class AtividadeService {
 
     private final AtividadeRepository repository;
     private final EntregaRepository entregaRepository;
+    private final ComentarioRepository comentarioRepository;
+    private final AcompanhamentoRepository acompanhamentoRepository;
+    private final MentorRepository mentorRepository;
+    private final StartupRepository startupRepository;
     private final AcompanhamentoService acompanhamentoService;
     private final Acesso acesso;
     private final Clock relogio;
 
     public AtividadeService(AtividadeRepository repository,
                             EntregaRepository entregaRepository,
+                            ComentarioRepository comentarioRepository,
+                            AcompanhamentoRepository acompanhamentoRepository,
+                            MentorRepository mentorRepository,
+                            StartupRepository startupRepository,
                             AcompanhamentoService acompanhamentoService,
                             Acesso acesso,
                             Clock relogio) {
         this.repository = repository;
         this.entregaRepository = entregaRepository;
+        this.comentarioRepository = comentarioRepository;
+        this.acompanhamentoRepository = acompanhamentoRepository;
+        this.mentorRepository = mentorRepository;
+        this.startupRepository = startupRepository;
         this.acompanhamentoService = acompanhamentoService;
         this.acesso = acesso;
         this.relogio = relogio;
@@ -115,7 +135,9 @@ public class AtividadeService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Só dá para desfazer um envio que o mentor ainda não avaliou.");
         }
         List<Entrega> entregas = entregaRepository.findByAtividadeIdOrderByIdAsc(atividadeId);
-        entregaRepository.delete(entregas.get(entregas.size() - 1));
+        Entrega ultima = entregas.get(entregas.size() - 1);
+        comentarioRepository.deleteByEntregaId(ultima.getId());
+        entregaRepository.delete(ultima);
         a.setStatus(entregas.size() > 1 ? StatusAtividade.DEVOLVIDA : StatusAtividade.PENDENTE);
         return resposta(a, agora());
     }
@@ -144,6 +166,23 @@ public class AtividadeService {
         List<Entrega> entregas = entregaRepository.findByAtividadeIdOrderByIdAsc(atividadeId);
         entregas.get(entregas.size() - 1).setFeedback(feedback);
         a.setStatus(novo);
+        return resposta(a, agora());
+    }
+
+    // Comentário numa entrega (os dois lados podem comentar, com o acompanhamento ativo)
+    @Transactional
+    public AtividadeResposta comentar(Long atividadeId, Long entregaId, NovoComentario novo) {
+        UsuarioLogado logado = acesso.atual();
+        Atividade a = daAtividadeAtiva(atividadeId, logado);
+        Entrega entrega = entregaRepository.findById(entregaId)
+                .filter(e -> e.getAtividadeId().equals(atividadeId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrega não encontrada."));
+        Comentario c = new Comentario();
+        c.setEntregaId(entrega.getId());
+        c.setAutor(logado.tipo());
+        c.setTexto(novo.texto().trim());
+        c.setCriadoEm(agora());
+        comentarioRepository.save(c);
         return resposta(a, agora());
     }
 
@@ -180,12 +219,32 @@ public class AtividadeService {
     }
 
     AtividadeResposta resposta(Atividade a, LocalDateTime agora) {
+        Nomes nomes = nomes(a.getAcompanhamentoId());
         List<EntregaResposta> entregas = entregaRepository.findByAtividadeIdOrderByIdAsc(a.getId()).stream()
                 .map(e -> new EntregaResposta(e.getId(), e.getTexto(), e.getLink(), List.of(), e.getEnviadaEm(),
-                        e.getFeedback(), List.of()))
+                        e.getFeedback(), comentarios(e.getId(), nomes)))
                 .toList();
         return new AtividadeResposta(a.getId(), a.getAcompanhamentoId(), a.getTitulo(), a.getDescricao(), a.getPrazo(),
                 List.of(), a.getStatus(), a.estaAtrasada(agora), entregas);
+    }
+
+    private List<ComentarioResposta> comentarios(Long entregaId, Nomes nomes) {
+        return comentarioRepository.findByEntregaIdOrderByIdAsc(entregaId).stream()
+                .map(c -> new ComentarioResposta(c.getId(), c.getAutor(),
+                        c.getAutor() == TipoUsuario.MENTOR ? nomes.mentor() : nomes.startup(),
+                        c.getTexto(), c.getCriadoEm()))
+                .toList();
+    }
+
+    // Nome atual do mentor e da startup do acompanhamento (para mostrar quem escreveu cada comentário)
+    private record Nomes(String mentor, String startup) {
+    }
+
+    private Nomes nomes(Long acompanhamentoId) {
+        Acompanhamento ac = acompanhamentoRepository.findById(acompanhamentoId).orElseThrow();
+        String mentor = mentorRepository.findById(ac.getMentorId()).map(m -> m.getNome()).orElse("Mentor");
+        String startup = startupRepository.findById(ac.getStartupId()).map(s -> s.getNome()).orElse("Startup");
+        return new Nomes(mentor, startup);
     }
 
     private LocalDateTime agora() {
