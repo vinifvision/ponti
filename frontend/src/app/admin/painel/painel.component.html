@@ -1,0 +1,440 @@
+<!-- Cabeçalho e filtro de período -->
+<header class="surgir flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+  <div>
+    <h1 class="text-3xl font-semibold tracking-tight text-ponti-marinho">Painel</h1>
+    @if (dados(); as d) {
+      <p class="mt-1 text-gray-500">
+        De {{ dataCurta(d.periodo.inicio) }} a {{ dataCurta(d.periodo.fim) }}, comparado com
+        {{ dataCurta(d.periodo.anteriorInicio) }} a {{ dataCurta(d.periodo.anteriorFim) }}
+      </p>
+    } @else {
+      <p class="mt-1 text-gray-500">Como a Ponti está indo, em números</p>
+    }
+  </div>
+
+  <div class="flex flex-col items-start gap-3 lg:items-end">
+    <div role="group" aria-label="Período" class="inline-flex rounded-xl bg-white p-1 shadow-sm ring-1 ring-gray-200">
+      @for (p of periodos; track p.dias) {
+        <button
+          type="button"
+          (click)="escolherDias(p.dias)"
+          [attr.aria-pressed]="dias() === p.dias"
+          class="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ponti-roxo"
+          [class]="dias() === p.dias ? 'bg-ponti-roxo text-white shadow-sm' : 'text-gray-600 hover:text-ponti-marinho'"
+        >
+          {{ p.rotulo }}
+        </button>
+      }
+      <button
+        type="button"
+        (click)="abrirPersonalizado()"
+        [attr.aria-pressed]="dias() === 'personalizado'"
+        class="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ponti-roxo"
+        [class]="dias() === 'personalizado' ? 'bg-ponti-roxo text-white shadow-sm' : 'text-gray-600 hover:text-ponti-marinho'"
+      >
+        Personalizado
+      </button>
+    </div>
+
+    @if (dias() === 'personalizado') {
+      <form class="surgir flex flex-wrap items-end gap-2" (ngSubmit)="aplicarPersonalizado()">
+        <label class="text-sm text-gray-600">
+          De
+          <input type="date" name="inicio" [(ngModel)]="inicioPersonalizado" [max]="fimPersonalizado || hoje" class="campo mt-1 py-1.5!" required />
+        </label>
+        <label class="text-sm text-gray-600">
+          Até
+          <input type="date" name="fim" [(ngModel)]="fimPersonalizado" [min]="inicioPersonalizado" [max]="hoje" class="campo mt-1 py-1.5!" required />
+        </label>
+        <button type="submit" class="cursor-pointer rounded-lg bg-ponti-roxo px-4 py-2 text-sm font-medium text-white transition hover:bg-ponti-roxo/90">
+          Aplicar
+        </button>
+      </form>
+    }
+  </div>
+</header>
+
+@if (erro()) {
+  <div role="alert" class="mt-8 rounded-2xl bg-red-50 p-5 text-red-800 ring-1 ring-red-200">
+    {{ erro() }}
+    <button type="button" (click)="carregar()" class="ml-2 cursor-pointer font-semibold underline">Tentar de novo</button>
+  </div>
+}
+
+@if (carregando() && !dados()) {
+  <!-- Esqueleto enquanto o primeiro carregamento acontece (a API do Render pode estar acordando) -->
+  <div class="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4" aria-hidden="true">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <div class="h-32 animate-pulse rounded-3xl bg-white ring-1 ring-gray-100"></div>
+    }
+  </div>
+  <div class="mt-6 h-80 animate-pulse rounded-3xl bg-white ring-1 ring-gray-100" aria-hidden="true"></div>
+  <p class="sr-only" role="status">Carregando o painel</p>
+}
+
+@if (dados(); as d) {
+  <div class="transition-opacity duration-300" [class.opacity-60]="carregando()" [attr.aria-busy]="carregando()">
+
+    <!-- Destaques -->
+    <section aria-label="Destaques do período" class="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      @for (x of d.destaques; track x.chave; let i = $index) {
+        <div class="surgir rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100" [style.animation-delay.ms]="60 * i">
+          <p class="text-sm font-medium text-gray-500">{{ rotuloDestaque[x.chave] ?? x.rotulo }}</p>
+          <p class="mt-2 text-4xl font-semibold tracking-tight text-ponti-marinho">{{ x.atual }}</p>
+          @let v = variacao(x.atual, x.anterior);
+          <p class="mt-2 flex items-center gap-1.5 text-sm text-gray-600">
+            <span
+              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+              [class]="v.sentido === 'subiu' ? 'bg-green-50 text-green-700' : v.sentido === 'caiu' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600'"
+            >
+              <span aria-hidden="true">{{ v.sentido === 'subiu' ? '▲' : v.sentido === 'caiu' ? '▼' : '=' }}</span>
+              {{ v.texto }}
+            </span>
+            <span>antes: {{ x.anterior }}</span>
+          </p>
+        </div>
+      }
+    </section>
+
+    <!-- Funil -->
+    <section class="surgir mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" style="animation-delay: 240ms" aria-labelledby="titulo-funil">
+      <h2 id="titulo-funil" class="text-xl font-semibold text-ponti-marinho">Em que etapa as startups travam?</h2>
+      @let total = d.funil.etapas[0].quantidade;
+      <p class="mt-1 text-sm text-gray-500">
+        As {{ total }} startups que se cadastraram entre {{ dataCurta(d.periodo.inicio) }} e {{ dataCurta(d.periodo.fim) }}, e até onde cada uma chegou.
+      </p>
+
+      <ol class="mt-6">
+        @for (e of d.funil.etapas; track e.etapa; let i = $index) {
+          @if (i > 0) {
+            @let perda = d.funil.etapas[i - 1].quantidade - e.quantidade;
+            @let queda = e.etapa === d.funil.maiorQueda && perda > 0;
+            <li class="grid grid-cols-[1fr] sm:grid-cols-[14rem_1fr]">
+              <p class="py-1.5 text-sm sm:col-start-2" [class]="queda ? 'font-semibold text-amber-800' : 'text-gray-400'">
+                <span aria-hidden="true">↓</span>
+                @if (perda === 0) {
+                  nenhuma parou aqui
+                } @else {
+                  {{ perda }} {{ perda === 1 ? 'parou' : 'pararam' }} aqui
+                  @if (queda) {
+                    <span class="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs ring-1 ring-amber-200">a maior perda</span>
+                  }
+                }
+              </p>
+            </li>
+          }
+          <li
+            class="grid grid-cols-[1fr] items-center gap-x-4 gap-y-1 rounded-2xl px-2 py-1.5 transition-colors hover:bg-gray-50 sm:grid-cols-[14rem_1fr]"
+            (mousemove)="mostrarDica($event, rotuloEtapa[e.etapa],
+              (i === 0 ? e.quantidade + ' startups' : e.quantidade + ' de ' + total + ' startups' + (e.taxaDoInicio !== null ? ' (' + e.taxaDoInicio + '%)' : '')),
+              'Período anterior: ' + e.quantidadeAnterior + (i === 0 ? '' : ' de ' + d.funil.etapas[0].quantidadeAnterior))"
+            (mouseleave)="esconderDica()"
+          >
+            <span class="text-sm font-medium text-gray-700">{{ rotuloEtapa[e.etapa] }}</span>
+            <div class="flex items-center gap-3">
+              <div class="h-6 flex-1">
+                <div
+                  class="barra h-6 rounded-r-[4px] transition-[width] duration-700 ease-out"
+                  [style.width.%]="animado() ? largura(e.quantidade, total) : 0"
+                  [style.background-color]="corSerie"
+                  [style.transition-delay.ms]="90 * i"
+                ></div>
+              </div>
+              <span class="w-16 text-right text-sm font-semibold tabular-nums text-gray-900">
+                {{ i === 0 ? e.quantidade : e.quantidade + ' de ' + total }}
+              </span>
+            </div>
+          </li>
+        }
+      </ol>
+
+      <details class="mt-4 text-sm text-gray-600">
+        <summary class="cursor-pointer select-none text-ponti-roxo hover:underline">Ver os números em tabela</summary>
+        <table class="mt-3 w-full text-left">
+          <thead class="text-gray-500">
+            <tr><th class="py-1 font-medium">Etapa</th><th class="font-medium">Startups</th><th class="font-medium">Do total</th><th class="font-medium">Período anterior</th></tr>
+          </thead>
+          <tbody>
+            @for (e of d.funil.etapas; track e.etapa) {
+              <tr class="border-t border-gray-100">
+                <td class="py-1">{{ rotuloEtapa[e.etapa] }}</td><td>{{ e.quantidade }}</td>
+                <td>{{ e.taxaDoInicio === null ? '-' : e.taxaDoInicio + '%' }}</td>
+                <td>{{ e.quantidadeAnterior }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </details>
+
+      @if (textos(); as t) {
+        <p class="mt-5 rounded-2xl bg-[#f3ebff] p-4 text-ponti-marinho">
+          {{ t.funil.texto }}
+          @if (t.funil.acao) {
+            <strong class="font-semibold">O que fazer:</strong> {{ t.funil.acao }}
+          }
+        </p>
+      }
+    </section>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+
+      <!-- Prova do match -->
+      <section class="surgir flex flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" style="animation-delay: 300ms" aria-labelledby="titulo-match">
+        <h2 id="titulo-match" class="text-xl font-semibold text-ponti-marinho">O match acerta?</h2>
+        <p class="mt-1 text-sm text-gray-500">Pedidos de mentoria e convites do período, separados pela compatibilidade que a Ponti calculou. Cada barra mostra quantos foram aceitos.</p>
+
+        <div class="relative mt-10 h-72">
+          <!-- Linhas de grade: 0, 50 e 100% -->
+          @for (g of [100, 50, 0]; track g) {
+            <div class="absolute inset-x-0 border-t border-gray-100" [style.bottom.%]="g">
+              <span class="absolute -top-2.5 left-0 bg-white pr-2 text-xs text-gray-400">{{ g }}%</span>
+            </div>
+          }
+          <div class="absolute inset-y-0 left-10 right-0 flex items-end justify-around">
+            @for (f of d.match.faixas; track f.faixa; let i = $index) {
+              <div
+                class="relative flex h-full w-20 cursor-default items-end justify-center"
+                (mousemove)="mostrarDica($event, 'Compatibilidade: ' + f.rotulo.toLowerCase(),
+                  f.convertidos + ' de ' + f.pares + ' pedidos aceitos',
+                  'Período anterior: ' + (f.taxaAnterior === null ? 'sem pedidos' : f.taxaAnterior + '% de ' + f.paresAnterior))"
+                (mouseleave)="esconderDica()"
+              >
+                @if (f.taxa !== null) {
+                  <div
+                    class="barra relative w-6 rounded-t-[4px] transition-[height] duration-700 ease-out"
+                    [style.height.%]="animado() ? Math.max(f.taxa, 1) : 0"
+                    [style.background-color]="corSerie"
+                    [style.transition-delay.ms]="120 * i"
+                  >
+                    <span class="absolute -top-7 left-1/2 -translate-x-1/2 text-sm font-semibold tabular-nums text-gray-900">{{ f.taxa }}%</span>
+                  </div>
+                } @else {
+                  <span class="mb-2 text-xs text-gray-400">sem dados</span>
+                }
+                @if (f.taxaAnterior !== null) {
+                  <!-- Marca do período anterior -->
+                  <div class="pointer-events-none absolute left-1/2 h-0.5 w-10 -translate-x-1/2 rounded bg-gray-400" [style.bottom.%]="f.taxaAnterior" aria-hidden="true"></div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        <div class="ml-10 mt-3 flex justify-around text-center">
+          @for (f of d.match.faixas; track f.faixa) {
+            <div class="w-28">
+              <p class="text-sm font-medium text-gray-700">{{ f.rotulo }}</p>
+              <p class="text-xs text-gray-500">{{ f.convertidos }} de {{ f.pares }} aceitos</p>
+            </div>
+          }
+        </div>
+        <p class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+          <span class="inline-block h-0.5 w-5 rounded bg-gray-400" aria-hidden="true"></span> período anterior
+        </p>
+
+        <details class="mt-3 text-sm text-gray-600">
+          <summary class="cursor-pointer select-none text-ponti-roxo hover:underline">Ver os números em tabela</summary>
+          <table class="mt-3 w-full text-left">
+            <thead class="text-gray-500"><tr><th class="py-1 font-medium">Compatibilidade</th><th class="font-medium">Pedidos aceitos</th><th class="font-medium">Período anterior</th></tr></thead>
+            <tbody>
+              @for (f of d.match.faixas; track f.faixa) {
+                <tr class="border-t border-gray-100">
+                  <td class="py-1">{{ f.rotulo }}</td>
+                  <td>{{ f.convertidos }} de {{ f.pares }}{{ f.taxa === null ? '' : ' (' + f.taxa + '%)' }}</td>
+                  <td>{{ f.taxaAnterior === null ? '-' : f.taxaAnterior + '% de ' + f.paresAnterior }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </details>
+
+        @if (textos(); as t) {
+          <p class="mt-auto rounded-2xl bg-[#f3ebff] p-4 text-ponti-marinho [margin-top:1.25rem]">
+            {{ t.match.texto }}
+            @if (t.match.acao) {
+              <strong class="font-semibold">O que fazer:</strong> {{ t.match.acao }}
+            }
+          </p>
+        }
+      </section>
+
+      <!-- Oferta x demanda -->
+      <section class="surgir flex flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" style="animation-delay: 360ms" aria-labelledby="titulo-oferta">
+        <div class="flex items-start justify-between gap-3">
+          <h2 id="titulo-oferta" class="text-xl font-semibold text-ponti-marinho">Em que tema faltam mentores?</h2>
+          <span class="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">agora</span>
+        </div>
+        <p class="mt-1 text-sm text-gray-500">Quantas startups precisam de ajuda em cada tema e quantos mentores atendem esse tema.</p>
+
+        <div class="mt-4 flex gap-5 text-sm text-gray-600" aria-hidden="true">
+          <span class="flex items-center gap-2"><span class="size-3 rounded-sm" [style.background-color]="corStartups"></span>Startups</span>
+          <span class="flex items-center gap-2"><span class="size-3 rounded-sm" [style.background-color]="corMentores"></span>Mentores</span>
+        </div>
+
+        <ul class="mt-4 space-y-3">
+          @for (t of d.ofertaDemanda; track t.tema; let i = $index) {
+            <li
+              class="grid grid-cols-[8.5rem_1fr] items-center gap-3 rounded-xl px-1 py-1 transition-colors hover:bg-gray-50"
+              (mousemove)="mostrarDica($event, t.rotulo, t.startups + ' startup' + (t.startups === 1 ? ' precisa' : 's precisam'), t.mentores + ' mentor' + (t.mentores === 1 ? ' atende' : 'es atendem'))"
+              (mouseleave)="esconderDica()"
+            >
+              <div>
+                <p class="text-sm font-medium leading-tight text-gray-700">{{ t.rotulo }}</p>
+                @if (t.situacao === 'FALTA') {
+                  <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+                    <span aria-hidden="true">!</span> Falta mentor
+                  </span>
+                } @else if (t.situacao === 'SOBRA') {
+                  <span class="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Sobra mentor</span>
+                }
+              </div>
+              <div class="space-y-[2px]">
+                <div class="flex items-center gap-2">
+                  <div class="barra h-3 rounded-r-[4px] transition-[width] duration-700 ease-out"
+                       [style.width.%]="animado() ? largura(t.startups, maiorOferta()) * 0.85 : 0"
+                       [style.background-color]="corStartups" [style.transition-delay.ms]="50 * i"></div>
+                  <span class="text-xs tabular-nums text-gray-700">{{ t.startups }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="barra h-3 rounded-r-[4px] transition-[width] duration-700 ease-out"
+                       [style.width.%]="animado() ? largura(t.mentores, maiorOferta()) * 0.85 : 0"
+                       [style.background-color]="corMentores" [style.transition-delay.ms]="50 * i + 40"></div>
+                  <span class="text-xs tabular-nums text-gray-700">{{ t.mentores }}</span>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <details class="mt-4 text-sm text-gray-600">
+          <summary class="cursor-pointer select-none text-ponti-roxo hover:underline">Ver os números em tabela</summary>
+          <table class="mt-3 w-full text-left">
+            <thead class="text-gray-500"><tr><th class="py-1 font-medium">Tema</th><th class="font-medium">Startups</th><th class="font-medium">Mentores</th></tr></thead>
+            <tbody>
+              @for (t of d.ofertaDemanda; track t.tema) {
+                <tr class="border-t border-gray-100"><td class="py-1">{{ t.rotulo }}</td><td>{{ t.startups }}</td><td>{{ t.mentores }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </details>
+
+        @if (textos(); as t) {
+          <p class="mt-auto rounded-2xl bg-[#f3ebff] p-4 text-ponti-marinho [margin-top:1.25rem]">
+            {{ t.oferta.texto }}
+            @if (t.oferta.acao) {
+              <strong class="font-semibold">O que fazer:</strong> {{ t.oferta.acao }}
+            }
+          </p>
+        }
+      </section>
+
+      <!-- Saúde dos acompanhamentos -->
+      <section class="surgir flex flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" style="animation-delay: 420ms" aria-labelledby="titulo-saude">
+        <div class="flex items-start justify-between gap-3">
+          <h2 id="titulo-saude" class="text-xl font-semibold text-ponti-marinho">Os acompanhamentos estão andando?</h2>
+          <span class="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">agora</span>
+        </div>
+        <p class="mt-1 text-sm text-gray-500">{{ d.saude.ativos }} acompanhamento{{ d.saude.ativos === 1 ? '' : 's' }} ativo{{ d.saude.ativos === 1 ? '' : 's' }}.</p>
+
+        <div class="mt-6 flex flex-wrap items-center gap-6">
+          <!-- Anel: % de entregas no prazo -->
+          <div class="relative size-24 shrink-0">
+            <svg viewBox="0 0 80 80" class="size-24 -rotate-90" aria-hidden="true">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" stroke-width="8" />
+              <circle
+                cx="40" cy="40" r="34" fill="none" stroke="#16a34a" stroke-width="8" stroke-linecap="round"
+                class="barra transition-[stroke-dashoffset] duration-1000 ease-out"
+                [attr.stroke-dasharray]="circunferencia"
+                [attr.stroke-dashoffset]="circunferencia * (1 - (animado() ? (d.saude.percentualNoPrazo ?? 0) : 0) / 100)"
+              />
+            </svg>
+            <div class="absolute inset-0 grid place-items-center text-center">
+              <span class="text-xl font-semibold text-gray-900">{{ d.saude.percentualNoPrazo === null ? '-' : d.saude.percentualNoPrazo + '%' }}</span>
+            </div>
+          </div>
+          <dl class="grid flex-1 grid-cols-3 gap-3 text-center">
+            <div class="rounded-2xl bg-green-50 p-3">
+              <dt class="text-xs font-medium text-green-800">No prazo</dt>
+              <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ d.saude.entregasNoPrazo }}</dd>
+            </div>
+            <div class="rounded-2xl bg-amber-50 p-3">
+              <dt class="text-xs font-medium text-amber-800">Entregues com atraso</dt>
+              <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ d.saude.entregasAtrasadas }}</dd>
+            </div>
+            <div class="rounded-2xl bg-red-50 p-3">
+              <dt class="text-xs font-medium text-red-800">Vencidas sem entrega</dt>
+              <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ d.saude.atividadesVencidas }}</dd>
+            </div>
+          </dl>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">O anel mostra quanto das entregas chegou dentro do prazo.</p>
+
+        @if (d.saude.parados.length) {
+          <h3 class="mt-6 text-sm font-semibold text-gray-700">Parados há mais de 14 dias</h3>
+          <ul class="mt-2 divide-y divide-gray-100">
+            @for (p of d.saude.parados; track p.acompanhamentoId) {
+              <li class="flex items-center justify-between gap-3 py-2.5">
+                <span class="text-sm text-gray-800"><strong class="font-semibold">{{ p.startup }}</strong> com {{ p.mentor }}</span>
+                <span class="shrink-0 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">{{ p.diasSemMovimento }} dias parado</span>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (textos(); as t) {
+          <p class="mt-auto rounded-2xl bg-[#f3ebff] p-4 text-ponti-marinho [margin-top:1.25rem]">
+            {{ t.saude.texto }}
+            @if (t.saude.acao) {
+              <strong class="font-semibold">O que fazer:</strong> {{ t.saude.acao }}
+            }
+          </p>
+        }
+      </section>
+
+      <!-- Precisa de atenção -->
+      <section class="surgir flex flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" style="animation-delay: 480ms" aria-labelledby="titulo-atencao">
+        <div class="flex items-start justify-between gap-3">
+          <h2 id="titulo-atencao" class="text-xl font-semibold text-ponti-marinho">Com quem eu preciso falar?</h2>
+          <span class="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">agora</span>
+        </div>
+        <p class="mt-1 text-sm text-gray-500">{{ textos()?.atencao?.texto }}</p>
+
+        <ul class="mt-4 space-y-2">
+          @for (a of d.atencao; track a.tipo + a.usuarioId; let i = $index) {
+            <li class="surgir flex items-center gap-3 rounded-2xl p-3 ring-1 ring-gray-100 transition hover:bg-gray-50 hover:ring-ponti-lilas" [style.animation-delay.ms]="500 + 50 * i">
+              <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1" [class]="classeAtencao(a.tipo)">{{ rotuloAtencao(a.tipo) }}</span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold text-gray-900">{{ a.nome }} <span class="font-normal text-gray-500">({{ quemE(a) }})</span></p>
+                <p class="text-sm text-gray-600">{{ a.motivo }}</p>
+              </div>
+              <a
+                [routerLink]="['/admin/usuarios']"
+                [queryParams]="{ busca: a.nome }"
+                class="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-ponti-roxo transition hover:bg-ponti-lilas/20"
+                [attr.aria-label]="'Ver a conta de ' + a.nome"
+              >
+                Ver conta
+              </a>
+            </li>
+          } @empty {
+            <li class="rounded-2xl bg-green-50 p-4 text-sm text-green-800">Tudo certo por aqui.</li>
+          }
+        </ul>
+      </section>
+    </div>
+  </div>
+}
+
+<!-- Tooltip dos gráficos -->
+@if (dica(); as t) {
+  <div
+    class="pointer-events-none fixed z-50 max-w-64 rounded-xl bg-ponti-marinho px-3 py-2 text-sm text-white shadow-lg"
+    [style.left.px]="t.x + 14"
+    [style.top.px]="t.y + 14"
+    role="tooltip"
+  >
+    <p class="font-semibold">{{ t.titulo }}</p>
+    @for (l of t.linhas; track $index) {
+      <p class="text-white/85">{{ l }}</p>
+    }
+  </div>
+}

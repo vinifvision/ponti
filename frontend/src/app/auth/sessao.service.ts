@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-export type TipoUsuario = 'STARTUP' | 'MENTOR';
+export type TipoUsuario = 'STARTUP' | 'MENTOR' | 'ADMIN';
 
 // Quem é a pessoa logada (UsuarioResumo no backend)
 export interface UsuarioLogado {
