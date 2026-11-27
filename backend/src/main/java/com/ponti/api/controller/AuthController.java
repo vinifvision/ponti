@@ -7,6 +7,7 @@ import com.ponti.api.dto.LoginResposta;
 import com.ponti.api.dto.UsuarioResumo;
 import com.ponti.api.model.Mentor;
 import com.ponti.api.model.Startup;
+import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.model.Usuario;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
@@ -80,6 +81,9 @@ public class AuthController {
         // O token pode ser válido mas o usuário ter sido apagado depois
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido ou expirado"));
+        if (usuario.estaBloqueado()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, LoginService.CONTA_BLOQUEADA);
+        }
         loginService.registrarAcesso(usuario);
         return resumo(usuario);
     }
@@ -91,6 +95,8 @@ public class AuthController {
             nome = startupRepository.findById(usuario.getStartupId()).map(Startup::getNome).orElse(null);
         } else if (usuario.getMentorId() != null) {
             nome = mentorRepository.findById(usuario.getMentorId()).map(Mentor::getNome).orElse(null);
+        } else if (usuario.getTipo() == TipoUsuario.ADMIN) {
+            nome = "Administrador";
         }
         return UsuarioResumo.de(usuario, nome);
     }

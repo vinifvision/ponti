@@ -16,6 +16,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // Contas de mentor (o ranking lê o último acesso de cada uma)
     List<Usuario> findByMentorIdNotNull();
 
+    // Contas bloqueadas pelo admin (somem das buscas e recomendações, ver ContasBloqueadas)
+    List<Usuario> findByBloqueadoTrue();
+
     // Usado ao excluir a conta (ver ContaService)
     void deleteByStartupId(Long startupId);
     void deleteByMentorId(Long mentorId);

@@ -11,6 +11,7 @@ import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.seguranca.Acesso;
 import com.ponti.api.seguranca.UsuarioLogado;
 import com.ponti.api.service.ContaService;
+import com.ponti.api.service.ContasBloqueadas;
 import com.ponti.api.service.MatchService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -27,9 +28,12 @@ public class StartupController {
     private final ContaService contaService;
     private final Acesso acesso;
     private final MatchService matchService;
+    private final ContasBloqueadas contasBloqueadas;
 
     public StartupController(StartupRepository repository, CertificacaoRepository certificacaoRepository,
-                             ContaService contaService, Acesso acesso, MatchService matchService) {
+                             ContaService contaService, Acesso acesso, MatchService matchService,
+                             ContasBloqueadas contasBloqueadas) {
+        this.contasBloqueadas = contasBloqueadas;
         this.repository = repository;
         this.certificacaoRepository = certificacaoRepository;
         this.contaService = contaService;
@@ -91,10 +95,11 @@ public class StartupController {
         return matchService.startupsParaMentor(logado.mentorId());
     }
 
-    // READ (todos)
+    // READ (todos), sem as startups bloqueadas pelo admin
     @GetMapping
     public List<Startup> listar() {
-        return repository.findAll();
+        var bloqueadas = contasBloqueadas.startups();
+        return repository.findAll().stream().filter(s -> !bloqueadas.contains(s.getId())).toList();
     }
 
     // READ (um)

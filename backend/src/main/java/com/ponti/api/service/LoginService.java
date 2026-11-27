@@ -15,6 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class LoginService {
 
     private static final String CREDENCIAIS_INVALIDAS = "E-mail ou senha inválidos";
+    public static final String CONTA_BLOQUEADA =
+            "Sua conta está bloqueada. Se achar que é um engano, fale com a equipe da Ponti.";
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
@@ -40,6 +42,10 @@ public class LoginService {
         boolean senhaConfere = passwordEncoder.matches(senha, hash);
         if (usuario.isEmpty() || !senhaConfere) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, CREDENCIAIS_INVALIDAS);
+        }
+        // Só avisa do bloqueio depois de a senha conferir, para não revelar nada a quem não é dono da conta
+        if (usuario.get().estaBloqueado()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, CONTA_BLOQUEADA);
         }
         registrarAcesso(usuario.get());
         return usuario.get();
