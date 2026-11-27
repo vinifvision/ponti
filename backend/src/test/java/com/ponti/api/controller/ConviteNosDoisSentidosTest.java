@@ -212,4 +212,23 @@ class ConviteNosDoisSentidosTest {
             mockMvc.perform(get("/startups/999999/certificacoes").with(Login.comoStartup(startupId))).andExpect(status().isNotFound());
         }
     }
+
+    // Datas usadas pelo dashboard do admin (funil e prova do match)
+    @Nested
+    class Datas {
+
+        @Test
+        void guardaQuandoFoiEnviadoEQuandoFoiRespondido() throws Exception {
+            java.time.Instant antes = java.time.Instant.now().minusSeconds(1);
+            Long id = criarConvite(Map.of("startupId", startupId, "mentorId", mentorId, "enviadoPor", "STARTUP",
+                    "criadoEm", "2020-01-01T00:00:00Z"));
+            var convite = conviteRepository.findById(id).orElseThrow();
+            assertThat(convite.getCriadoEm()).isAfter(antes); // o servidor decide a data, não o JSON
+            assertThat(convite.getRespondidoEm()).isNull();
+
+            mockMvc.perform(post("/convites/" + id + "/recusar").with(Login.comoMentor(mentorId)))
+                    .andExpect(status().isOk());
+            assertThat(conviteRepository.findById(id).orElseThrow().getRespondidoEm()).isAfter(antes);
+        }
+    }
 }
