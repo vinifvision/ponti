@@ -13,8 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 // Criação da conta de admin a partir das variáveis de ambiente (sem senha no código).
 // Este contexto sobe SEM as variáveis (mesmo que o terminal tenha PONTI_ADMIN_EMAIL/SENHA definidas:
-// as propriedades do teste valem mais que as variáveis de ambiente).
-@SpringBootTest(properties = {"ponti.admin.email=", "ponti.admin.senha="})
+// as propriedades do teste valem mais que as variáveis de ambiente). Banco próprio, para não enxergar
+// o admin criado por outros testes.
+@SpringBootTest(properties = {"ponti.admin.email=", "ponti.admin.senha=", "spring.datasource.url=jdbc:h2:mem:ponti-conta-admin"})
 @Transactional
 class ContaAdminTest {
 

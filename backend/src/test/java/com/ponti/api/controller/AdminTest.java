@@ -36,9 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 // Perfil de administrador de ponta a ponta, com tokens JWT de verdade:
 // conta criada pelas variáveis de ambiente, acesso só do admin à área /admin,
 // lista de usuários, bloqueio/desbloqueio e registro de auditoria.
+// Banco próprio: a conta de admin criada aqui não pode aparecer nos outros testes (que rodam em qualquer ordem).
 @SpringBootTest(properties = {
         "ponti.admin.email=Admin@Teste.com",
-        "ponti.admin.senha=senha-de-teste-do-admin"
+        "ponti.admin.senha=senha-de-teste-do-admin",
+        "spring.datasource.url=jdbc:h2:mem:ponti-admin"
 })
 @AutoConfigureMockMvc
 @Transactional
