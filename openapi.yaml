@@ -12,7 +12,12 @@ info:
 
     **Erros:** todas as respostas de erro seguem o padrão Problem Details (RFC 9457),
     em português, no schema `Erro`. Erros de validação trazem a lista `campos`.
-  version: 1.2.0
+
+    **Administrador:** a conta ADMIN é criada pela API a partir das variáveis de ambiente
+    `PONTI_ADMIN_EMAIL` e `PONTI_ADMIN_SENHA` (não existe senha no código). Só ela usa as rotas
+    `/admin`; startups e mentores recebem 403 nelas, e o admin recebe 403 nas outras.
+    Contas bloqueadas pelo admin não entram (403 no login) e o token que tinham deixa de valer (401).
+  version: 1.3.0
 servers:
   - url: http://localhost:8080
     description: Servidor local
@@ -31,6 +36,11 @@ tags:
       a startup escolhe um horário livre e paga (pagamento SIMULADO), e o mentor confirma
       com o link do Google Meet ou recusa.
   - name: Auth
+  - name: Admin
+    description: >
+      Área do administrador: dashboard (funil, prova do match, oferta x demanda, saúde dos
+      acompanhamentos e contas que precisam de atenção), lista de usuários com bloqueio e
+      desbloqueio, e o registro de auditoria dessas ações.
   - name: Match
     description: Compatibilidade entre startups e mentores, calculada a partir dos temas e do setor.
   - name: Temas
@@ -867,6 +877,8 @@ paths:
           description: E-mail ou senha em branco
         "401":
           description: E-mail ou senha inválidos (mesma resposta para os dois casos)
+        "403":
+          description: Conta bloqueada pelo administrador (só aparece com a senha certa)
   /auth/me:
     get:
       tags: [Auth]
@@ -1184,6 +1196,105 @@ paths:
         "400": { $ref: "#/components/responses/Invalido" }
         "404": { $ref: "#/components/responses/NaoEncontrado" }
         "409": { $ref: "#/components/responses/Conflito" }
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Dashboard do admin, comparado com o período anterior de mesmo tamanho
+      description: >
+        Funil e prova do match usam o período. Oferta x demanda, saúde e atenção são uma foto de agora.
+        Sem datas, usa os últimos 30 dias. Período maior que 1 ano ou invertido: 400.
+      parameters:
+        - { name: inicio, in: query, required: false, schema: { type: string, format: date }, example: "2026-10-29" }
+        - { name: fim, in: query, required: false, schema: { type: string, format: date }, example: "2026-11-27" }
+      responses:
+        "200":
+          description: Números do painel
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardAdmin" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+  /admin/usuarios:
+    get:
+      tags: [Admin]
+      summary: Lista de usuários (mais recentes primeiro), com busca, filtros e paginação
+      parameters:
+        - { name: busca, in: query, required: false, description: Parte do nome ou do e-mail, schema: { type: string } }
+        - { name: tipo, in: query, required: false, schema: { type: string, enum: [STARTUP, MENTOR, ADMIN] } }
+        - { name: situacao, in: query, required: false, schema: { type: string, enum: [ATIVO, BLOQUEADO] } }
+        - { name: pagina, in: query, required: false, schema: { type: integer, default: 0 } }
+        - { name: tamanho, in: query, required: false, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: Uma página de usuários (sem senha, WhatsApp ou dados do perfil)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginaUsuarios" }
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+  /admin/usuarios/{id}/bloquear:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    post:
+      tags: [Admin]
+      summary: Bloqueia a conta (motivo obrigatório; fica no registro de auditoria)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PedidoBloqueio" }
+      responses:
+        "200":
+          description: Conta bloqueada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsuarioAdmin" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "404":
+          description: Usuário não encontrado
+        "409":
+          description: Conta de administrador (não pode ser bloqueada) ou conta já bloqueada
+  /admin/usuarios/{id}/desbloquear:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    post:
+      tags: [Admin]
+      summary: Desbloqueia a conta (motivo opcional; fica no registro de auditoria)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PedidoDesbloqueio" }
+      responses:
+        "200":
+          description: Conta desbloqueada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsuarioAdmin" }
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
+        "404":
+          description: Usuário não encontrado
+        "409":
+          description: A conta não está bloqueada
+  /admin/auditoria:
+    get:
+      tags: [Admin]
+      summary: Registro de auditoria, mais recentes primeiro (só leitura)
+      parameters:
+        - { name: pagina, in: query, required: false, schema: { type: integer, default: 0 } }
+        - { name: tamanho, in: query, required: false, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: Uma página do registro
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginaAuditoria" }
+        "401": { $ref: "#/components/responses/SemLogin" }
+        "403": { $ref: "#/components/responses/SemPermissao" }
 components:
   securitySchemes:
     bearerAuth:
@@ -1587,6 +1698,18 @@ components:
           description: >
             Quem tomou a iniciativa. Quem responde (aceita ou recusa) é o outro lado.
             Só existe um convite por par startup + mentor, seja qual for o sentido.
+        criadoEm:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Quando o convite foi enviado (definido pelo servidor). Convites antigos podem não ter.
+        respondidoEm:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Quando foi aceito ou recusado.
     CadastroStartup:
       type: object
       description: O nível de maturidade não entra no cadastro; é definido depois, em outro formulário.
@@ -1697,7 +1820,7 @@ components:
           example: contato@agrotechrecife.com.br
         tipo:
           type: string
-          enum: [STARTUP, MENTOR]
+          enum: [STARTUP, MENTOR, ADMIN]
         startupId:
           type: integer
           format: int64
@@ -1875,3 +1998,143 @@ components:
       description: "Até 5 arquivos de até 10 MB: pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, png, jpg, jpeg, zip."
       maxItems: 5
       items: { type: string, format: binary }
+    UsuarioAdmin:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string }
+        tipo: { type: string, enum: [STARTUP, MENTOR, ADMIN] }
+        nome: { type: string, nullable: true }
+        perfilId: { type: integer, format: int64, nullable: true, description: Id da startup ou do mentor }
+        bloqueado: { type: boolean }
+        bloqueadoEm: { type: string, format: date-time, nullable: true }
+        motivoBloqueio: { type: string, nullable: true }
+        criadoEm: { type: string, format: date-time, nullable: true }
+        ultimoAcessoEm: { type: string, format: date-time, nullable: true }
+    PaginaUsuarios:
+      type: object
+      properties:
+        itens: { type: array, items: { $ref: "#/components/schemas/UsuarioAdmin" } }
+        total: { type: integer, format: int64 }
+        pagina: { type: integer }
+        tamanho: { type: integer }
+    PedidoBloqueio:
+      type: object
+      required: [motivo]
+      properties:
+        motivo: { type: string, maxLength: 500, example: Reclamações repetidas nas avaliações }
+    PedidoDesbloqueio:
+      type: object
+      properties:
+        motivo: { type: string, maxLength: 500, nullable: true, example: Situação resolvida }
+    RegistroAuditoria:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        autorUsuarioId: { type: integer, format: int64 }
+        autorEmail: { type: string }
+        acao: { type: string, enum: [BLOQUEAR_USUARIO, DESBLOQUEAR_USUARIO] }
+        alvoUsuarioId: { type: integer, format: int64, nullable: true }
+        alvoDescricao: { type: string, nullable: true, example: "VetNorte (vetnorte@exemplo.com)" }
+        motivo: { type: string, nullable: true }
+        criadoEm: { type: string, format: date-time }
+    PaginaAuditoria:
+      type: object
+      properties:
+        itens: { type: array, items: { $ref: "#/components/schemas/RegistroAuditoria" } }
+        total: { type: integer, format: int64 }
+        pagina: { type: integer }
+        tamanho: { type: integer }
+    DashboardAdmin:
+      type: object
+      description: Taxas são porcentagens inteiras (0 a 100) e vêm nulas quando não há base para calcular.
+      properties:
+        periodo:
+          type: object
+          properties:
+            inicio: { type: string, format: date }
+            fim: { type: string, format: date }
+            anteriorInicio: { type: string, format: date }
+            anteriorFim: { type: string, format: date }
+        destaques:
+          type: array
+          items:
+            type: object
+            properties:
+              chave: { type: string, enum: [startups, mentores, matches, mentorias] }
+              rotulo: { type: string }
+              atual: { type: integer, format: int64 }
+              anterior: { type: integer, format: int64 }
+        funil:
+          type: object
+          description: Das startups cadastradas no período, quantas chegaram a cada etapa (até hoje).
+          properties:
+            maiorQueda: { type: string, nullable: true, enum: [INTERESSE, MATCH, MENTORIA, ACOMPANHAMENTO] }
+            etapas:
+              type: array
+              items:
+                type: object
+                properties:
+                  etapa: { type: string, enum: [CADASTRO, INTERESSE, MATCH, MENTORIA, ACOMPANHAMENTO] }
+                  rotulo: { type: string }
+                  quantidade: { type: integer, format: int64 }
+                  taxaDaAnterior: { type: integer, nullable: true }
+                  taxaDoInicio: { type: integer, nullable: true }
+                  quantidadeAnterior: { type: integer, format: int64 }
+                  taxaDaAnteriorNoPeriodoAnterior: { type: integer, nullable: true }
+        match:
+          type: object
+          description: Pedidos e convites do período por faixa de compatibilidade, e quantos foram aceitos.
+          properties:
+            diferenca: { type: integer, nullable: true, description: Taxa da faixa alta menos a da baixa }
+            faixas:
+              type: array
+              items:
+                type: object
+                properties:
+                  faixa: { type: string, enum: [ALTA, MEDIA, BAIXA] }
+                  rotulo: { type: string, example: 70% ou mais }
+                  pares: { type: integer }
+                  convertidos: { type: integer }
+                  taxa: { type: integer, nullable: true }
+                  paresAnterior: { type: integer }
+                  taxaAnterior: { type: integer, nullable: true }
+        ofertaDemanda:
+          type: array
+          items:
+            type: object
+            properties:
+              tema: { type: string }
+              rotulo: { type: string }
+              startups: { type: integer }
+              mentores: { type: integer }
+              situacao: { type: string, enum: [FALTA, EQUILIBRIO, SOBRA] }
+        saude:
+          type: object
+          properties:
+            ativos: { type: integer }
+            entregasNoPrazo: { type: integer }
+            entregasAtrasadas: { type: integer }
+            atividadesVencidas: { type: integer }
+            percentualNoPrazo: { type: integer, nullable: true }
+            parados:
+              type: array
+              items:
+                type: object
+                properties:
+                  acompanhamentoId: { type: integer, format: int64 }
+                  startup: { type: string }
+                  mentor: { type: string }
+                  diasSemMovimento: { type: integer, format: int64 }
+        atencao:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo: { type: string, enum: [MENTOR_MAL_AVALIADO, MENTOR_SEM_RESPOSTA, STARTUP_SEM_CONEXAO] }
+              usuarioId: { type: integer, format: int64 }
+              perfil: { type: string, enum: [STARTUP, MENTOR] }
+              perfilId: { type: integer, format: int64 }
+              nome: { type: string }
+              motivo: { type: string, example: "Nota média 2,5 em 2 avaliações" }
+              bloqueado: { type: boolean }

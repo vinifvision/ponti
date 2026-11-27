@@ -9,6 +9,10 @@ describe('rotaInicialDe', () => {
     expect(rotaInicialDe('STARTUP')).toBe('/encontrar-mentores');
   });
 
+  it('admin começa no painel', () => {
+    expect(rotaInicialDe('ADMIN')).toBe('/admin/painel');
+  });
+
   it('sem tipo definido, usa a tela da startup', () => {
     expect(rotaInicialDe(null)).toBe('/encontrar-mentores');
   });
@@ -33,6 +37,16 @@ describe('decidirAcesso', () => {
   it('tela só de startup: startup entra, mentor volta para o início dele', () => {
     expect(decidirAcesso(true, 'STARTUP', ['STARTUP'])).toBe('permitir');
     expect(decidirAcesso(true, 'MENTOR', ['STARTUP'])).toBe('ir-para-inicio');
+  });
+
+  it('área do admin: só o admin entra; startup e mentor voltam para o início deles', () => {
+    expect(decidirAcesso(true, 'ADMIN', ['ADMIN'])).toBe('permitir');
+    expect(decidirAcesso(true, 'STARTUP', ['ADMIN'])).toBe('ir-para-inicio');
+    expect(decidirAcesso(true, 'MENTOR', ['ADMIN'])).toBe('ir-para-inicio');
+  });
+
+  it('telas de startup e mentor: o admin volta para o painel dele', () => {
+    expect(decidirAcesso(true, 'ADMIN', ['STARTUP', 'MENTOR'])).toBe('ir-para-inicio');
   });
 
   it('logado sem tipo conhecido não passa de uma tela restrita', () => {

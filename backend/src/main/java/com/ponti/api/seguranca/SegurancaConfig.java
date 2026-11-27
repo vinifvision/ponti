@@ -25,7 +25,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 //  - sem sessão: cada requisição se identifica pelo token JWT (cabeçalho Authorization);
 //  - rotas públicas: login, cadastro, /auth/me (que confere o token sozinho), a documentação
 //    e o download de anexos no PC (/arquivos-locais, protegido pela assinatura do link);
-//  - todo o resto exige login (401). As regras de dono ficam na classe Acesso (403).
+//  - /admin/** só para o admin; o resto exige login de startup ou mentor (401 sem login, 403 com
+//    o tipo errado). As regras de dono ficam na classe Acesso (403).
 @Configuration
 public class SegurancaConfig {
 
@@ -61,7 +62,10 @@ public class SegurancaConfig {
                     if (consoleH2) {
                         rotas.requestMatchers("/h2-console/**").permitAll();
                     }
-                    rotas.anyRequest().authenticated();
+                    // Área do admin: só a conta ADMIN. E o admin só usa a área dele (não tem perfil
+                    // de startup nem de mentor, então as outras rotas não fazem sentido para ele).
+                    rotas.requestMatchers("/admin/**").hasRole("ADMIN");
+                    rotas.anyRequest().hasAnyRole("STARTUP", "MENTOR");
                 })
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((req, res, ex) ->

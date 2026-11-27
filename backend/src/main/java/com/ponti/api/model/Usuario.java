@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.Locale;
 
 // Credenciais de acesso. Cada usuário é dono de um perfil: uma Startup OU um Mentor
-// (o campo do outro tipo fica nulo).
+// (o campo do outro tipo fica nulo). O admin não tem perfil (os dois ficam nulos).
 @Entity
 public class Usuario {
 
@@ -39,6 +39,44 @@ public class Usuario {
     // Último acesso à plataforma (login ou GET /auth/me). Nulo = desconhecido (registros antigos).
     @JsonIgnore
     private Instant ultimoAcessoEm;
+
+    // Quando a conta foi criada (usado pelo dashboard do admin). Contas antigas podem ficar sem data.
+    @JsonIgnore
+    private Instant criadoEm;
+
+    // Bloqueio feito pelo admin. Conta bloqueada não entra e some das buscas.
+    // Boolean (e não boolean) para a coluna nova aceitar as linhas antigas do banco, que ficam nulas.
+    @JsonIgnore
+    private Boolean bloqueado;
+
+    @JsonIgnore
+    private Instant bloqueadoEm;
+
+    @JsonIgnore
+    private String motivoBloqueio;
+
+    @PrePersist
+    void antesDeCriar() {
+        if (criadoEm == null) {
+            criadoEm = Instant.now();
+        }
+    }
+
+    public boolean estaBloqueado() {
+        return Boolean.TRUE.equals(bloqueado);
+    }
+
+    public void bloquear(String motivo, Instant agora) {
+        bloqueado = true;
+        bloqueadoEm = agora;
+        motivoBloqueio = motivo;
+    }
+
+    public void desbloquear() {
+        bloqueado = false;
+        bloqueadoEm = null;
+        motivoBloqueio = null;
+    }
 
     // Grava no máximo uma vez por hora, para não escrever no banco a cada requisição
     static final Duration INTERVALO_REGISTRO_ACESSO = Duration.ofHours(1);
@@ -71,4 +109,8 @@ public class Usuario {
     public void setMentorId(Long mentorId) { this.mentorId = mentorId; }
     public Instant getUltimoAcessoEm() { return ultimoAcessoEm; }
     public void setUltimoAcessoEm(Instant ultimoAcessoEm) { this.ultimoAcessoEm = ultimoAcessoEm; }
+    public Instant getCriadoEm() { return criadoEm; }
+    public void setCriadoEm(Instant criadoEm) { this.criadoEm = criadoEm; }
+    public Instant getBloqueadoEm() { return bloqueadoEm; }
+    public String getMotivoBloqueio() { return motivoBloqueio; }
 }

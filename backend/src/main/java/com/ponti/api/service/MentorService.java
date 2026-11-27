@@ -27,9 +27,12 @@ public class MentorService {
     private final AvaliacaoRepository avaliacaoRepository;
     private final AgendamentoRepository agendamentoRepository;
     private final Clock relogio;
+    private final ContasBloqueadas contasBloqueadas;
 
     public MentorService(MentorRepository mentorRepository, AvaliacaoRepository avaliacaoRepository,
-                         AgendamentoRepository agendamentoRepository, Clock relogio) {
+                         AgendamentoRepository agendamentoRepository, Clock relogio,
+                         ContasBloqueadas contasBloqueadas) {
+        this.contasBloqueadas = contasBloqueadas;
         this.mentorRepository = mentorRepository;
         this.avaliacaoRepository = avaliacaoRepository;
         this.agendamentoRepository = agendamentoRepository;
@@ -38,7 +41,11 @@ public class MentorService {
 
     public List<MentorResposta> listar() {
         Reputacao r = reputacao();
-        return mentorRepository.findAll().stream().map(r::aplicar).toList();
+        // Mentores bloqueados pelo admin não aparecem na lista nem nas recomendações
+        var bloqueados = contasBloqueadas.mentores();
+        return mentorRepository.findAll().stream()
+                .filter(m -> !bloqueados.contains(m.getId()))
+                .map(r::aplicar).toList();
     }
 
     public MentorResposta buscar(Long id) {

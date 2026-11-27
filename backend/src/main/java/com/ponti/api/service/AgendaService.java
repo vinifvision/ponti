@@ -229,6 +229,7 @@ public class AgendaService {
                 .filter(c -> c.getEnviadoPor() == TipoUsuario.MENTOR && c.getStatus() == StatusConvite.PENDENTE)
                 .forEach(c -> {
                     c.setStatus(StatusConvite.ACEITO);
+                    c.setRespondidoEm(java.time.Instant.now());
                     conviteRepository.save(c);
                 });
     }

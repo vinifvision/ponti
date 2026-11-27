@@ -26,7 +26,9 @@ class DadosDemonstracaoTest {
         List<MentorResposta> mentores = mentorService.listar();
 
         assertThat(mentores).hasSizeGreaterThanOrEqualTo(12);
-        assertThat(mentores).allSatisfy(m -> assertThat(m.fotoUrl()).startsWith("/demo/mentores/"));
+        // Os 12 do conjunto base têm foto (os 2 extras do dashboard ficam sem, como um cadastro real)
+        assertThat(mentores.stream().filter(m -> m.fotoUrl() != null && m.fotoUrl().startsWith("/demo/mentores/")))
+                .hasSizeGreaterThanOrEqualTo(12);
         MentorResposta juliana = mentores.stream().filter(m -> m.nome().equals("Juliana G.")).findFirst().orElseThrow();
         assertThat(juliana.notaMedia()).isBetween(4.0, 5.0);
         assertThat(juliana.totalMentorias()).isGreaterThanOrEqualTo(4);

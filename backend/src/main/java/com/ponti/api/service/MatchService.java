@@ -42,10 +42,12 @@ public class MatchService {
     private final IndicadoresMentorService indicadoresMentorService;
     private final RankingPropriedades parametrosRanking;
     private final Clock relogio;
+    private final ContasBloqueadas contasBloqueadas;
 
     public MatchService(MentorService mentorService, StartupRepository startupRepository,
                         IndicadoresMentorService indicadoresMentorService, RankingPropriedades parametrosRanking,
-                        Clock relogio) {
+                        Clock relogio, ContasBloqueadas contasBloqueadas) {
+        this.contasBloqueadas = contasBloqueadas;
         this.mentorService = mentorService;
         this.startupRepository = startupRepository;
         this.indicadoresMentorService = indicadoresMentorService;
@@ -90,7 +92,9 @@ public class MatchService {
     // Startups para o mentor logado, da mais compatível para a menos
     public List<StartupRecomendada> startupsParaMentor(Long mentorId) {
         MentorResposta mentor = mentorService.buscar(mentorId);
+        var bloqueadas = contasBloqueadas.startups();
         return startupRepository.findAll().stream()
+                .filter(s -> !bloqueadas.contains(s.getId()))
                 .map(s -> {
                     Resultado r = calcular(s.getNecessidades(), s.getSegmento(),
                             mentor.temas(), mentor.ecossistemas(), false);
