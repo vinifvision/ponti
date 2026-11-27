@@ -21,8 +21,8 @@ type Situacao = 'AGUARDANDO' | 'CONFIRMADA' | 'REALIZADA' | 'RECUSADA' | 'CANCEL
 type AbaMentoria = 'pendentes' | 'ativos' | 'encerrados';
 
 const ROTULOS_ABAS: Record<AbaMentoria, string> = {
-  pendentes: 'Propostas pendentes',
   ativos: 'Ativos',
+  pendentes: 'Propostas pendentes',
   encerrados: 'Encerrados',
 };
 
@@ -71,11 +71,11 @@ export class MentoriasComponent implements OnInit {
 
   // ---------- Abas ----------
   abaAtual = computed(() =>
-    escolherAba<AbaMentoria>(this.aba(), [
-      { chave: 'pendentes', quantidade: this.pedidos().length + this.sugestoesPendentes().length },
+    this.aba() === 'pendentes' || this.aba() === 'encerrados' ? escolherAba<AbaMentoria>(this.aba(), [
       { chave: 'ativos', quantidade: this.proximas().length },
+      { chave: 'pendentes', quantidade: this.pedidos().length + this.sugestoesPendentes().length },
       { chave: 'encerrados', quantidade: this.historico().length + this.sugestoesRespondidas().length },
-    ]),
+    ]) : 'ativos',
   );
   // Bolinha de aviso só onde a pessoa precisa agir:
   //   pendentes:  mentor, com pedidos para confirmar; startup, com sugestões para responder ou Pix para pagar

@@ -55,11 +55,11 @@ export class ListaAcompanhamentosComponent implements OnInit {
     return !g.pendentes.length && !g.ativos.length && !g.encerrados.length;
   });
   abaAtual = computed(() =>
-    escolherAba(this.aba(), [
-      { chave: 'pendentes' as const, quantidade: this.grupos().pendentes.length },
+    this.aba() === 'pendentes' || this.aba() === 'encerrados' ? escolherAba(this.aba(), [
       { chave: 'ativos' as const, quantidade: this.grupos().ativos.length },
+      { chave: 'pendentes' as const, quantidade: this.grupos().pendentes.length },
       { chave: 'encerrados' as const, quantidade: this.grupos().encerrados.length },
-    ]),
+    ]) : 'ativos',
   );
   abas = computed<AbaLista[]>(() => {
     const avisos = notificacoesDaLista(this.grupos(), this.ehMentor());

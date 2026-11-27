@@ -52,8 +52,8 @@ export type AbaListaAcompanhamento = 'pendentes' | 'ativos' | 'encerrados';
 
 // Rótulo e chave de cada aba, na ordem em que aparecem
 export const ABAS_LISTA_ACOMPANHAMENTOS: { chave: AbaListaAcompanhamento; rotulo: string }[] = [
-  { chave: 'pendentes', rotulo: 'Propostas pendentes' },
   { chave: 'ativos', rotulo: 'Ativos' },
+  { chave: 'pendentes', rotulo: 'Propostas pendentes' },
   { chave: 'encerrados', rotulo: 'Encerrados' },
 ];
 
