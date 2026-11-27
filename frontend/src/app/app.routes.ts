@@ -71,6 +71,10 @@ export const routes: Routes = [
       // Telas dos dois tipos
       { path: 'mentorias', component: MentoriasComponent, title: 'Mentorias | Ponti' },
       { path: 'convites', pathMatch: 'full', redirectTo: 'mentorias' },
+      {
+        path: 'acompanhamentos',
+        loadChildren: () => import('./acompanhamentos/acompanhamentos.routes').then((m) => m.ACOMPANHAMENTOS_ROUTES),
+      },
       { path: 'mentores/:id/perfil', component: PerfilMentorComponent, title: 'Perfil do mentor | Ponti' },
       { path: 'startups/:id/perfil', component: PerfilStartupComponent, title: 'Perfil da startup | Ponti' },
       // /perfil mostra o próprio perfil; o botão "Editar perfil" leva para /perfil/editar

@@ -4,6 +4,11 @@ export type NomeIcone =
   | 'busca'
   | 'agenda'
   | 'agenda-relogio'
+  | 'lista-checagem'
+  | 'check'
+  | 'link'
+  | 'mensagem'
+  | 'mais'
   | 'usuario'
   | 'config'
   | 'recolher'
@@ -17,7 +22,8 @@ export type NomeIcone =
   | 'brilho'
   | 'grafico'
   | 'linkedin'
-  | 'patinha';
+  | 'patinha'
+  | 'editar';
 
 @Component({
   selector: 'app-icone',
@@ -43,6 +49,23 @@ export type NomeIcone =
         @case ('agenda') {
           <svg:rect width="18" height="18" x="3" y="4" rx="2" />
           <svg:path d="M8 2v4M16 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+        }
+        @case ('check') {
+          <svg:path d="M20 6 9 17l-5-5" />
+        }
+        @case ('link') {
+          <svg:path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <svg:path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        }
+        @case ('mensagem') {
+          <svg:path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        }
+        @case ('mais') {
+          <svg:path d="M5 12h14M12 5v14" />
+        }
+        @case ('lista-checagem') {
+          <svg:path d="M13 5h8M13 12h8M13 19h8" />
+          <svg:path d="m3 17 2 2 4-4M3 7l2 2 4-4" />
         }
         @case ('agenda-relogio') {
           <svg:path d="M16 14v2.2l1.6 1" />
@@ -88,6 +111,10 @@ export type NomeIcone =
         }
         @case ('seta-esquerda') {
           <svg:path d="m12 19-7-7 7-7M19 12H5" />
+        }
+        @case ('editar') {
+          <svg:path d="M12 20h9" />
+          <svg:path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
         }
         @case ('fechar') {
           <svg:path d="M18 6 6 18M6 6l12 12" />

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AgendaService } from '../../agenda/agenda.service';
@@ -7,6 +8,8 @@ import { SessaoService } from '../../auth/sessao.service';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { ConviteService } from '../../convites/convite.service';
 import { Agendamento, ConviteDetalhe, StatusAgendamento } from '../../models';
+import { AbasListaComponent } from '../../shared/abas-lista/abas-lista.component';
+import { AbaLista, escolherAba } from '../../shared/abas-lista/abas-lista.utils';
 import { dataHoraCompleta, hora, jaPassou } from '../../shared/data.utils';
 import { descreverMaturidade } from '../../shared/maturidade.utils';
 import { formatarDuracao, formatarValorSessao, linkSeguro } from '../../shared/mentoria.utils';
@@ -15,20 +18,34 @@ import { EstrelasComponent } from '../../shared/estrelas/estrelas.component';
 import { iniciais } from '../../shared/texto.utils';
 
 type Situacao = 'AGUARDANDO' | 'CONFIRMADA' | 'REALIZADA' | 'RECUSADA' | 'CANCELADA';
+type AbaMentoria = 'pendentes' | 'ativos' | 'encerrados';
 
-// "Mentorias": as sessões agendadas dos dois lados (fluxo estilo Preply) e as sugestões de mentoria.
-//  - Startup: sugestões recebidas dos mentores, próximas sessões (com o link do Meet) e histórico.
-//  - Mentor: pedidos para confirmar (com o link do Meet), próximas sessões, histórico e sugestões enviadas.
+const ROTULOS_ABAS: Record<AbaMentoria, string> = {
+  ativos: 'Ativos',
+  pendentes: 'Propostas pendentes',
+  encerrados: 'Encerrados',
+};
+
+// "Mentorias": as sessões agendadas dos dois lados (fluxo estilo Preply) e as sugestões de mentoria, em três abas.
+//  - Propostas pendentes
+//      Startup: sugestões recebidas dos mentores e pedidos que ainda esperam o mentor (ou o pagamento do Pix).
+//      Mentor: pedidos para confirmar (com o link do Meet) e sugestões enviadas que a startup ainda não respondeu.
+//  - Ativos: próximas sessões confirmadas (com o link do Meet).
+//  - Encerrados: histórico (realizadas, recusadas, canceladas, expiradas) e, para o mentor, sugestões já respondidas.
+// A aba aberta fica na URL (?aba=ativos); a bolinha de aviso marca a aba com algo esperando a pessoa.
 @Component({
   selector: 'app-mentorias',
   standalone: true,
-  imports: [FormsModule, RouterLink, EstrelasComponent],
+  imports: [FormsModule, RouterLink, EstrelasComponent, NgTemplateOutlet, AbasListaComponent],
   templateUrl: './mentorias.component.html',
 })
 export class MentoriasComponent implements OnInit {
   private agendaService = inject(AgendaService);
   private conviteService = inject(ConviteService);
   private sessao = inject(SessaoService);
+
+  // Vem da URL (?aba=...) por withComponentInputBinding
+  aba = input<string>();
 
   ehMentor = computed(() => this.sessao.tipo() === 'MENTOR');
   agendamentos = signal<Agendamento[]>([]);
@@ -42,16 +59,41 @@ export class MentoriasComponent implements OnInit {
   pedidos = computed(() =>
     this.agendamentos().filter((a) => a.status === 'PENDENTE' && !jaPassou(a.inicio)),
   );
-  proximas = computed(() =>
-    this.agendamentos().filter((a) =>
-      this.ehMentor() ? a.status === 'CONFIRMADO' && !jaPassou(a.fim) : ['PENDENTE', 'CONFIRMADO'].includes(a.status) && !jaPassou(a.fim),
-    ),
-  );
+  // Só as confirmadas e que ainda não aconteceram. Os pedidos que esperam o mentor ficam em "Propostas pendentes".
+  proximas = computed(() => this.agendamentos().filter((a) => a.status === 'CONFIRMADO' && !jaPassou(a.fim)));
   historico = computed(() => {
     const ativos = new Set([...this.pedidos(), ...this.proximas()].map((a) => a.id));
     return this.agendamentos().filter((a) => !ativos.has(a.id)).reverse();
   });
   sugestoesPendentes = computed(() => this.sugestoes().filter((c) => c.status === 'PENDENTE'));
+  // Sugestões que o mentor enviou e a startup já respondeu (agendou ou dispensou)
+  sugestoesRespondidas = computed(() => this.sugestoes().filter((c) => c.status !== 'PENDENTE'));
+
+  // ---------- Abas ----------
+  abaAtual = computed(() =>
+    this.aba() === 'pendentes' || this.aba() === 'encerrados' ? escolherAba<AbaMentoria>(this.aba(), [
+      { chave: 'ativos', quantidade: this.proximas().length },
+      { chave: 'pendentes', quantidade: this.pedidos().length + this.sugestoesPendentes().length },
+      { chave: 'encerrados', quantidade: this.historico().length + this.sugestoesRespondidas().length },
+    ]) : 'ativos',
+  );
+  // Bolinha de aviso só onde a pessoa precisa agir:
+  //   pendentes:  mentor, com pedidos para confirmar; startup, com sugestões para responder ou Pix para pagar
+  //   encerrados: startup, com mentoria realizada ainda sem avaliação
+  abas = computed<AbaLista[]>(() => {
+    const avisos: Record<AbaMentoria, boolean> = {
+      pendentes: this.ehMentor()
+        ? this.pedidos().length > 0
+        : this.sugestoesPendentes().length > 0 || this.pedidos().some((a) => a.statusPagamento === 'AGUARDANDO'),
+      ativos: false,
+      encerrados: this.historico().some((a) => this.podeAvaliar(a)),
+    };
+    return (Object.keys(ROTULOS_ABAS) as AbaMentoria[]).map((chave) => ({
+      chave,
+      rotulo: ROTULOS_ABAS[chave],
+      notificacao: avisos[chave],
+    }));
+  });
 
   // Números do topo da página
   realizadas = computed(() => this.agendamentos().filter((a) => a.realizada));
