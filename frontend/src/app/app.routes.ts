@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { tipoGuard } from './auth/auth.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
+import { LandingComponent } from './pages/landing/landing.component';
 import { BoasVindasComponent } from './pages/boas-vindas/boas-vindas.component';
 import { LoginComponent } from './pages/login/login.component';
 import { CadastroComponent } from './pages/cadastro/cadastro.component';
@@ -21,8 +22,8 @@ import { sairSemSalvarGuard } from './shared/sair-sem-salvar.guard';
 import { ConfiguracoesComponent } from './pages/configuracoes/configuracoes.component';
 
 export const routes: Routes = [
-  // Primeira tela ao abrir o site
-  { path: '', pathMatch: 'full', redirectTo: 'bem-vindo' },
+  // Primeira tela ao abrir o site: landing institucional (sem o painel lilás do login)
+  { path: '', pathMatch: 'full', component: LandingComponent, title: 'Ponti | Conectando o futuro da inovação' },
 
   // Telas públicas (sem navbar)
   {
