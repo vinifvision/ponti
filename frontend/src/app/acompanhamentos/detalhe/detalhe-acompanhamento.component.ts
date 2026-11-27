@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { mensagemDeErro } from '../../auth/mensagem-erro';
 import { BolinhaNotificacaoComponent } from '../../shared/bolinha-notificacao/bolinha-notificacao.component';
 import { DialogoConfirmacaoComponent } from '../../shared/dialogo-confirmacao/dialogo-confirmacao.component';
@@ -21,6 +22,7 @@ import { AcompanhamentoAtualService } from './acompanhamento-atual.service';
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    FormsModule,
     IconeComponent,
     SeloComponent,
     DialogoConfirmacaoComponent,
@@ -38,6 +40,13 @@ export class DetalheAcompanhamentoComponent implements OnInit {
   private dialogoEncerrar = viewChild.required(DialogoConfirmacaoComponent);
 
   encerrando = signal(false);
+  metasExpandidas = signal(false);
+  modalMetasAberto = signal(false);
+  modalEdicaoAberto = signal(false);
+  tituloRascunho = signal('');
+  metasRascunho = signal<string[]>([]);
+  novaMeta = signal('');
+  avisoEdicao = signal('');
   salvandoMetaId = signal<number | null>(null);
   erroAcao = signal('');
 
@@ -95,7 +104,7 @@ export class DetalheAcompanhamentoComponent implements OnInit {
   }
 
   alternarMeta(meta: Meta) {
-    if (!this.podeMarcarMeta() || this.salvandoMetaId() === meta.id) return;
+    if (!this.podeMarcarMeta() || this.salvandoMetaId() === meta.id || meta.id < 0 || this.avisoEdicao()) return;
     this.salvandoMetaId.set(meta.id);
     this.erroAcao.set('');
     this.service.atualizarMeta(meta.id, !meta.cumprida).subscribe({
@@ -108,6 +117,51 @@ export class DetalheAcompanhamentoComponent implements OnInit {
         this.salvandoMetaId.set(null);
       },
     });
+  }
+
+  alternarMetas() { this.metasExpandidas.update((v) => !v); }
+
+  abrirEdicaoMetas(event?: Event) {
+    event?.stopPropagation();
+    this.metasRascunho.set(this.atual.metas().map((m) => m.titulo));
+    this.modalMetasAberto.set(true);
+  }
+
+  abrirEdicaoAcompanhamento() {
+    const a = this.atual.acompanhamento();
+    if (!a) return;
+    this.tituloRascunho.set(a.objetivo);
+    this.metasRascunho.set(this.atual.metas().map((m) => m.titulo));
+    this.modalEdicaoAberto.set(true);
+  }
+
+  adicionarMetaRascunho() {
+    const titulo = this.novaMeta().trim();
+    if (!titulo) return;
+    this.metasRascunho.update((lista) => [...lista, titulo]);
+    this.novaMeta.set('');
+  }
+
+  removerMetaRascunho(indice: number) { this.metasRascunho.update((lista) => lista.filter((_, i) => i !== indice)); }
+
+  private aplicarMetasLocais() {
+    const atuais = this.atual.metas();
+    this.atual.metas.set(this.metasRascunho().map((titulo, i) => ({ id: atuais[i]?.id ?? -(i + 1), titulo, cumprida: atuais[i]?.cumprida ?? false, cumpridaEm: atuais[i]?.cumpridaEm ?? null })));
+  }
+
+  salvarEdicaoLocal() {
+    const a = this.atual.acompanhamento();
+    if (!a || !this.tituloRascunho().trim()) return;
+    this.atual.acompanhamento.set({ ...a, objetivo: this.tituloRascunho().trim() });
+    this.aplicarMetasLocais();
+    this.modalEdicaoAberto.set(false);
+    this.avisoEdicao.set('Alterações aplicadas apenas nesta visualização. A API atual não oferece operações para salvar título ou metas.');
+  }
+
+  salvarMetasLocais() {
+    this.aplicarMetasLocais();
+    this.modalMetasAberto.set(false);
+    this.avisoEdicao.set('Alterações aplicadas apenas nesta visualização. A API atual não oferece operações para salvar metas.');
   }
 
   async encerrarAcompanhamento() {
