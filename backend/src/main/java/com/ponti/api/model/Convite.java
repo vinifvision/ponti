@@ -2,6 +2,7 @@ package com.ponti.api.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 
 @Entity
 public class Convite {
@@ -24,6 +25,18 @@ public class Convite {
     @Enumerated(EnumType.STRING)
     private TipoUsuario enviadoPor = TipoUsuario.STARTUP;
 
+    // Quando o convite foi enviado e quando foi respondido (usados pelo dashboard do admin).
+    // Convites antigos podem ficar sem data.
+    private Instant criadoEm;
+    private Instant respondidoEm;
+
+    @PrePersist
+    void antesDeCriar() {
+        if (criadoEm == null) {
+            criadoEm = Instant.now();
+        }
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getStartupId() { return startupId; }
@@ -34,4 +47,8 @@ public class Convite {
     public void setStatus(StatusConvite status) { this.status = status; }
     public TipoUsuario getEnviadoPor() { return enviadoPor; }
     public void setEnviadoPor(TipoUsuario enviadoPor) { this.enviadoPor = enviadoPor; }
+    public Instant getCriadoEm() { return criadoEm; }
+    public void setCriadoEm(Instant criadoEm) { this.criadoEm = criadoEm; }
+    public Instant getRespondidoEm() { return respondidoEm; }
+    public void setRespondidoEm(Instant respondidoEm) { this.respondidoEm = respondidoEm; }
 }

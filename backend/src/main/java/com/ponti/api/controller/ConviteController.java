@@ -100,6 +100,8 @@ public class ConviteController {
         }
         body.setId(null);
         body.setStatus(StatusConvite.PENDENTE);
+        body.setCriadoEm(java.time.Instant.now());
+        body.setRespondidoEm(null);
         return repository.save(body);
     }
 
@@ -148,6 +150,7 @@ public class ConviteController {
                     "Esse convite já foi respondido (" + convite.getStatus() + ")");
         }
         convite.setStatus(novoStatus);
+        convite.setRespondidoEm(java.time.Instant.now());
         return repository.save(convite);
     }
 }

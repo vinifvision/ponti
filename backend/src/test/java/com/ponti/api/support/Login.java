@@ -25,6 +25,10 @@ public final class Login {
         return como(new UsuarioLogado(null, TipoUsuario.MENTOR, null, mentorId));
     }
 
+    public static RequestPostProcessor comoAdmin(Long usuarioId) {
+        return como(new UsuarioLogado(usuarioId, TipoUsuario.ADMIN, null, null));
+    }
+
     private static RequestPostProcessor como(UsuarioLogado logado) {
         return authentication(new UsernamePasswordAuthenticationToken(
                 logado, null, List.of(new SimpleGrantedAuthority("ROLE_" + logado.tipo().name()))));

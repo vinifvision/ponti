@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { autenticadoGuard, tipoGuard } from './auth/auth.guard';
+import { tipoGuard } from './auth/auth.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
 import { BoasVindasComponent } from './pages/boas-vindas/boas-vindas.component';
@@ -40,11 +40,25 @@ export const routes: Routes = [
     ],
   },
 
-  // Área logada (só entra quem fez login)
+  // Área do administrador (moldura própria, com a barra lateral). Startup e mentor voltam para o início deles.
+  // "loadComponent": o código do admin só é baixado por quem entra nele (não pesa para startups e mentores).
+  {
+    path: 'admin',
+    loadComponent: () => import('./admin/admin-shell/admin-shell.component').then((m) => m.AdminShellComponent),
+    canActivate: [tipoGuard('ADMIN')],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'painel' },
+      { path: 'painel', loadComponent: () => import('./admin/painel/painel.component').then((m) => m.PainelComponent), title: 'Painel | Ponti' },
+      { path: 'usuarios', loadComponent: () => import('./admin/usuarios/usuarios.component').then((m) => m.UsuariosComponent), title: 'Usuários | Ponti' },
+      { path: 'registro', loadComponent: () => import('./admin/registro/registro.component').then((m) => m.RegistroComponent), title: 'Registro | Ponti' },
+    ],
+  },
+
+  // Área logada de startups e mentores (o admin vai para o painel dele)
   {
     path: '',
     component: ShellComponent,
-    canActivate: [autenticadoGuard],
+    canActivate: [tipoGuard('STARTUP', 'MENTOR')],
     children: [
       // Telas só de startup
       { path: 'encontrar-mentores', component: EncontrarMentoresComponent, canActivate: [tipoGuard('STARTUP')], title: 'Encontrar Mentores | Ponti' },

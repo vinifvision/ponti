@@ -1,7 +1,8 @@
 import type { TipoUsuario } from './sessao.service';
 
-// Tela inicial de cada tipo de conta: startup procura mentores; mentor procura startups.
+// Tela inicial de cada tipo de conta: startup procura mentores; mentor procura startups; admin vai para o painel.
 export function rotaInicialDe(tipo: TipoUsuario | null): string {
+  if (tipo === 'ADMIN') return '/admin/painel';
   return tipo === 'MENTOR' ? '/encontrar-startups' : '/encontrar-mentores';
 }
 

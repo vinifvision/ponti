@@ -40,7 +40,10 @@ public class JwtAutenticacaoFilter extends OncePerRequestFilter {
             try {
                 Long usuarioId = jwtService.validar(cabecalho.substring(PREFIXO.length()));
                 // O usuário pode ter sido apagado depois que o token foi emitido
-                usuarioRepository.findById(usuarioId).map(UsuarioLogado::de).ifPresent(logado -> {
+                // Conta bloqueada pelo admin: o token deixa de valer na hora (a rota responde 401)
+                usuarioRepository.findById(usuarioId)
+                        .filter(usuario -> !usuario.estaBloqueado())
+                        .map(UsuarioLogado::de).ifPresent(logado -> {
                     var autenticacao = new UsernamePasswordAuthenticationToken(
                             logado, null, List.of(new SimpleGrantedAuthority("ROLE_" + logado.tipo().name())));
                     SecurityContextHolder.getContext().setAuthentication(autenticacao);
