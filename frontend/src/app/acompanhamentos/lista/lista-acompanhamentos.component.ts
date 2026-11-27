@@ -1,17 +1,20 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { SessaoService } from '../../auth/sessao.service';
+import { AbasListaComponent } from '../../shared/abas-lista/abas-lista.component';
+import { AbaLista, escolherAba } from '../../shared/abas-lista/abas-lista.utils';
 import { DialogoConfirmacaoComponent } from '../../shared/dialogo-confirmacao/dialogo-confirmacao.component';
 import { AcompanhamentoService } from '../acompanhamento.service';
 import { PainelConsolidado, ResumoAcompanhamento } from '../acompanhamento.models';
-import { agruparPorStatus } from '../acompanhamento.utils';
+import { ABAS_LISTA_ACOMPANHAMENTOS, agruparPorStatus, notificacoesDaLista } from '../acompanhamento.utils';
 import { CardAcompanhamentoComponent } from '../componentes/card-acompanhamento.component';
 import { ModalNovoAcompanhamentoComponent } from '../componentes/modal-novo-acompanhamento.component';
 import { PainelProgressoComponent } from '../componentes/painel-progresso.component';
 import { IconeComponent } from '../../shared/icone/icone.component';
 
-// Tela 1 do módulo: acompanhamentos separados em propostas pendentes, ativos e encerrados.
+// Tela 1 do módulo: acompanhamentos separados, em abas, em propostas pendentes, ativos e encerrados.
+// A aba aberta fica na URL (?aba=ativos); a bolinha de aviso marca a aba com algo esperando a pessoa.
 // A startup vê no topo o painel de progresso de todos os mentores; o mentor vê as startups dele.
 // O mentor também tem aqui o botão "Novo acompanhamento", no topo da tela (como o "Criar turma" do Google
 // Classroom): escolhe uma startup elegível e abre a proposta.
@@ -25,6 +28,7 @@ import { IconeComponent } from '../../shared/icone/icone.component';
     DialogoConfirmacaoComponent,
     ModalNovoAcompanhamentoComponent,
     IconeComponent,
+    AbasListaComponent,
   ],
   templateUrl: './lista-acompanhamentos.component.html',
 })
@@ -37,6 +41,9 @@ export class ListaAcompanhamentosComponent implements OnInit {
 
   ehMentor = computed(() => this.sessao.tipo() === 'MENTOR');
 
+  // Vem da URL (?aba=...) por withComponentInputBinding
+  aba = input<string>();
+
   lista = signal<ResumoAcompanhamento[]>([]);
   painel = signal<PainelConsolidado | null>(null);
   carregando = signal(true);
@@ -46,6 +53,17 @@ export class ListaAcompanhamentosComponent implements OnInit {
   vazio = computed(() => {
     const g = this.grupos();
     return !g.pendentes.length && !g.ativos.length && !g.encerrados.length;
+  });
+  abaAtual = computed(() =>
+    this.aba() === 'pendentes' || this.aba() === 'encerrados' ? escolherAba(this.aba(), [
+      { chave: 'ativos' as const, quantidade: this.grupos().ativos.length },
+      { chave: 'pendentes' as const, quantidade: this.grupos().pendentes.length },
+      { chave: 'encerrados' as const, quantidade: this.grupos().encerrados.length },
+    ]) : 'ativos',
+  );
+  abas = computed<AbaLista[]>(() => {
+    const avisos = notificacoesDaLista(this.grupos(), this.ehMentor());
+    return ABAS_LISTA_ACOMPANHAMENTOS.map((a) => ({ ...a, notificacao: avisos[a.chave] }));
   });
   // O painel só faz sentido para a startup e quando já existe algo em andamento
   mostrarPainel = computed(() => !this.ehMentor() && (this.painel()?.acompanhamentosAtivos ?? 0) > 0);

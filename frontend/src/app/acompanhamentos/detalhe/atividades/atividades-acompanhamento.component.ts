@@ -1,9 +1,6 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
-import { mensagemDeErro } from '../../../auth/mensagem-erro';
+import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { PerfilLogadoService } from '../../../auth/perfil-logado.service';
 import { SessaoService } from '../../../auth/sessao.service';
-import { AcompanhamentoService } from '../../acompanhamento.service';
 import { Atividade, PessoaAvatar } from '../../acompanhamento.models';
 import { FiltroAtividades, ehFiltroAtividades, filtrarAtividades } from '../../acompanhamento.utils';
 import { ModalAtividadeComponent } from '../../componentes/modal-atividade.component';
@@ -21,8 +18,7 @@ import { AcompanhamentoAtualService } from '../acompanhamento-atual.service';
   imports: [PassoAtividadeComponent, ModalAtividadeComponent, ModalFeedbackComponent],
   templateUrl: './atividades-acompanhamento.component.html',
 })
-export class AtividadesAcompanhamentoComponent implements OnInit {
-  private service = inject(AcompanhamentoService);
+export class AtividadesAcompanhamentoComponent {
   private atual = inject(AcompanhamentoAtualService);
   private sessao = inject(SessaoService);
   private perfilLogado = inject(PerfilLogadoService);
@@ -37,9 +33,11 @@ export class AtividadesAcompanhamentoComponent implements OnInit {
   readonly ehMentor = this.atual.ehMentor;
   readonly somenteLeitura = this.atual.somenteLeitura;
 
-  atividades = signal<Atividade[]>([]);
-  carregando = signal(true);
-  erro = signal('');
+  // O carregamento é feito pela casca da página (AcompanhamentoAtualService), que também usa as atividades
+  // para mostrar a bolinha de aviso nas abas
+  readonly atividades = this.atual.atividades;
+  readonly carregando = this.atual.carregandoAtividades;
+  readonly erro = this.atual.erroAtividades;
 
   filtroAtual = computed<FiltroAtividades>(() => {
     const f = this.filtro();
@@ -76,21 +74,6 @@ export class AtividadesAcompanhamentoComponent implements OnInit {
     return { nome: parceiro?.nome ?? 'Mentor', fotoUrl: parceiro?.fotoUrl ?? null };
   });
 
-  ngOnInit() {
-    const id = this.acompanhamento()?.id;
-    if (id === undefined) return;
-    this.service.atividades(id).subscribe({
-      next: (lista) => {
-        this.atividades.set(lista);
-        this.carregando.set(false);
-      },
-      error: (e: HttpErrorResponse) => {
-        this.erro.set(mensagemDeErro(e, 'Não foi possível carregar as atividades.'));
-        this.carregando.set(false);
-      },
-    });
-  }
-
   novaAtividade() {
     this.modalAtividade().abrir();
   }
@@ -104,10 +87,10 @@ export class AtividadesAcompanhamentoComponent implements OnInit {
   }
 
   adicionar(a: Atividade) {
-    this.atividades.update((lista) => [...lista, a]);
+    this.atual.adicionarAtividade(a);
   }
 
   substituir(a: Atividade) {
-    this.atividades.update((lista) => lista.map((x) => (x.id === a.id ? a : x)));
+    this.atual.substituirAtividade(a);
   }
 }

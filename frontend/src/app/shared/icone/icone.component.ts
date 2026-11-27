@@ -22,7 +22,8 @@ export type NomeIcone =
   | 'brilho'
   | 'grafico'
   | 'linkedin'
-  | 'patinha';
+  | 'patinha'
+  | 'editar';
 
 @Component({
   selector: 'app-icone',
@@ -110,6 +111,10 @@ export type NomeIcone =
         }
         @case ('seta-esquerda') {
           <svg:path d="m12 19-7-7 7-7M19 12H5" />
+        }
+        @case ('editar') {
+          <svg:path d="M12 20h9" />
+          <svg:path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
         }
         @case ('fechar') {
           <svg:path d="M18 6 6 18M6 6l12 12" />

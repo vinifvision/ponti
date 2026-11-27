@@ -46,6 +46,29 @@ export function agruparPorStatus(lista: ResumoAcompanhamento[]): GruposAcompanha
   };
 }
 
+// ---------- Abas da lista de acompanhamentos ----------
+
+export type AbaListaAcompanhamento = 'pendentes' | 'ativos' | 'encerrados';
+
+// Rótulo e chave de cada aba, na ordem em que aparecem
+export const ABAS_LISTA_ACOMPANHAMENTOS: { chave: AbaListaAcompanhamento; rotulo: string }[] = [
+  { chave: 'ativos', rotulo: 'Ativos' },
+  { chave: 'pendentes', rotulo: 'Propostas pendentes' },
+  { chave: 'encerrados', rotulo: 'Encerrados' },
+];
+
+// Quais abas ganham a bolinha de aviso (só o que espera uma ação da pessoa):
+//   pendentes:  só para a startup, que precisa aceitar ou recusar. Para o mentor a proposta espera a startup.
+//   ativos:     algum acompanhamento com atividade atrasada ou pendência (startup: a entregar; mentor: a revisar).
+//   encerrados: nunca (somente leitura).
+export function notificacoesDaLista(grupos: GruposAcompanhamento, ehMentor: boolean): Record<AbaListaAcompanhamento, boolean> {
+  return {
+    pendentes: !ehMentor && grupos.pendentes.length > 0,
+    ativos: grupos.ativos.some((a) => a.atividadesAtrasadas > 0 || a.pendencias > 0),
+    encerrados: false,
+  };
+}
+
 // Selos de situação que aparecem no topo do card
 export function selosDoCard(a: ResumoAcompanhamento, ehMentor: boolean): SeloCard[] {
   switch (a.status) {
@@ -174,6 +197,27 @@ export function filtrarAtividades(lista: Atividade[], filtro: FiltroAtividades, 
     default:
       return ordenadas;
   }
+}
+
+// Quais abas ganham a bolinha de aviso. Só o que a pessoa ainda pode resolver; acompanhamento encerrado
+// (ou proposta sem aceite) é somente leitura e não mostra nenhuma bolinha.
+//   todas:      mentor, quando há entregas aguardando revisão (elas só aparecem nesta aba)
+//   pendentes:  startup, quando há atividade ainda não entregue
+//   atrasadas:  os dois lados, quando há atividade com prazo vencido
+//   devolvidas: startup, quando o mentor devolveu algo para ajustar
+export function notificacoesDasAbas(
+  lista: Atividade[],
+  ehMentor: boolean,
+  somenteLeitura: boolean,
+  agora?: Date,
+): Record<FiltroAtividades, boolean> {
+  if (somenteLeitura) return { todas: false, pendentes: false, atrasadas: false, devolvidas: false };
+  return {
+    todas: ehMentor && lista.some((a) => a.status === 'ENTREGUE'),
+    pendentes: !ehMentor && lista.some((a) => a.status === 'PENDENTE'),
+    atrasadas: lista.some((a) => estaAtrasada(a, agora)),
+    devolvidas: !ehMentor && lista.some((a) => a.status === 'DEVOLVIDA'),
+  };
 }
 
 // Números do card da lista, calculados a partir das atividades

@@ -52,48 +52,44 @@
       </div>
     }
 
-    @if (grupos().pendentes.length) {
-      <section class="mt-10" aria-labelledby="titulo-pendentes">
-        <h2 id="titulo-pendentes" class="flex items-center gap-3 text-2xl font-medium">
-          Propostas pendentes
-          <span class="rounded-full bg-ponti-roxo px-3 py-0.5 text-sm font-medium text-white">{{ grupos().pendentes.length }}</span>
-        </h2>
-        <ul class="mt-4 flex flex-col gap-4">
-          @for (a of grupos().pendentes; track a.id) {
-            <li>
-              <app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" (aceitar)="aceitar($event)" (recusar)="recusar($event)" />
-            </li>
-          }
-        </ul>
-      </section>
-    }
+    <app-abas-lista [abas]="abas()" [ativa]="abaAtual()" rotulo="Situação dos acompanhamentos" />
 
-    @if (grupos().ativos.length) {
-      <section class="mt-10" aria-labelledby="titulo-ativos">
-        <h2 id="titulo-ativos" class="flex items-center gap-3 text-2xl font-medium">
-          Ativos
-          <span class="rounded-full bg-gray-200 px-3 py-0.5 text-sm font-medium text-gray-700">{{ grupos().ativos.length }}</span>
-        </h2>
-        <ul class="mt-4 flex flex-col gap-4">
-          @for (a of grupos().ativos; track a.id) {
-            <li><app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" /></li>
-          }
-        </ul>
-      </section>
-    }
-
-    @if (grupos().encerrados.length) {
-      <section class="mt-10" aria-labelledby="titulo-encerrados">
-        <h2 id="titulo-encerrados" class="flex items-center gap-3 text-2xl font-medium">
-          Encerrados
-          <span class="rounded-full bg-gray-200 px-3 py-0.5 text-sm font-medium text-gray-700">{{ grupos().encerrados.length }}</span>
-        </h2>
-        <ul class="mt-4 flex flex-col gap-4">
-          @for (a of grupos().encerrados; track a.id) {
-            <li><app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" /></li>
-          }
-        </ul>
-      </section>
+    @switch (abaAtual()) {
+      @case ('pendentes') {
+        @if (grupos().pendentes.length) {
+          <ul class="mt-8 flex flex-col gap-4">
+            @for (a of grupos().pendentes; track a.id) {
+              <li>
+                <app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" (aceitar)="aceitar($event)" (recusar)="recusar($event)" />
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center text-lg text-gray-600">Nenhuma proposta pendente.</p>
+        }
+      }
+      @case ('ativos') {
+        @if (grupos().ativos.length) {
+          <ul class="mt-8 flex flex-col gap-4">
+            @for (a of grupos().ativos; track a.id) {
+              <li><app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center text-lg text-gray-600">Nenhum acompanhamento ativo.</p>
+        }
+      }
+      @case ('encerrados') {
+        @if (grupos().encerrados.length) {
+          <ul class="mt-8 flex flex-col gap-4">
+            @for (a of grupos().encerrados; track a.id) {
+              <li><app-card-acompanhamento [acompanhamento]="a" [ehMentor]="ehMentor()" /></li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center text-lg text-gray-600">Nenhum acompanhamento encerrado.</p>
+        }
+      }
     }
   }
 

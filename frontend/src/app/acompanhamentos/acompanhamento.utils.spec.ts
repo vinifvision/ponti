@@ -1,8 +1,8 @@
 import { Atividade, ResumoAcompanhamento } from './acompanhamento.models';
 import {
   ABAS_ATIVIDADES, agruparPorStatus, dataCurta, dataHoraCurta, diasDeAtraso, ehFiltroAtividades, entregueComAtraso,
-  estaAtrasada, filtrarAtividades, ordenarPorPrazo, percentual, plural, prazoCurto, resumirAtividades, selosDaAtividade,
-  selosDoCard, textoPrazo, tomDoNo,
+  estaAtrasada, filtrarAtividades, notificacoesDaLista, notificacoesDasAbas, ordenarPorPrazo, percentual, plural, prazoCurto,
+  resumirAtividades, selosDaAtividade, selosDoCard, textoPrazo, tomDoNo,
 } from './acompanhamento.utils';
 
 function resumo(extra: Partial<ResumoAcompanhamento>): ResumoAcompanhamento {
@@ -226,5 +226,70 @@ describe('abas de atividades', () => {
   it('devolve lista vazia quando nada se encaixa', () => {
     expect(filtrarAtividades([], 'atrasadas', AGORA)).toEqual([]);
     expect(filtrarAtividades([atividade({ status: 'APROVADA' })], 'pendentes', AGORA)).toEqual([]);
+  });
+});
+
+describe('notificacoesDaLista', () => {
+  it('startup: bolinha em pendentes quando há proposta para responder', () => {
+    const g = agruparPorStatus([resumo({ id: 1, status: 'PROPOSTO' })]);
+    expect(notificacoesDaLista(g, false)).toEqual({ pendentes: true, ativos: false, encerrados: false });
+  });
+
+  it('mentor: proposta pendente espera a startup, então não acende a aba', () => {
+    const g = agruparPorStatus([resumo({ id: 1, status: 'PROPOSTO' })]);
+    expect(notificacoesDaLista(g, true).pendentes).toBe(false);
+  });
+
+  it('ativos acende com atraso ou pendência, e fica apagada quando está tudo em dia', () => {
+    const atrasado = agruparPorStatus([resumo({ id: 1, atividadesAtrasadas: 1 })]);
+    const pendente = agruparPorStatus([resumo({ id: 2, pendencias: 2 })]);
+    const emDia = agruparPorStatus([resumo({ id: 3 })]);
+    expect(notificacoesDaLista(atrasado, false).ativos).toBe(true);
+    expect(notificacoesDaLista(pendente, true).ativos).toBe(true);
+    expect(notificacoesDaLista(emDia, false).ativos).toBe(false);
+  });
+
+  it('encerrados nunca acende', () => {
+    const g = agruparPorStatus([resumo({ id: 1, status: 'ENCERRADO', pendencias: 3, atividadesAtrasadas: 1 })]);
+    expect(notificacoesDaLista(g, false).encerrados).toBe(false);
+  });
+});
+
+describe('notificacoesDasAbas', () => {
+  const agora = new Date('2026-11-10T12:00:00');
+  const ativ = (id: number, status: Atividade['status'], prazo: string): Atividade => ({
+    id, acompanhamentoId: 1, titulo: 'T', descricao: '', prazo, status, entregas: [],
+  });
+  const futuro = '2026-11-20T23:59:00';
+  const vencido = '2026-11-01T23:59:00';
+
+  it('startup: pendentes, atrasadas e devolvidas acendem; todas não', () => {
+    const lista = [ativ(1, 'PENDENTE', futuro), ativ(2, 'PENDENTE', vencido), ativ(3, 'DEVOLVIDA', futuro)];
+    expect(notificacoesDasAbas(lista, false, false, agora)).toEqual({
+      todas: false, pendentes: true, atrasadas: true, devolvidas: true,
+    });
+  });
+
+  it('mentor: entrega aguardando revisão acende "Todas atividades"; pendentes e devolvidas não', () => {
+    const lista = [ativ(1, 'ENTREGUE', futuro), ativ(2, 'PENDENTE', futuro), ativ(3, 'DEVOLVIDA', futuro)];
+    expect(notificacoesDasAbas(lista, true, false, agora)).toEqual({
+      todas: true, pendentes: false, atrasadas: false, devolvidas: false,
+    });
+  });
+
+  it('atrasada acende para o mentor também', () => {
+    expect(notificacoesDasAbas([ativ(1, 'PENDENTE', vencido)], true, false, agora).atrasadas).toBe(true);
+  });
+
+  it('em dia (ou só aprovadas) não acende nada', () => {
+    const lista = [ativ(1, 'APROVADA', vencido), ativ(2, 'PENDENTE', futuro)];
+    const r = notificacoesDasAbas(lista, true, false, agora);
+    expect(Object.values(r).some(Boolean)).toBe(false);
+  });
+
+  it('somente leitura (encerrado ou proposta) não acende nada', () => {
+    const lista = [ativ(1, 'PENDENTE', vencido), ativ(2, 'ENTREGUE', futuro), ativ(3, 'DEVOLVIDA', futuro)];
+    expect(Object.values(notificacoesDasAbas(lista, false, true, agora)).some(Boolean)).toBe(false);
+    expect(Object.values(notificacoesDasAbas(lista, true, true, agora)).some(Boolean)).toBe(false);
   });
 });
