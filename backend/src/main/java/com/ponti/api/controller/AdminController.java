@@ -1,5 +1,6 @@
 package com.ponti.api.controller;
 
+import com.ponti.api.dto.DashboardAdmin;
 import com.ponti.api.dto.PaginaAdmin;
 import com.ponti.api.dto.PedidoBloqueio;
 import com.ponti.api.dto.PedidoDesbloqueio;
@@ -7,7 +8,10 @@ import com.ponti.api.dto.UsuarioAdmin;
 import com.ponti.api.model.RegistroAuditoria;
 import com.ponti.api.model.TipoUsuario;
 import com.ponti.api.service.AdminUsuariosService;
+import com.ponti.api.service.DashboardService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 // Área do administrador. A configuração de segurança libera /admin/** só para a conta ADMIN.
@@ -16,9 +20,19 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminUsuariosService usuariosService;
+    private final DashboardService dashboardService;
 
-    public AdminController(AdminUsuariosService usuariosService) {
+    public AdminController(AdminUsuariosService usuariosService, DashboardService dashboardService) {
         this.usuariosService = usuariosService;
+        this.dashboardService = dashboardService;
+    }
+
+    // Dashboard: ?inicio=2026-11-01&fim=2026-11-27 (padrão: últimos 30 dias). Compara com o período
+    // anterior de mesmo tamanho.
+    @GetMapping("/dashboard")
+    public DashboardAdmin dashboard(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        return dashboardService.gerar(inicio, fim);
     }
 
     // Lista de usuários: ?busca=&tipo=STARTUP|MENTOR|ADMIN&situacao=ATIVO|BLOQUEADO&pagina=0&tamanho=20

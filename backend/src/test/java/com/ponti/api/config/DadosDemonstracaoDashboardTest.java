@@ -10,6 +10,8 @@ import com.ponti.api.repository.ConviteRepository;
 import com.ponti.api.repository.MentorRepository;
 import com.ponti.api.repository.StartupRepository;
 import com.ponti.api.repository.UsuarioRepository;
+import com.ponti.api.dto.DashboardAdmin;
+import com.ponti.api.service.DashboardService;
 import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ class DadosDemonstracaoDashboardTest {
     @Autowired MentorRepository mentorRepository;
     @Autowired ConviteRepository conviteRepository;
     @Autowired AvaliacaoRepository avaliacaoRepository;
+    @Autowired DashboardService dashboardService;
 
     @Test
     void carregaAsStartupsEOsMentoresExtras() {
@@ -79,5 +82,34 @@ class DadosDemonstracaoDashboardTest {
         assertThat(conviteRepository.count()).isEqualTo(convites);
         assertThat(usuarioRepository.findByEmail("petcare@exemplo.com").orElseThrow().getCriadoEm())
                 .isEqualTo(cadastroPetcare);
+    }
+
+    // A história que o dashboard conta no pitch (últimos 30 dias). Se alguém mexer nos dados de
+    // demonstração e quebrar essa história, este teste avisa.
+    @Test
+    void dashboardContaAHistoriaDoPitch() {
+        DashboardAdmin d = dashboardService.gerar(null, null);
+
+        // Funil: 9 cadastros e a maior perda logo no primeiro passo (startups que não pedem nada)
+        assertThat(d.funil().etapas()).extracting(DashboardAdmin.EtapaFunil::quantidade).containsExactly(9L, 6L, 4L, 3L, 2L);
+        assertThat(d.funil().maiorQueda()).isEqualTo("INTERESSE");
+
+        // Prova do match: match alto vira conexão muito mais que match baixo
+        assertThat(d.match().faixas().get(0).taxa()).isEqualTo(100);
+        assertThat(d.match().faixas().get(2).taxa()).isLessThan(40);
+        assertThat(d.match().diferenca()).isGreaterThanOrEqualTo(60);
+
+        // Oferta x demanda: falta mentor de Marketing, Tecnologia e Jurídico
+        assertThat(d.ofertaDemanda().subList(0, 3)).extracting(t -> t.tema().name())
+                .containsExactly("MARKETING", "TECNOLOGIA", "JURIDICO");
+        assertThat(d.ofertaDemanda().subList(0, 3)).allMatch(t -> t.situacao().equals("FALTA"));
+
+        // Saúde: a Rota Verde parou
+        assertThat(d.saude().parados()).extracting(DashboardAdmin.AcompanhamentoParado::startup).contains("Rota Verde");
+        assertThat(d.saude().entregasAtrasadas()).isPositive();
+
+        // Atenção: os dois mentores mal avaliados e startups sem conexão
+        assertThat(d.atencao()).extracting(DashboardAdmin.Atencao::nome)
+                .contains("Henrique Bastos", "Sérgio Leal", "Bairro Seguro", "VetNorte");
     }
 }

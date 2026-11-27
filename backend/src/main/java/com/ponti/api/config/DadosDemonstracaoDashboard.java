@@ -242,6 +242,25 @@ public class DadosDemonstracaoDashboard implements CommandLineRunner {
         futura("aprendemais", "henrique", 5, "18:00", StatusAgendamento.PENDENTE, 6);
 
         // SolarCasa, Conta Certa e Horta Urbana: só o cadastro
+
+        // Tentativas fora do perfil: as startups também procuram mentores que não atendem o que elas precisam,
+        // e esses pedidos quase nunca viram match (é o que a "prova do match" mostra)
+        convite("rotaverde", "beatriz", TipoUsuario.STARTUP, StatusConvite.ACEITO, 21, 20);   // 75%: aceito
+        convite("rotaverde", "camila", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 24, 23);  // 0%
+        convite("feiraja", "diego", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 20, 19);     // 0%
+        recusado("feiraja", "rafael", 18);                                                     // 63%
+        convite("clinicafacil", "marcos", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 18, 17); // 0%
+        convite("clinicafacil", "fernanda", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 18, 16); // 50%
+        convite("bairroseguro", "camila", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 12, 11); // 0%
+        recusado("docelar", "thiago", 11);                                                     // 0%
+        convite("aprendemais", "lucas", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 8, 7);    // 13%
+    }
+
+    // Pedido de mentoria que o mentor recusou (feito "pedidoHaDias" dias atrás, respondido no dia seguinte)
+    private void recusado(String startup, String mentor, int pedidoHaDias) {
+        Agendamento a = futura(startup, mentor, -(pedidoHaDias - 5), "16:00", StatusAgendamento.RECUSADO, pedidoHaDias);
+        a.setRespondidoEm(a.getCriadoEm().plus(Duration.ofDays(1)));
+        agendamentoRepository.save(a);
     }
 
     // Startups mais antigas e o histórico dos mentores mal avaliados
@@ -257,6 +276,11 @@ public class DadosDemonstracaoDashboard implements CommandLineRunner {
         Agendamento recusado = futura("vetnorte", "rafael", -28, "19:00", StatusAgendamento.RECUSADO, 33);
         recusado.setRespondidoEm(recusado.getCriadoEm().plus(Duration.ofHours(30)));
         agendamentoRepository.save(recusado);
+
+        // Mais tentativas fora do perfil no período anterior
+        convite("pescaviva", "thiago", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 43, 42);   // 0%
+        recusado("modacircular", "camila", 47);                                                // 0%
+        convite("vetnorte", "marcos", TipoUsuario.STARTUP, StatusConvite.RECUSADO, 36, 35);   // 0%
 
         // Cuida Idoso: match alto com a Camila, mentoria e acompanhamento já encerrado
         avaliar(realizada("cuidaidoso", "camila", 70, "10:00"), 5, "Priorizamos o MVP em uma tarde.");
