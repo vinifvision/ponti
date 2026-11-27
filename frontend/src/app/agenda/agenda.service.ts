@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../api.config';
-import { Agendamento, FaixaDisponibilidade, NovoAgendamento } from '../models';
+import { Agendamento, DefinicaoExcecao, ExcecaoDia, FaixaDisponibilidade, NovoAgendamento } from '../models';
 
 // Fala com a agenda do backend: disponibilidade do mentor, horários livres e agendamentos.
 @Injectable({ providedIn: 'root' })
@@ -16,6 +16,21 @@ export class AgendaService {
   // Substitui a disponibilidade semanal inteira
   salvarDisponibilidade(mentorId: number, faixas: FaixaDisponibilidade[]): Observable<FaixaDisponibilidade[]> {
     return this.http.put<FaixaDisponibilidade[]>(`${API_URL}/mentores/${mentorId}/disponibilidade`, faixas);
+  }
+
+  // Ajustes de datas específicas (folga, horário diferente) entre duas datas ("2026-11-01")
+  excecoes(mentorId: number, de: string, ate: string): Observable<ExcecaoDia[]> {
+    return this.http.get<ExcecaoDia[]>(`${API_URL}/mentores/${mentorId}/excecoes`, { params: { de, ate } });
+  }
+
+  // Cria ou substitui o ajuste de UMA data ("2026-10-29"); ele vale no lugar do horário semanal
+  salvarExcecao(mentorId: number, data: string, definicao: DefinicaoExcecao): Observable<ExcecaoDia> {
+    return this.http.put<ExcecaoDia>(`${API_URL}/mentores/${mentorId}/excecoes/${data}`, definicao);
+  }
+
+  // Remove o ajuste: a data volta a seguir o horário semanal
+  removerExcecao(mentorId: number, data: string): Observable<void> {
+    return this.http.delete<void>(`${API_URL}/mentores/${mentorId}/excecoes/${data}`);
   }
 
   // Horários livres entre duas datas ("2026-11-01"), como "2026-11-03T09:00:00"
